@@ -42,11 +42,11 @@ export function Modal({ isOpen, onClose, children, title, size = 'md' }: ModalPr
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
     >
       <div
         className={cn(
-          'relative w-full bg-slate-900 border border-slate-700 rounded-xl shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col',
+          'relative w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col',
           {
             'max-w-sm': size === 'sm',
             'max-w-md': size === 'md',
@@ -58,11 +58,11 @@ export function Modal({ isOpen, onClose, children, title, size = 'md' }: ModalPr
         )}
       >
         {title && (
-          <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-700 shrink-0">
-            <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
+          <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-700 shrink-0">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+              className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -93,7 +93,7 @@ interface ModalFooterProps {
 
 export function ModalFooter({ children, className }: ModalFooterProps) {
   return (
-    <div className={cn('flex items-center justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-700 shrink-0', className)}>
+    <div className={cn('flex items-center justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700 shrink-0', className)}>
       {children}
     </div>
   );

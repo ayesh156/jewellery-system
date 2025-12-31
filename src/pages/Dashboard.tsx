@@ -85,8 +85,8 @@ export function Dashboard() {
       {/* Page Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-100">Dashboard</h1>
-          <p className="mt-1 text-slate-400">Welcome back! Here's your business overview.</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Dashboard</h1>
+          <p className="mt-1 text-slate-600 dark:text-slate-400">Welcome back! Here's your business overview.</p>
         </div>
         <div className="flex gap-3">
           <Link to="/invoices/create">
@@ -127,11 +127,11 @@ export function Dashboard() {
                   </span>
                 )}
                 {stat.changeType === 'neutral' && (
-                  <span className="text-slate-400 text-sm">{stat.change}</span>
+                  <span className="text-slate-600 dark:text-slate-400 text-sm">{stat.change}</span>
                 )}
               </div>
-              <p className="text-sm text-slate-400 mb-1">{stat.title}</p>
-              <p className="text-2xl font-bold text-slate-100">{stat.value}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">{stat.title}</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stat.value}</p>
             </CardContent>
           </Card>
         ))}
@@ -154,20 +154,20 @@ export function Dashboard() {
             </Link>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="divide-y divide-slate-700/50">
+            <div className="divide-y divide-slate-200 dark:divide-slate-700/50">
               {recentInvoices.map((invoice) => (
-                <div key={invoice.id} className="flex items-center justify-between px-6 py-4 hover:bg-slate-800/30 transition-colors">
+                <div key={invoice.id} className="flex items-center justify-between px-6 py-4 hover:bg-slate-100 dark:hover:bg-slate-800/30 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500/20 to-yellow-500/20 flex items-center justify-center">
                       <FileText className="w-5 h-5 text-amber-400" />
                     </div>
                     <div>
-                      <p className="font-medium text-slate-200">{invoice.invoiceNumber}</p>
-                      <p className="text-sm text-slate-400">{invoice.customerName}</p>
+                      <p className="font-medium text-slate-800 dark:text-slate-200">{invoice.invoiceNumber}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">{invoice.customerName}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-slate-200">{formatCurrency(invoice.total)}</p>
+                    <p className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(invoice.total)}</p>
                     <Badge
                       variant={
                         invoice.status === 'paid' ? 'success' :
@@ -196,27 +196,27 @@ export function Dashboard() {
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-3">
               <Link to="/invoices/create">
-                <div className="p-4 rounded-lg bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-amber-500/30 transition-all cursor-pointer text-center">
+                <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/50 hover:border-amber-500/30 transition-all cursor-pointer text-center">
                   <FileText className="w-6 h-6 text-amber-400 mx-auto mb-2" />
-                  <p className="text-sm text-slate-300">New Invoice</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">New Invoice</p>
                 </div>
               </Link>
               <Link to="/grn/create">
-                <div className="p-4 rounded-lg bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-amber-500/30 transition-all cursor-pointer text-center">
+                <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/50 hover:border-amber-500/30 transition-all cursor-pointer text-center">
                   <Truck className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-                  <p className="text-sm text-slate-300">New GRN</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">New GRN</p>
                 </div>
               </Link>
               <Link to="/products">
-                <div className="p-4 rounded-lg bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-amber-500/30 transition-all cursor-pointer text-center">
+                <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/50 hover:border-amber-500/30 transition-all cursor-pointer text-center">
                   <Package className="w-6 h-6 text-emerald-400 mx-auto mb-2" />
-                  <p className="text-sm text-slate-300">Products</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">Products</p>
                 </div>
               </Link>
               <Link to="/reports">
-                <div className="p-4 rounded-lg bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-amber-500/30 transition-all cursor-pointer text-center">
+                <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/50 hover:border-amber-500/30 transition-all cursor-pointer text-center">
                   <TrendingUp className="w-6 h-6 text-purple-400 mx-auto mb-2" />
-                  <p className="text-sm text-slate-300">Reports</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">Reports</p>
                 </div>
               </Link>
             </CardContent>
@@ -237,13 +237,13 @@ export function Dashboard() {
             </CardHeader>
             <CardContent className="space-y-3">
               {recentGRNs.map((grn) => (
-                <div key={grn.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-800/30">
+                <div key={grn.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-100 dark:bg-slate-800/30">
                   <div>
-                    <p className="font-medium text-slate-200 text-sm">{grn.grnNumber}</p>
-                    <p className="text-xs text-slate-400">{grn.supplierName}</p>
+                    <p className="font-medium text-slate-800 dark:text-slate-200 text-sm">{grn.grnNumber}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">{grn.supplierName}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-slate-200">{formatCurrency(grn.total)}</p>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(grn.total)}</p>
                     <Badge variant={grn.status === 'received' ? 'success' : 'warning'} className="text-xs">
                       {grn.status}
                     </Badge>
@@ -260,9 +260,9 @@ export function Dashboard() {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-400 mb-1">Total Inventory Value</p>
-              <p className="text-3xl font-bold text-slate-100">{formatCurrency(totalInventoryValue)}</p>
-              <p className="text-sm text-slate-400 mt-2">
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Total Inventory Value</p>
+              <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{formatCurrency(totalInventoryValue)}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
                 Across {totalProducts} products
               </p>
             </div>

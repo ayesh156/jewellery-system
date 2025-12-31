@@ -13,11 +13,13 @@ import {
   Building2,
   AlertTriangle,
   Package,
+  Clock,
+  Calendar,
 } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
+import { Combobox } from '../components/ui/Combobox';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
@@ -160,8 +162,8 @@ export function Suppliers() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-100">Suppliers</h1>
-          <p className="mt-1 text-slate-400">Manage your supplier network</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Suppliers</h1>
+          <p className="mt-1 text-slate-600 dark:text-slate-400">Manage your supplier network</p>
         </div>
         <Button variant="gold" onClick={() => setShowAddModal(true)}>
           <Plus className="w-4 h-4" />
@@ -177,8 +179,8 @@ export function Suppliers() {
               <Truck className="w-6 h-6 text-blue-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Total Suppliers</p>
-              <p className="text-2xl font-bold text-slate-100">{totalSuppliers}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Total Suppliers</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{totalSuppliers}</p>
             </div>
           </CardContent>
         </Card>
@@ -188,8 +190,8 @@ export function Suppliers() {
               <Building2 className="w-6 h-6 text-emerald-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Active Suppliers</p>
-              <p className="text-2xl font-bold text-slate-100">{activeSuppliers}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Active Suppliers</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{activeSuppliers}</p>
             </div>
           </CardContent>
         </Card>
@@ -199,8 +201,8 @@ export function Suppliers() {
               <Package className="w-6 h-6 text-amber-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Total Payables</p>
-              <p className="text-2xl font-bold text-slate-100">{formatCurrency(totalCreditUsed)}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Total Payables</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formatCurrency(totalCreditUsed)}</p>
             </div>
           </CardContent>
         </Card>
@@ -221,18 +223,20 @@ export function Suppliers() {
                 />
               </div>
             </div>
-            <Select
+            <Combobox
               value={countryFilter}
-              onChange={(e) => setCountryFilter(e.target.value)}
-              className="lg:w-48"
-            >
-              <option value="">All Countries</option>
-              {countries.map((country) => (
-                <option key={country} value={country}>
-                  {country}
-                </option>
-              ))}
-            </Select>
+              onChange={setCountryFilter}
+              options={[
+                { value: '', label: 'All Countries', icon: <Globe className="w-4 h-4" /> },
+                ...countries.map((country) => ({
+                  value: country,
+                  label: country,
+                  icon: <MapPin className="w-4 h-4" />
+                }))
+              ]}
+              placeholder="Filter by country..."
+              className="lg:w-64"
+            />
           </div>
         </CardContent>
       </Card>
@@ -263,9 +267,9 @@ export function Suppliers() {
                           <Building2 className="w-5 h-5 text-blue-400" />
                         </div>
                         <div>
-                          <p className="font-medium text-slate-200">{supplier.companyName}</p>
+                          <p className="font-medium text-slate-800 dark:text-slate-200">{supplier.companyName}</p>
                           {supplier.taxId && (
-                            <p className="text-xs text-slate-400">Tax ID: {supplier.taxId}</p>
+                            <p className="text-xs text-slate-600 dark:text-slate-400">Tax ID: {supplier.taxId}</p>
                           )}
                         </div>
                       </div>
@@ -273,24 +277,24 @@ export function Suppliers() {
                     <TableCell>
                       <div className="space-y-1">
                         {supplier.contactPerson && (
-                          <p className="text-sm text-slate-200">{supplier.contactPerson}</p>
+                          <p className="text-sm text-slate-800 dark:text-slate-200">{supplier.contactPerson}</p>
                         )}
-                        <div className="flex items-center gap-2 text-xs text-slate-400">
+                        <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
                           <Phone className="w-3 h-3" />
                           {formatPhone(supplier.phone)}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2 text-sm text-slate-300">
+                      <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
                         <Globe className="w-3 h-3" />
                         {supplier.city}, {supplier.country}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right font-semibold text-slate-200">
+                    <TableCell className="text-right font-semibold text-slate-800 dark:text-slate-200">
                       {formatCurrency(stats.totalPurchases)}
                     </TableCell>
-                    <TableCell className="text-center text-slate-300">
+                    <TableCell className="text-center text-slate-700 dark:text-slate-300">
                       {stats.grnCount}
                     </TableCell>
                     <TableCell className="text-center">
@@ -331,8 +335,8 @@ export function Suppliers() {
           </Table>
           {filteredSuppliers.length === 0 && (
             <div className="p-8 text-center">
-              <Truck className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-400">No suppliers found</p>
+              <Truck className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-600 dark:text-slate-400">No suppliers found</p>
             </div>
           )}
         </CardContent>
@@ -345,7 +349,7 @@ export function Suppliers() {
         title={editMode ? 'Edit Supplier' : 'Add New Supplier'}
         size="lg"
       >
-        <div className="px-6 py-5 space-y-5">
+        <div className="px-5 sm:px-6 py-5 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Company Name"
@@ -423,19 +427,21 @@ export function Suppliers() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Payment Terms
               </label>
-              <Select
-                value={formData.paymentTerms}
-                onChange={(e) => handleInputChange('paymentTerms', e.target.value)}
-              >
-                <option value="immediate">Immediate</option>
-                <option value="net15">Net 15</option>
-                <option value="net30">Net 30</option>
-                <option value="net45">Net 45</option>
-                <option value="net60">Net 60</option>
-              </Select>
+              <Combobox
+                value={formData.paymentTerms || ''}
+                onChange={(val) => handleInputChange('paymentTerms', val)}
+                options={[
+                  { value: 'immediate', label: 'Immediate', icon: <Clock className="w-4 h-4" /> },
+                  { value: 'net15', label: 'Net 15', icon: <Calendar className="w-4 h-4" /> },
+                  { value: 'net30', label: 'Net 30', icon: <Calendar className="w-4 h-4" /> },
+                  { value: 'net45', label: 'Net 45', icon: <Calendar className="w-4 h-4" /> },
+                  { value: 'net60', label: 'Net 60', icon: <Calendar className="w-4 h-4" /> }
+                ]}
+                placeholder="Select payment terms..."
+              />
             </div>
             <Input
               label="Credit Limit"
@@ -450,19 +456,19 @@ export function Suppliers() {
                   type="checkbox"
                   checked={formData.isActive}
                   onChange={(e) => handleInputChange('isActive', e.target.checked)}
-                  className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-amber-500 focus:ring-amber-500"
+                  className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-amber-500 focus:ring-amber-500"
                 />
-                <span className="text-sm text-slate-300">Active Supplier</span>
+                <span className="text-sm text-slate-700 dark:text-slate-300">Active Supplier</span>
               </label>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               Notes
             </label>
             <textarea
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 resize-none"
+              className="w-full px-4 py-3 bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 resize-none"
               rows={3}
               value={formData.notes}
               onChange={(e) => handleInputChange('notes', e.target.value)}
@@ -470,7 +476,8 @@ export function Suppliers() {
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-5 border-t border-slate-700">
+        </div>
+        <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
             <Button variant="ghost" onClick={resetForm}>
               Cancel
             </Button>
@@ -478,7 +485,6 @@ export function Suppliers() {
               {editMode ? 'Update Supplier' : 'Add Supplier'}
             </Button>
           </div>
-        </div>
       </Modal>
 
       {/* View Modal */}
@@ -495,69 +501,69 @@ export function Suppliers() {
                 <Building2 className="w-8 h-8 text-blue-400" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-100">{selectedSupplier.companyName}</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{selectedSupplier.companyName}</h3>
                 {selectedSupplier.contactPerson && (
-                  <p className="text-slate-400">Contact: {selectedSupplier.contactPerson}</p>
+                  <p className="text-slate-600 dark:text-slate-400">Contact: {selectedSupplier.contactPerson}</p>
                 )}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 rounded-lg bg-slate-800/50">
-                <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
+              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm mb-1">
                   <Phone className="w-4 h-4" />
                   Phone
                 </div>
-                <p className="font-medium text-slate-200">{formatPhone(selectedSupplier.phone)}</p>
+                <p className="font-medium text-slate-800 dark:text-slate-200">{formatPhone(selectedSupplier.phone)}</p>
               </div>
-              <div className="p-3 rounded-lg bg-slate-800/50">
-                <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
+              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm mb-1">
                   <Mail className="w-4 h-4" />
                   Email
                 </div>
-                <p className="font-medium text-slate-200">{selectedSupplier.email || 'N/A'}</p>
+                <p className="font-medium text-slate-800 dark:text-slate-200">{selectedSupplier.email || 'N/A'}</p>
               </div>
-              <div className="p-3 rounded-lg bg-slate-800/50 col-span-2">
-                <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
+              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 col-span-2">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm mb-1">
                   <MapPin className="w-4 h-4" />
                   Address
                 </div>
-                <p className="font-medium text-slate-200">
+                <p className="font-medium text-slate-800 dark:text-slate-200">
                   {selectedSupplier.address}, {selectedSupplier.city}, {selectedSupplier.country}
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 rounded-lg bg-slate-800/50">
-                <p className="text-sm text-slate-400">Tax ID</p>
-                <p className="font-medium text-slate-200">{selectedSupplier.taxId || 'N/A'}</p>
+              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <p className="text-sm text-slate-600 dark:text-slate-400">Tax ID</p>
+                <p className="font-medium text-slate-800 dark:text-slate-200">{selectedSupplier.taxId || 'N/A'}</p>
               </div>
-              <div className="p-3 rounded-lg bg-slate-800/50">
-                <p className="text-sm text-slate-400">Payment Terms</p>
-                <p className="font-medium text-slate-200">
+              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <p className="text-sm text-slate-600 dark:text-slate-400">Payment Terms</p>
+                <p className="font-medium text-slate-800 dark:text-slate-200">
                   {selectedSupplier.paymentTerms?.replace('net', 'Net ')}
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-slate-800/50">
-                <p className="text-sm text-slate-400">Bank</p>
-                <p className="font-medium text-slate-200">{selectedSupplier.bankName || 'N/A'}</p>
+              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <p className="text-sm text-slate-600 dark:text-slate-400">Bank</p>
+                <p className="font-medium text-slate-800 dark:text-slate-200">{selectedSupplier.bankName || 'N/A'}</p>
               </div>
-              <div className="p-3 rounded-lg bg-slate-800/50">
-                <p className="text-sm text-slate-400">Account</p>
-                <p className="font-medium text-slate-200">{selectedSupplier.bankAccount || 'N/A'}</p>
+              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <p className="text-sm text-slate-600 dark:text-slate-400">Account</p>
+                <p className="font-medium text-slate-800 dark:text-slate-200">{selectedSupplier.bankAccount || 'N/A'}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-lg bg-slate-800/50 text-center min-w-0">
-                <p className="text-xs text-slate-400 mb-1">Credit Limit</p>
-                <p className="text-sm font-bold text-slate-200 truncate">
+              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 text-center min-w-0">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Credit Limit</p>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
                   {formatCurrency(selectedSupplier.creditLimit || 0)}
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-slate-800/50 text-center min-w-0">
-                <p className="text-xs text-slate-400 mb-1">Current Balance</p>
+              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 text-center min-w-0">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Current Balance</p>
                 <p className="text-sm font-bold text-amber-400 truncate">
                   {formatCurrency(selectedSupplier.currentBalance || 0)}
                 </p>
@@ -565,15 +571,15 @@ export function Suppliers() {
             </div>
 
             {selectedSupplier.notes && (
-              <div className="p-3 rounded-lg bg-slate-800/50">
-                <p className="text-sm text-slate-400 mb-1">Notes</p>
-                <p className="text-slate-200">{selectedSupplier.notes}</p>
+              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Notes</p>
+                <p className="text-slate-800 dark:text-slate-200">{selectedSupplier.notes}</p>
               </div>
             )}
           </div>
         )}
         {selectedSupplier && (
-          <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-700/50">
+          <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700/50">
             <Button variant="ghost" onClick={() => setShowViewModal(false)}>
               Close
             </Button>
@@ -597,17 +603,18 @@ export function Suppliers() {
         onClose={() => setShowDeleteModal(false)}
         title="Delete Supplier"
       >
-        <div className="space-y-4">
+        <div className="px-5 sm:px-6 py-5 space-y-4">
           <div className="flex items-center gap-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
             <AlertTriangle className="w-8 h-8 text-red-400" />
             <div>
-              <p className="font-medium text-slate-200">Are you sure?</p>
-              <p className="text-sm text-slate-400">
+              <p className="font-medium text-slate-800 dark:text-slate-200">Are you sure?</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 This will permanently delete "{selectedSupplier?.companyName}". This action cannot be undone.
               </p>
             </div>
           </div>
-          <div className="flex justify-end gap-3">
+        </div>
+        <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
             <Button variant="ghost" onClick={() => setShowDeleteModal(false)}>
               Cancel
             </Button>
@@ -616,7 +623,6 @@ export function Suppliers() {
               Delete
             </Button>
           </div>
-        </div>
       </Modal>
     </div>
   );

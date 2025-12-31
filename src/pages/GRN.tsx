@@ -18,7 +18,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
+import { Combobox } from '../components/ui/Combobox';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
@@ -126,8 +126,8 @@ export function GRNPage() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-100">Goods Received Notes</h1>
-          <p className="mt-1 text-slate-400">Track supplier deliveries and inventory</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Goods Received Notes</h1>
+          <p className="mt-1 text-slate-600 dark:text-slate-400">Track supplier deliveries and inventory</p>
         </div>
         <Link to="/grn/create">
           <Button variant="gold">
@@ -145,8 +145,8 @@ export function GRNPage() {
               <Truck className="w-6 h-6 text-blue-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Total GRNs</p>
-              <p className="text-2xl font-bold text-slate-100">{totalGRNs}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Total GRNs</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{totalGRNs}</p>
             </div>
           </CardContent>
         </Card>
@@ -156,8 +156,8 @@ export function GRNPage() {
               <CheckCircle className="w-6 h-6 text-emerald-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Received</p>
-              <p className="text-2xl font-bold text-slate-100">{receivedGRNs}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Received</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{receivedGRNs}</p>
             </div>
           </CardContent>
         </Card>
@@ -167,8 +167,8 @@ export function GRNPage() {
               <Clock className="w-6 h-6 text-amber-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Pending</p>
-              <p className="text-2xl font-bold text-slate-100">{pendingGRNs}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Pending</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{pendingGRNs}</p>
             </div>
           </CardContent>
         </Card>
@@ -178,8 +178,8 @@ export function GRNPage() {
               <Package className="w-6 h-6 text-purple-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Total Value</p>
-              <p className="text-2xl font-bold text-slate-100">{formatCurrency(totalValue)}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Total Value</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formatCurrency(totalValue)}</p>
             </div>
           </CardContent>
         </Card>
@@ -200,30 +200,34 @@ export function GRNPage() {
                 />
               </div>
             </div>
-            <Select
+            <Combobox
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="lg:w-40"
-            >
-              <option value="">All Status</option>
-              {grnStatuses.map((status) => (
-                <option key={status} value={status}>
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                </option>
-              ))}
-            </Select>
-            <Select
+              onChange={setStatusFilter}
+              options={[
+                { value: '', label: 'All Status', icon: <Package className="w-4 h-4" /> },
+                ...grnStatuses.map((status) => ({
+                  value: status,
+                  label: status.charAt(0).toUpperCase() + status.slice(1),
+                  icon: status === 'received' ? <CheckCircle className="w-4 h-4" /> : status === 'pending' ? <Clock className="w-4 h-4" /> : status === 'cancelled' ? <XCircle className="w-4 h-4" /> : status === 'returned' ? <AlertTriangle className="w-4 h-4" /> : <Package className="w-4 h-4" />
+                }))
+              ]}
+              placeholder="Filter by status..."
+              className="lg:w-56"
+            />
+            <Combobox
               value={supplierFilter}
-              onChange={(e) => setSupplierFilter(e.target.value)}
-              className="lg:w-48"
-            >
-              <option value="">All Suppliers</option>
-              {mockSuppliers.map((supplier) => (
-                <option key={supplier.id} value={supplier.id}>
-                  {supplier.companyName}
-                </option>
-              ))}
-            </Select>
+              onChange={setSupplierFilter}
+              options={[
+                { value: '', label: 'All Suppliers', icon: <Truck className="w-4 h-4" /> },
+                ...mockSuppliers.map((supplier) => ({
+                  value: supplier.id,
+                  label: supplier.companyName,
+                  icon: <Truck className="w-4 h-4" />
+                }))
+              ]}
+              placeholder="Filter by supplier..."
+              className="lg:w-64"
+            />
           </div>
         </CardContent>
       </Card>
@@ -252,17 +256,17 @@ export function GRNPage() {
                         <Truck className="w-5 h-5 text-blue-400" />
                       </div>
                       <div>
-                        <p className="font-medium text-slate-200">{grn.grnNumber}</p>
+                        <p className="font-medium text-slate-800 dark:text-slate-200">{grn.grnNumber}</p>
                         {grn.purchaseOrderNumber && (
-                          <p className="text-xs text-slate-400">PO: {grn.purchaseOrderNumber}</p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400">PO: {grn.purchaseOrderNumber}</p>
                         )}
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-slate-300">{grn.supplierName}</TableCell>
-                  <TableCell className="text-slate-400">{formatDate(grn.createdAt)}</TableCell>
-                  <TableCell className="text-center text-slate-300">{grn.items.length}</TableCell>
-                  <TableCell className="text-right font-semibold text-slate-200">
+                  <TableCell className="text-slate-700 dark:text-slate-300">{grn.supplierName}</TableCell>
+                  <TableCell className="text-slate-600 dark:text-slate-400">{formatDate(grn.createdAt)}</TableCell>
+                  <TableCell className="text-center text-slate-700 dark:text-slate-300">{grn.items.length}</TableCell>
+                  <TableCell className="text-right font-semibold text-slate-800 dark:text-slate-200">
                     {formatCurrency(grn.total)}
                   </TableCell>
                   <TableCell className="text-center">{getStatusBadge(grn.status)}</TableCell>
@@ -312,8 +316,8 @@ export function GRNPage() {
           </Table>
           {filteredGRNs.length === 0 && (
             <div className="p-8 text-center">
-              <Truck className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-400">No GRNs found</p>
+              <Truck className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-600 dark:text-slate-400">No GRNs found</p>
             </div>
           )}
         </CardContent>
@@ -330,62 +334,62 @@ export function GRNPage() {
           <div className="px-5 sm:px-6 py-5 space-y-5">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-bold text-slate-100">{selectedGRN.grnNumber}</h3>
-                <p className="text-slate-400">{formatDate(selectedGRN.createdAt)}</p>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{selectedGRN.grnNumber}</h3>
+                <p className="text-slate-600 dark:text-slate-400">{formatDate(selectedGRN.createdAt)}</p>
               </div>
               {getStatusBadge(selectedGRN.status)}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg bg-slate-800/50">
-                <p className="text-sm text-slate-400">Supplier</p>
-                <p className="font-medium text-slate-200">{selectedGRN.supplierName}</p>
+              <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <p className="text-sm text-slate-600 dark:text-slate-400">Supplier</p>
+                <p className="font-medium text-slate-800 dark:text-slate-200">{selectedGRN.supplierName}</p>
               </div>
-              <div className="p-4 rounded-lg bg-slate-800/50">
-                <p className="text-sm text-slate-400">Purchase Order</p>
-                <p className="font-medium text-slate-200">
+              <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <p className="text-sm text-slate-600 dark:text-slate-400">Purchase Order</p>
+                <p className="font-medium text-slate-800 dark:text-slate-200">
                   {selectedGRN.purchaseOrderNumber || 'N/A'}
                 </p>
               </div>
               {selectedGRN.receivedDate && (
-                <div className="p-4 rounded-lg bg-slate-800/50 col-span-2">
-                  <p className="text-sm text-slate-400">Received Date</p>
-                  <p className="font-medium text-slate-200">{formatDate(selectedGRN.receivedDate)}</p>
+                <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50 col-span-2">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Received Date</p>
+                  <p className="font-medium text-slate-800 dark:text-slate-200">{formatDate(selectedGRN.receivedDate)}</p>
                 </div>
               )}
             </div>
 
             {/* Items */}
             <div>
-              <h4 className="text-sm font-medium text-slate-400 mb-3">Items Received</h4>
-              <div className="rounded-lg border border-slate-700 overflow-hidden">
+              <h4 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3">Items Received</h4>
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
                 <table className="w-full">
-                  <thead className="bg-slate-800/50">
+                  <thead className="bg-slate-100 dark:bg-slate-800/50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Item</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Qty</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Weight</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Cost</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Total</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Item</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Qty</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Weight</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Cost</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Total</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-700/50">
+                  <tbody className="divide-y divide-slate-200 dark:divide-slate-700/50">
                     {selectedGRN.items.map((item, index) => (
                       <tr key={index}>
                         <td className="px-4 py-3">
-                          <p className="text-slate-200">{item.productName}</p>
-                          <p className="text-xs text-slate-400">{item.sku}</p>
+                          <p className="text-slate-800 dark:text-slate-200">{item.productName}</p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400">{item.sku}</p>
                         </td>
-                        <td className="px-4 py-3 text-right text-slate-300">
+                        <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">
                           {item.quantity}
                         </td>
-                        <td className="px-4 py-3 text-right text-slate-300">
+                        <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">
                           {item.metalWeight ? formatWeight(item.metalWeight) : '-'}
                         </td>
-                        <td className="px-4 py-3 text-right text-slate-300">
+                        <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">
                           {formatCurrency(item.unitCost)}
                         </td>
-                        <td className="px-4 py-3 text-right text-slate-200">
+                        <td className="px-4 py-3 text-right text-slate-800 dark:text-slate-200">
                           {formatCurrency(item.total)}
                         </td>
                       </tr>
@@ -396,37 +400,37 @@ export function GRNPage() {
             </div>
 
             {/* Totals */}
-            <div className="space-y-2 pt-4 border-t border-slate-700">
+            <div className="space-y-2 pt-4 border-t border-slate-200 dark:border-slate-700">
               <div className="flex justify-between text-sm">
-                <span className="text-slate-400">Subtotal</span>
-                <span className="text-slate-200">{formatCurrency(selectedGRN.subtotal)}</span>
+                <span className="text-slate-600 dark:text-slate-400">Subtotal</span>
+                <span className="text-slate-800 dark:text-slate-200">{formatCurrency(selectedGRN.subtotal)}</span>
               </div>
               {(selectedGRN.shippingCharges ?? 0) > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Shipping</span>
-                  <span className="text-slate-200">{formatCurrency(selectedGRN.shippingCharges || 0)}</span>
+                  <span className="text-slate-600 dark:text-slate-400">Shipping</span>
+                  <span className="text-slate-800 dark:text-slate-200">{formatCurrency(selectedGRN.shippingCharges || 0)}</span>
                 </div>
               )}
               {(selectedGRN.tax ?? 0) > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Tax</span>
-                  <span className="text-slate-200">{formatCurrency(selectedGRN.tax || 0)}</span>
+                  <span className="text-slate-600 dark:text-slate-400">Tax</span>
+                  <span className="text-slate-800 dark:text-slate-200">{formatCurrency(selectedGRN.tax || 0)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-lg font-bold pt-3 border-t border-slate-700">
-                <span className="text-slate-200">Total</span>
+              <div className="flex justify-between text-lg font-bold pt-3 border-t border-slate-200 dark:border-slate-700">
+                <span className="text-slate-800 dark:text-slate-200">Total</span>
                 <span className="text-amber-400">{formatCurrency(selectedGRN.total)}</span>
               </div>
             </div>
 
             {selectedGRN.notes && (
-              <div className="p-4 rounded-lg bg-slate-800/50">
-                <p className="text-sm text-slate-400 mb-1">Notes</p>
-                <p className="text-slate-200">{selectedGRN.notes}</p>
+              <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Notes</p>
+                <p className="text-slate-800 dark:text-slate-200">{selectedGRN.notes}</p>
               </div>
             )}
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
               <Button variant="ghost" onClick={() => setShowViewModal(false)}>
                 Close
               </Button>
@@ -461,14 +465,15 @@ export function GRNPage() {
           <div className="flex items-start gap-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
             <AlertTriangle className="w-8 h-8 text-red-400 shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium text-slate-200">Are you sure?</p>
-              <p className="text-sm text-slate-400 mt-1">
+              <p className="font-medium text-slate-800 dark:text-slate-200">Are you sure?</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                 This will permanently delete GRN "{selectedGRN?.grnNumber}". This action cannot be
                 undone.
               </p>
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
+        </div>
+        <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
             <Button variant="ghost" onClick={() => setShowDeleteModal(false)}>
               Cancel
             </Button>
@@ -477,7 +482,6 @@ export function GRNPage() {
               Delete
             </Button>
           </div>
-        </div>
       </Modal>
     </div>
   );

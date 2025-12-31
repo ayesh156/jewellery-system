@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Select } from '../components/ui/Select';
+import { Combobox } from '../components/ui/Combobox';
 import { Badge } from '../components/ui/Badge';
 import { mockInvoices, mockProducts, mockGRNs, mockCustomers, mockCategories } from '../data/mockData';
 import { formatCurrency, formatWeight, formatDate } from '../utils/formatters';
@@ -207,10 +207,10 @@ export function Reports() {
               </div>
               <TrendingUp className="w-4 h-4 text-emerald-400" />
             </div>
-            <p className="text-2xl font-bold text-slate-100 mt-3">
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-3">
               {formatCurrency(salesData.totalSales)}
             </p>
-            <p className="text-sm text-slate-400">Total Sales</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Total Sales</p>
           </CardContent>
         </Card>
         <Card>
@@ -220,8 +220,8 @@ export function Reports() {
                 <FileText className="w-5 h-5 text-blue-400" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-slate-100 mt-3">{salesData.invoiceCount}</p>
-            <p className="text-sm text-slate-400">Invoices</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-3">{salesData.invoiceCount}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Invoices</p>
           </CardContent>
         </Card>
         <Card>
@@ -231,10 +231,10 @@ export function Reports() {
                 <BarChart3 className="w-5 h-5 text-amber-400" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-slate-100 mt-3">
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-3">
               {formatCurrency(salesData.avgInvoiceValue)}
             </p>
-            <p className="text-sm text-slate-400">Avg Invoice</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Avg Invoice</p>
           </CardContent>
         </Card>
         <Card>
@@ -244,10 +244,10 @@ export function Reports() {
                 <TrendingDown className="w-5 h-5 text-red-400" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-slate-100 mt-3">
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-3">
               {formatCurrency(salesData.pendingAmount)}
             </p>
-            <p className="text-sm text-slate-400">Pending</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Pending</p>
           </CardContent>
         </Card>
       </div>
@@ -269,14 +269,14 @@ export function Reports() {
                     {index + 1}
                   </span>
                   <div className="flex-1">
-                    <p className="font-medium text-slate-200">{product.name}</p>
-                    <p className="text-sm text-slate-400">{product.quantity} units</p>
+                    <p className="font-medium text-slate-800 dark:text-slate-200">{product.name}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">{product.quantity} units</p>
                   </div>
                   <p className="font-semibold text-amber-400">{formatCurrency(product.revenue)}</p>
                 </div>
               ))}
               {salesData.topProducts.length === 0 && (
-                <p className="text-center text-slate-400 py-4">No sales data</p>
+                <p className="text-center text-slate-600 dark:text-slate-400 py-4">No sales data</p>
               )}
             </div>
           </CardContent>
@@ -293,15 +293,15 @@ export function Reports() {
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-500/10">
-                <span className="text-slate-300">Paid</span>
+                <span className="text-slate-700 dark:text-slate-300">Paid</span>
                 <Badge variant="success">{salesData.byStatus.paid}</Badge>
               </div>
               <div className="flex items-center justify-between p-3 rounded-lg bg-amber-500/10">
-                <span className="text-slate-300">Pending</span>
+                <span className="text-slate-700 dark:text-slate-300">Pending</span>
                 <Badge variant="warning">{salesData.byStatus.pending}</Badge>
               </div>
               <div className="flex items-center justify-between p-3 rounded-lg bg-blue-500/10">
-                <span className="text-slate-300">Partial</span>
+                <span className="text-slate-700 dark:text-slate-300">Partial</span>
                 <Badge variant="info">{salesData.byStatus.partial}</Badge>
               </div>
             </div>
@@ -320,8 +320,8 @@ export function Reports() {
             <div className="p-2 rounded-lg bg-amber-500/10 w-fit">
               <Package className="w-5 h-5 text-amber-400" />
             </div>
-            <p className="text-2xl font-bold text-slate-100 mt-3">{inventoryData.totalProducts}</p>
-            <p className="text-sm text-slate-400">Total Products</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-3">{inventoryData.totalProducts}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Total Products</p>
           </CardContent>
         </Card>
         <Card>
@@ -329,10 +329,10 @@ export function Reports() {
             <div className="p-2 rounded-lg bg-emerald-500/10 w-fit">
               <DollarSign className="w-5 h-5 text-emerald-400" />
             </div>
-            <p className="text-2xl font-bold text-slate-100 mt-3">
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-3">
               {formatCurrency(inventoryData.totalValue)}
             </p>
-            <p className="text-sm text-slate-400">Stock Value</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Stock Value</p>
           </CardContent>
         </Card>
         <Card>
@@ -340,10 +340,10 @@ export function Reports() {
             <div className="p-2 rounded-lg bg-blue-500/10 w-fit">
               <Gem className="w-5 h-5 text-blue-400" />
             </div>
-            <p className="text-2xl font-bold text-slate-100 mt-3">
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-3">
               {formatWeight(inventoryData.totalWeight)}
             </p>
-            <p className="text-sm text-slate-400">Total Weight</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Total Weight</p>
           </CardContent>
         </Card>
         <Card>
@@ -351,10 +351,10 @@ export function Reports() {
             <div className="p-2 rounded-lg bg-red-500/10 w-fit">
               <TrendingDown className="w-5 h-5 text-red-400" />
             </div>
-            <p className="text-2xl font-bold text-slate-100 mt-3">
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-3">
               {inventoryData.lowStockProducts.length}
             </p>
-            <p className="text-sm text-slate-400">Low Stock</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Low Stock</p>
           </CardContent>
         </Card>
       </div>
@@ -368,10 +368,10 @@ export function Reports() {
           <CardContent>
             <div className="space-y-3">
               {inventoryData.byCategory.map((cat) => (
-                <div key={cat.name} className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50">
+                <div key={cat.name} className="flex items-center justify-between p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
                   <div>
-                    <p className="font-medium text-slate-200">{cat.name}</p>
-                    <p className="text-sm text-slate-400">{cat.count} items</p>
+                    <p className="font-medium text-slate-800 dark:text-slate-200">{cat.name}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">{cat.count} items</p>
                   </div>
                   <p className="font-semibold text-amber-400">{formatCurrency(cat.value)}</p>
                 </div>
@@ -388,10 +388,10 @@ export function Reports() {
           <CardContent>
             <div className="space-y-3">
               {inventoryData.byMetal.map((metal) => (
-                <div key={metal.name} className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50">
+                <div key={metal.name} className="flex items-center justify-between p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
                   <div>
-                    <p className="font-medium text-slate-200 capitalize">{metal.name}</p>
-                    <p className="text-sm text-slate-400">{formatWeight(metal.weight)}</p>
+                    <p className="font-medium text-slate-800 dark:text-slate-200 capitalize">{metal.name}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">{formatWeight(metal.weight)}</p>
                   </div>
                   <p className="font-semibold text-amber-400">{formatCurrency(metal.value)}</p>
                 </div>
@@ -411,8 +411,8 @@ export function Reports() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {inventoryData.lowStockProducts.map((product) => (
                 <div key={product.id} className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                  <p className="font-medium text-slate-200">{product.name}</p>
-                  <p className="text-sm text-slate-400">{product.sku}</p>
+                  <p className="font-medium text-slate-800 dark:text-slate-200">{product.name}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">{product.sku}</p>
                   <Badge variant="error" className="mt-2">
                     Stock: {product.stockQuantity}
                   </Badge>
@@ -433,10 +433,10 @@ export function Reports() {
             <div className="p-2 rounded-lg bg-blue-500/10 w-fit">
               <Truck className="w-5 h-5 text-blue-400" />
             </div>
-            <p className="text-2xl font-bold text-slate-100 mt-3">
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-3">
               {formatCurrency(purchaseData.totalPurchases)}
             </p>
-            <p className="text-sm text-slate-400">Total Purchases</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Total Purchases</p>
           </CardContent>
         </Card>
         <Card>
@@ -444,8 +444,8 @@ export function Reports() {
             <div className="p-2 rounded-lg bg-amber-500/10 w-fit">
               <FileText className="w-5 h-5 text-amber-400" />
             </div>
-            <p className="text-2xl font-bold text-slate-100 mt-3">{purchaseData.grnCount}</p>
-            <p className="text-sm text-slate-400">GRNs</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-3">{purchaseData.grnCount}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">GRNs</p>
           </CardContent>
         </Card>
         <Card>
@@ -453,10 +453,10 @@ export function Reports() {
             <div className="p-2 rounded-lg bg-emerald-500/10 w-fit">
               <BarChart3 className="w-5 h-5 text-emerald-400" />
             </div>
-            <p className="text-2xl font-bold text-slate-100 mt-3">
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-3">
               {formatCurrency(purchaseData.avgGRNValue)}
             </p>
-            <p className="text-sm text-slate-400">Avg GRN Value</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Avg GRN Value</p>
           </CardContent>
         </Card>
       </div>
@@ -468,16 +468,16 @@ export function Reports() {
         <CardContent>
           <div className="space-y-3">
             {purchaseData.bySupplier.map((supplier) => (
-              <div key={supplier.name} className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50">
+              <div key={supplier.name} className="flex items-center justify-between p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
                 <div>
-                  <p className="font-medium text-slate-200">{supplier.name}</p>
-                  <p className="text-sm text-slate-400">{supplier.count} orders</p>
+                  <p className="font-medium text-slate-800 dark:text-slate-200">{supplier.name}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">{supplier.count} orders</p>
                 </div>
                 <p className="font-semibold text-amber-400">{formatCurrency(supplier.value)}</p>
               </div>
             ))}
             {purchaseData.bySupplier.length === 0 && (
-              <p className="text-center text-slate-400 py-4">No purchase data</p>
+              <p className="text-center text-slate-600 dark:text-slate-400 py-4">No purchase data</p>
             )}
           </div>
         </CardContent>
@@ -493,10 +493,10 @@ export function Reports() {
             <div className="p-2 rounded-lg bg-blue-500/10 w-fit">
               <Users className="w-5 h-5 text-blue-400" />
             </div>
-            <p className="text-2xl font-bold text-slate-100 mt-3">
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-3">
               {customerData.totalCustomers}
             </p>
-            <p className="text-sm text-slate-400">Total Customers</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Total Customers</p>
           </CardContent>
         </Card>
         <Card>
@@ -504,8 +504,8 @@ export function Reports() {
             <div className="p-2 rounded-lg bg-amber-500/10 w-fit">
               <Gem className="w-5 h-5 text-amber-400" />
             </div>
-            <p className="text-2xl font-bold text-slate-100 mt-3">{customerData.vipCustomers}</p>
-            <p className="text-sm text-slate-400">VIP Customers</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-3">{customerData.vipCustomers}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">VIP Customers</p>
           </CardContent>
         </Card>
         <Card>
@@ -513,10 +513,10 @@ export function Reports() {
             <div className="p-2 rounded-lg bg-purple-500/10 w-fit">
               <TrendingUp className="w-5 h-5 text-purple-400" />
             </div>
-            <p className="text-2xl font-bold text-slate-100 mt-3">
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-3">
               {customerData.wholesaleCustomers}
             </p>
-            <p className="text-sm text-slate-400">Wholesale</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Wholesale</p>
           </CardContent>
         </Card>
       </div>
@@ -528,15 +528,15 @@ export function Reports() {
         <CardContent>
           <div className="space-y-3">
             {customerData.topCustomers.map((customer, index) => (
-              <div key={customer.id} className="flex items-center gap-4 p-3 rounded-lg bg-slate-800/50">
+              <div key={customer.id} className="flex items-center gap-4 p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
                 <span className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-sm font-medium text-amber-400">
                   {index + 1}
                 </span>
                 <div className="flex-1">
-                  <p className="font-medium text-slate-200">
+                  <p className="font-medium text-slate-800 dark:text-slate-200">
                     {customer.name}
                   </p>
-                  <p className="text-sm text-slate-400">{customer.invoiceCount} orders</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">{customer.invoiceCount} orders</p>
                 </div>
                 <Badge
                   variant={
@@ -565,18 +565,24 @@ export function Reports() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-100">Reports</h1>
-          <p className="mt-1 text-slate-400">Business analytics and insights</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Reports</h1>
+          <p className="mt-1 text-slate-600 dark:text-slate-400">Business analytics and insights</p>
         </div>
         <div className="flex gap-3">
-          <Select value={period} onChange={(e) => setPeriod(e.target.value as ReportPeriod)}>
-            <option value="today">Today</option>
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-            <option value="quarter">This Quarter</option>
-            <option value="year">This Year</option>
-            <option value="all">All Time</option>
-          </Select>
+          <Combobox
+            value={period}
+            onChange={(val) => setPeriod(val as ReportPeriod)}
+            options={[
+              { value: 'today', label: 'Today', icon: <Calendar className="w-4 h-4" /> },
+              { value: 'week', label: 'This Week', icon: <Calendar className="w-4 h-4" /> },
+              { value: 'month', label: 'This Month', icon: <Calendar className="w-4 h-4" /> },
+              { value: 'quarter', label: 'This Quarter', icon: <Calendar className="w-4 h-4" /> },
+              { value: 'year', label: 'This Year', icon: <Calendar className="w-4 h-4" /> },
+              { value: 'all', label: 'All Time', icon: <BarChart3 className="w-4 h-4" /> }
+            ]}
+            placeholder="Select period..."
+            className="w-56"
+          />
           <Button variant="outline" className="whitespace-nowrap">
             <Download className="w-4 h-4" />
             Export

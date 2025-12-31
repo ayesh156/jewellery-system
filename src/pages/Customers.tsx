@@ -17,7 +17,7 @@ import {
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
+import { Combobox, type ComboboxOption } from '../components/ui/Combobox';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import {
@@ -327,8 +327,8 @@ export function Customers() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-100">Customers</h1>
-          <p className="mt-1 text-slate-400">Manage your customer database</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Customers</h1>
+          <p className="mt-1 text-slate-600 dark:text-slate-400">Manage your customer database</p>
         </div>
         <Button variant="gold" onClick={() => setShowAddModal(true)}>
           <Plus className="w-4 h-4" />
@@ -344,8 +344,8 @@ export function Customers() {
               <Users className="w-6 h-6 text-blue-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Total Customers</p>
-              <p className="text-2xl font-bold text-slate-100">{totalCustomers}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Total Customers</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{totalCustomers}</p>
             </div>
           </CardContent>
         </Card>
@@ -355,8 +355,8 @@ export function Customers() {
               <Crown className="w-6 h-6 text-amber-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">VIP Customers</p>
-              <p className="text-2xl font-bold text-slate-100">{vipCustomers}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">VIP Customers</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{vipCustomers}</p>
             </div>
           </CardContent>
         </Card>
@@ -366,8 +366,8 @@ export function Customers() {
               <Star className="w-6 h-6 text-purple-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Wholesale</p>
-              <p className="text-2xl font-bold text-slate-100">{wholesaleCustomers}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Wholesale</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{wholesaleCustomers}</p>
             </div>
           </CardContent>
         </Card>
@@ -388,18 +388,25 @@ export function Customers() {
                 />
               </div>
             </div>
-            <Select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="lg:w-48"
-            >
-              <option value="">All Types</option>
-              {customerTypes.map((type) => (
-                <option key={type} value={type}>
-                  {getCustomerTypeLabel(type)}
-                </option>
-              ))}
-            </Select>
+            <div className="lg:w-56">
+              <Combobox
+                options={[
+                  { value: 'retail', label: 'Retail', icon: <Users className="w-4 h-4" /> },
+                  { value: 'wholesale', label: 'Wholesale', icon: <Star className="w-4 h-4" /> },
+                  { value: 'vip', label: 'VIP', icon: <Crown className="w-4 h-4" /> },
+                  { value: 'credit', label: 'Credit', icon: <CreditCard className="w-4 h-4" /> },
+                ]}
+                value={typeFilter}
+                onChange={(val) => setTypeFilter(val)}
+                placeholder="All Types"
+                searchPlaceholder="Search types..."
+                defaultIcon={<Users className="w-4 h-4" />}
+                showAllOption
+                allOptionLabel="All Types"
+                clearable
+                showFooter={false}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -433,25 +440,25 @@ export function Customers() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="font-medium text-slate-200">{customer.name}</p>
+                            <p className="font-medium text-slate-800 dark:text-slate-200">{customer.name}</p>
                             {getCustomerTypeIcon(customer.customerType)}
                           </div>
                           {customer.businessName ? (
-                            <p className="text-xs text-slate-400">{customer.businessName}</p>
+                            <p className="text-xs text-slate-600 dark:text-slate-400">{customer.businessName}</p>
                           ) : (
-                            <p className="text-xs text-slate-400">{customer.city}</p>
+                            <p className="text-xs text-slate-600 dark:text-slate-400">{customer.city}</p>
                           )}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm text-slate-300">
+                        <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
                           <Phone className="w-3 h-3" />
                           {formatPhone(customer.phone)}
                         </div>
                         {customer.email && (
-                          <div className="flex items-center gap-2 text-xs text-slate-400">
+                          <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
                             <Mail className="w-3 h-3" />
                             {customer.email}
                           </div>
@@ -459,14 +466,14 @@ export function Customers() {
                       </div>
                     </TableCell>
                     <TableCell>{getCustomerTypeBadge(customer.customerType)}</TableCell>
-                    <TableCell className="text-right font-semibold text-slate-200">
+                    <TableCell className="text-right font-semibold text-slate-800 dark:text-slate-200">
                       {formatCurrency(stats.totalSpent)}
                     </TableCell>
-                    <TableCell className="text-center text-slate-300">
+                    <TableCell className="text-center text-slate-700 dark:text-slate-300">
                       {stats.invoiceCount}
                     </TableCell>
                     <TableCell className="text-right">
-                      <span className={customer.creditBalance && customer.creditBalance > 0 ? 'text-amber-400' : 'text-slate-400'}>
+                      <span className={customer.creditBalance && customer.creditBalance > 0 ? 'text-amber-400' : 'text-slate-600 dark:text-slate-400'}>
                         {formatCurrency(customer.creditBalance || 0)}
                       </span>
                     </TableCell>
@@ -503,8 +510,8 @@ export function Customers() {
           </Table>
           {filteredCustomers.length === 0 && (
             <div className="p-8 text-center">
-              <Users className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-400">No customers found</p>
+              <Users className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-600 dark:text-slate-400">No customers found</p>
             </div>
           )}
         </CardContent>
@@ -517,7 +524,7 @@ export function Customers() {
         title={editMode ? 'Edit Customer' : 'Add New Customer'}
         size="lg"
       >
-        <div className="px-6 py-5 space-y-5">
+        <div className="px-5 sm:px-6 py-5 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Full Name"
@@ -568,19 +575,19 @@ export function Customers() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Customer Type
               </label>
-              <Select
+              <Combobox
                 value={formData.customerType}
-                onChange={(e) => handleInputChange('customerType', e.target.value)}
-              >
-                {customerTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {getCustomerTypeLabel(type)}
-                  </option>
-                ))}
-              </Select>
+                onChange={(val) => handleInputChange('customerType', val)}
+                options={customerTypes.map((type) => ({
+                  value: type,
+                  label: getCustomerTypeLabel(type),
+                  icon: type === 'vip' ? <Crown className="w-4 h-4" /> : type === 'wholesale' ? <Star className="w-4 h-4" /> : <Users className="w-4 h-4" />
+                }))}
+                placeholder="Select customer type..."
+              />
             </div>
             <Input
               label="Credit Limit"
@@ -591,7 +598,8 @@ export function Customers() {
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-5 border-t border-slate-700">
+        </div>
+        <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
             <Button variant="ghost" onClick={resetForm}>
               Cancel
             </Button>
@@ -599,7 +607,6 @@ export function Customers() {
               {editMode ? 'Update Customer' : 'Add Customer'}
             </Button>
           </div>
-        </div>
       </Modal>
 
       {/* View Modal */}
@@ -619,62 +626,62 @@ export function Customers() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-bold text-slate-100">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
                     {selectedCustomer.name}
                   </h3>
                   {getCustomerTypeBadge(selectedCustomer.customerType)}
                 </div>
                 {selectedCustomer.businessName && (
-                  <p className="text-slate-400">{selectedCustomer.businessName}</p>
+                  <p className="text-slate-600 dark:text-slate-400">{selectedCustomer.businessName}</p>
                 )}
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-slate-500 dark:text-slate-500">
                   Customer since {formatDate(selectedCustomer.registrationDate)}
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 rounded-lg bg-slate-800/50">
-                <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
+              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm mb-1">
                   <Phone className="w-4 h-4" />
                   Phone
                 </div>
-                <p className="font-medium text-slate-200">{formatPhone(selectedCustomer.phone)}</p>
+                <p className="font-medium text-slate-800 dark:text-slate-200">{formatPhone(selectedCustomer.phone)}</p>
               </div>
-              <div className="p-3 rounded-lg bg-slate-800/50">
-                <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
+              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm mb-1">
                   <Mail className="w-4 h-4" />
                   Email
                 </div>
-                <p className="font-medium text-slate-200">{selectedCustomer.email || 'N/A'}</p>
+                <p className="font-medium text-slate-800 dark:text-slate-200">{selectedCustomer.email || 'N/A'}</p>
               </div>
-              <div className="p-3 rounded-lg bg-slate-800/50 col-span-2">
-                <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
+              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 col-span-2">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm mb-1">
                   <MapPin className="w-4 h-4" />
                   Address
                 </div>
-                <p className="font-medium text-slate-200">
+                <p className="font-medium text-slate-800 dark:text-slate-200">
                   {selectedCustomer.address ? `${selectedCustomer.address}, ${selectedCustomer.city}` : 'N/A'}
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
-              <div className="p-3 rounded-lg bg-slate-800/50 text-center min-w-0">
-                <p className="text-xs text-slate-400 mb-1">Total Purchased</p>
-                <p className="text-sm font-bold text-slate-200 truncate">
+              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 text-center min-w-0">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Total Purchased</p>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
                   {formatCurrency(selectedCustomer.totalPurchased)}
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-slate-800/50 text-center min-w-0">
-                <p className="text-xs text-slate-400 mb-1">Credit Limit</p>
-                <p className="text-sm font-bold text-slate-200 truncate">
+              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 text-center min-w-0">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Credit Limit</p>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
                   {formatCurrency(selectedCustomer.creditLimit || 0)}
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-slate-800/50 text-center min-w-0">
-                <p className="text-xs text-slate-400 mb-1">Credit Balance</p>
-                <p className={`text-sm font-bold truncate ${selectedCustomer.creditBalance && selectedCustomer.creditBalance > 0 ? 'text-amber-400' : 'text-slate-200'}`}>
+              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 text-center min-w-0">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Credit Balance</p>
+                <p className={`text-sm font-bold truncate ${selectedCustomer.creditBalance && selectedCustomer.creditBalance > 0 ? 'text-amber-400' : 'text-slate-800 dark:text-slate-200'}`}>
                   {formatCurrency(selectedCustomer.creditBalance || 0)}
                 </p>
               </div>
@@ -682,7 +689,7 @@ export function Customers() {
           </div>
         )}
         {selectedCustomer && (
-          <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-700/50">
+          <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700/50">
             <Button variant="ghost" onClick={() => setShowViewModal(false)}>
               Close
             </Button>
@@ -706,17 +713,18 @@ export function Customers() {
         onClose={() => setShowDeleteModal(false)}
         title="Delete Customer"
       >
-        <div className="space-y-4">
+        <div className="px-5 sm:px-6 py-5 space-y-4">
           <div className="flex items-center gap-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
             <AlertTriangle className="w-8 h-8 text-red-400" />
             <div>
-              <p className="font-medium text-slate-200">Are you sure?</p>
-              <p className="text-sm text-slate-400">
+              <p className="font-medium text-slate-800 dark:text-slate-200">Are you sure?</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 This will permanently delete "{selectedCustomer?.name}". This action cannot be undone.
               </p>
             </div>
           </div>
-          <div className="flex justify-end gap-3">
+        </div>
+        <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
             <Button variant="ghost" onClick={() => setShowDeleteModal(false)}>
               Cancel
             </Button>
@@ -725,7 +733,6 @@ export function Customers() {
               Delete
             </Button>
           </div>
-        </div>
       </Modal>
     </div>
   );

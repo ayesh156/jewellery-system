@@ -11,11 +11,14 @@ import {
   Printer,
   Save,
   X,
+  DollarSign,
+  CreditCard,
+  Percent,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
+import { Combobox } from '../components/ui/Combobox';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { mockProducts, mockCustomers } from '../data/mockData';
@@ -202,8 +205,8 @@ export function CreateInvoice() {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-slate-100">Create Invoice</h1>
-            <p className="mt-1 text-slate-400">Create a new sales invoice</p>
+            <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Create Invoice</h1>
+            <p className="mt-1 text-slate-600 dark:text-slate-400">Create a new sales invoice</p>
           </div>
         </div>
         <div className="flex gap-3">
@@ -222,7 +225,7 @@ export function CreateInvoice() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Customer Selection */}
-          <Card className="relative z-20">
+          <Card className="relative z-30 overflow-visible">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="w-5 h-5 text-blue-400" />
@@ -231,7 +234,7 @@ export function CreateInvoice() {
             </CardHeader>
             <CardContent>
               {selectedCustomer ? (
-                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/10 flex items-center justify-center border border-blue-500/20">
                       <span className="text-lg font-semibold text-blue-400">
@@ -239,10 +242,10 @@ export function CreateInvoice() {
                       </span>
                     </div>
                     <div>
-                      <p className="font-medium text-slate-200">
+                      <p className="font-medium text-slate-800 dark:text-slate-200">
                         {selectedCustomer.name}
                       </p>
-                      <p className="text-sm text-slate-400">{selectedCustomer.phone}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">{selectedCustomer.phone}</p>
                       {selectedCustomer.customerType !== 'retail' && (
                         <Badge variant="gold" className="mt-1">
                           {selectedCustomer.customerType.toUpperCase()}
@@ -270,12 +273,12 @@ export function CreateInvoice() {
                     className="pl-10"
                   />
                   {showCustomerSearch && customerSearchQuery && (
-                    <div className="absolute z-50 w-full mt-2 rounded-lg bg-slate-800 border border-slate-700 shadow-2xl max-h-72 overflow-y-auto">
+                    <div className="absolute z-[9999] w-full mt-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xl max-h-72 overflow-y-auto">
                       {filteredCustomers.length > 0 ? (
                         filteredCustomers.map((customer) => (
                           <button
                             key={customer.id}
-                            className="w-full flex items-center gap-3 p-4 hover:bg-slate-700/50 transition-colors text-left border-b border-slate-700/50 last:border-b-0"
+                            className="w-full flex items-center gap-3 p-4 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-100 dark:border-slate-700/50 last:border-b-0"
                             onClick={() => handleSelectCustomer(customer)}
                           >
                             <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
@@ -284,10 +287,10 @@ export function CreateInvoice() {
                               </span>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-slate-200 truncate">
+                              <p className="font-medium text-slate-800 dark:text-slate-200 truncate">
                                 {customer.name}
                               </p>
-                              <p className="text-xs text-slate-400">{customer.phone}</p>
+                              <p className="text-xs text-slate-600 dark:text-slate-400">{customer.phone}</p>
                             </div>
                             <Badge variant="default" className="shrink-0">
                               {customer.customerType}
@@ -295,7 +298,7 @@ export function CreateInvoice() {
                           </button>
                         ))
                       ) : (
-                        <div className="p-6 text-center text-slate-400">
+                        <div className="p-6 text-center text-slate-500 dark:text-slate-400">
                           <User className="w-8 h-8 mx-auto mb-2 opacity-50" />
                           <p>No customers found</p>
                         </div>
@@ -308,7 +311,7 @@ export function CreateInvoice() {
           </Card>
 
           {/* Product Selection */}
-          <Card>
+          <Card className="relative z-20 overflow-visible">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Gem className="w-5 h-5 text-amber-400" />
@@ -328,20 +331,20 @@ export function CreateInvoice() {
                   className="pl-10"
                 />
                 {showProductSearch && productSearchQuery && (
-                  <div className="absolute z-50 w-80 mt-2 rounded-lg bg-slate-800 border border-slate-700 shadow-2xl max-h-64 overflow-y-auto right-0">
+                  <div className="absolute z-[9999] w-80 mt-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xl max-h-64 overflow-y-auto right-0">
                     {filteredProducts.length > 0 ? (
                       filteredProducts.map((product) => (
                         <button
                           key={product.id}
-                          className="w-full flex items-center gap-3 p-3 hover:bg-slate-700/50 transition-colors text-left border-b border-slate-700/50 last:border-b-0"
+                          className="w-full flex items-center gap-3 p-3 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-100 dark:border-slate-700/50 last:border-b-0"
                           onClick={() => handleAddProduct(product)}
                         >
                           <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
                             <Gem className="w-5 h-5 text-amber-400" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-slate-200 truncate">{product.name}</p>
-                            <p className="text-xs text-slate-400">
+                            <p className="font-medium text-slate-800 dark:text-slate-200 truncate">{product.name}</p>
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
                               {product.sku} • {formatWeight(product.metalWeight)} • Stock:{' '}
                               {product.stockQuantity}
                             </p>
@@ -367,14 +370,14 @@ export function CreateInvoice() {
                   {invoiceItems.map((item) => (
                     <div
                       key={item.productId}
-                      className="flex items-center gap-4 p-4 rounded-lg bg-slate-800/50"
+                      className="flex items-center gap-4 p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50"
                     >
                       <div className="w-12 h-12 rounded-lg bg-amber-500/20 flex items-center justify-center">
                         <Gem className="w-6 h-6 text-amber-400" />
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-slate-200">{item.productName}</p>
-                        <p className="text-sm text-slate-400">{item.description}</p>
+                        <p className="font-medium text-slate-800 dark:text-slate-200">{item.productName}</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">{item.description}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
@@ -384,7 +387,7 @@ export function CreateInvoice() {
                         >
                           -
                         </Button>
-                        <span className="w-8 text-center text-slate-200">{item.quantity}</span>
+                        <span className="w-8 text-center text-slate-800 dark:text-slate-200">{item.quantity}</span>
                         <Button
                           variant="outline"
                           size="icon"
@@ -394,10 +397,10 @@ export function CreateInvoice() {
                         </Button>
                       </div>
                       <div className="w-24 text-right">
-                        <p className="font-semibold text-slate-200">
+                        <p className="font-semibold text-slate-800 dark:text-slate-200">
                           {formatCurrency(item.total)}
                         </p>
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-slate-600 dark:text-slate-400">
                           @ {formatCurrency(item.unitPrice)}
                         </p>
                       </div>
@@ -413,9 +416,9 @@ export function CreateInvoice() {
                   ))}
                 </div>
               ) : (
-                <div className="p-8 text-center border-2 border-dashed border-slate-700 rounded-lg">
-                  <Gem className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                  <p className="text-slate-400">Search and add products to the invoice</p>
+                <div className="p-8 text-center border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg">
+                  <Gem className="w-12 h-12 text-slate-500 dark:text-slate-600 mx-auto mb-3" />
+                  <p className="text-slate-600 dark:text-slate-400">Search and add products to the invoice</p>
                 </div>
               )}
             </CardContent>
@@ -439,16 +442,18 @@ export function CreateInvoice() {
                   className="flex-1"
                 />
                 <div className="w-28">
-                  <label className="block text-sm font-medium text-slate-300 mb-1.5 opacity-0">
+                  <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5 opacity-0">
                     Type
                   </label>
-                  <Select
+                  <Combobox
                     value={discountType}
-                    onChange={(e) => setDiscountType(e.target.value as 'percentage' | 'fixed')}
-                  >
-                    <option value="percentage">%</option>
-                    <option value="fixed">Fixed</option>
-                  </Select>
+                    onChange={(val) => setDiscountType(val as 'percentage' | 'fixed')}
+                    options={[
+                      { value: 'percentage', label: '%', icon: <Percent className="w-4 h-4" /> },
+                      { value: 'fixed', label: 'Fixed', icon: <DollarSign className="w-4 h-4" /> }
+                    ]}
+                    placeholder="Type"
+                  />
                 </div>
               </div>
               <Input
@@ -467,20 +472,19 @@ export function CreateInvoice() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">
                   Payment Method
                 </label>
-                <Select
+                <Combobox
                   value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                >
-                  {paymentMethods.map((method) => (
-                    <option key={method} value={method}>
-                      {method.replace('_', ' ').charAt(0).toUpperCase() +
-                        method.replace('_', ' ').slice(1)}
-                    </option>
-                  ))}
-                </Select>
+                  onChange={(val) => setPaymentMethod(val as PaymentMethod)}
+                  options={paymentMethods.map((method) => ({
+                    value: method,
+                    label: method.replace('-', ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+                    icon: method === 'cash' ? <DollarSign className="w-4 h-4" /> : <CreditCard className="w-4 h-4" />
+                  }))}
+                  placeholder="Select payment method..."
+                />
               </div>
               <Input
                 label="Amount Paid"
@@ -500,36 +504,36 @@ export function CreateInvoice() {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Subtotal</span>
-                  <span className="text-slate-200">{formatCurrency(subtotal)}</span>
+                  <span className="text-slate-600 dark:text-slate-400">Subtotal</span>
+                  <span className="text-slate-800 dark:text-slate-200">{formatCurrency(subtotal)}</span>
                 </div>
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">
+                    <span className="text-slate-600 dark:text-slate-400">
                       Discount {discountType === 'percentage' && `(${discount}%)`}
                     </span>
-                    <span className="text-red-400">-{formatCurrency(discountAmount)}</span>
+                    <span className="text-red-500 dark:text-red-400">-{formatCurrency(discountAmount)}</span>
                   </div>
                 )}
                 {taxAmount > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Tax ({taxRate}%)</span>
-                    <span className="text-slate-200">{formatCurrency(taxAmount)}</span>
+                    <span className="text-slate-600 dark:text-slate-400">Tax ({taxRate}%)</span>
+                    <span className="text-slate-800 dark:text-slate-200">{formatCurrency(taxAmount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-lg font-bold pt-3 border-t border-slate-700">
-                  <span className="text-slate-200">Total</span>
-                  <span className="text-amber-400">{formatCurrency(total)}</span>
+                <div className="flex justify-between text-lg font-bold pt-3 border-t border-slate-200 dark:border-slate-700">
+                  <span className="text-slate-800 dark:text-slate-200">Total</span>
+                  <span className="text-amber-500 dark:text-amber-400">{formatCurrency(total)}</span>
                 </div>
                 {paidAmount > 0 && (
                   <>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-400">Paid</span>
-                      <span className="text-emerald-400">{formatCurrency(paidAmount)}</span>
+                      <span className="text-slate-600 dark:text-slate-400">Paid</span>
+                      <span className="text-emerald-500 dark:text-emerald-400">{formatCurrency(paidAmount)}</span>
                     </div>
                     <div className="flex justify-between text-sm font-medium">
-                      <span className="text-slate-400">Balance Due</span>
-                      <span className="text-amber-400">{formatCurrency(balanceDue)}</span>
+                      <span className="text-slate-600 dark:text-slate-400">Balance Due</span>
+                      <span className="text-amber-500 dark:text-amber-400">{formatCurrency(balanceDue)}</span>
                     </div>
                   </>
                 )}
@@ -544,7 +548,7 @@ export function CreateInvoice() {
             </CardHeader>
             <CardContent>
               <textarea
-                className="w-full px-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 resize-none"
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700/50 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 resize-none"
                 rows={3}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}

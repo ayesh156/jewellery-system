@@ -15,11 +15,12 @@ import {
   DollarSign,
   Clock,
   CheckCircle,
+  CreditCard,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
+import { Combobox } from '../components/ui/Combobox';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
@@ -166,8 +167,8 @@ export function Invoices() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-100">Invoices</h1>
-          <p className="mt-1 text-slate-400">Manage sales and payments</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Invoices</h1>
+          <p className="mt-1 text-slate-600 dark:text-slate-400">Manage sales and payments</p>
         </div>
         <Link to="/invoices/create">
           <Button variant="gold">
@@ -185,8 +186,8 @@ export function Invoices() {
               <FileText className="w-6 h-6 text-blue-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Total Invoices</p>
-              <p className="text-2xl font-bold text-slate-100">{totalInvoices}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Total Invoices</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{totalInvoices}</p>
             </div>
           </CardContent>
         </Card>
@@ -196,8 +197,8 @@ export function Invoices() {
               <CheckCircle className="w-6 h-6 text-emerald-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Total Revenue</p>
-              <p className="text-2xl font-bold text-slate-100">{formatCurrency(totalRevenue)}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Total Revenue</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formatCurrency(totalRevenue)}</p>
             </div>
           </CardContent>
         </Card>
@@ -207,8 +208,8 @@ export function Invoices() {
               <Clock className="w-6 h-6 text-amber-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Pending</p>
-              <p className="text-2xl font-bold text-slate-100">{pendingInvoices.length}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Pending</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{pendingInvoices.length}</p>
             </div>
           </CardContent>
         </Card>
@@ -218,8 +219,8 @@ export function Invoices() {
               <DollarSign className="w-6 h-6 text-red-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Outstanding</p>
-              <p className="text-2xl font-bold text-slate-100">{formatCurrency(pendingAmount)}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Outstanding</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formatCurrency(pendingAmount)}</p>
             </div>
           </CardContent>
         </Card>
@@ -240,28 +241,32 @@ export function Invoices() {
                 />
               </div>
             </div>
-            <Select
+            <Combobox
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="lg:w-40"
-            >
-              <option value="">All Status</option>
-              {invoiceStatuses.map((status) => (
-                <option key={status} value={status}>
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                </option>
-              ))}
-            </Select>
-            <Select
+              onChange={setStatusFilter}
+              options={[
+                { value: '', label: 'All Status', icon: <Filter className="w-4 h-4" /> },
+                ...invoiceStatuses.map((status) => ({
+                  value: status,
+                  label: status.charAt(0).toUpperCase() + status.slice(1),
+                  icon: status === 'paid' ? <CheckCircle className="w-4 h-4" /> : status === 'pending' ? <Clock className="w-4 h-4" /> : status === 'cancelled' ? <AlertTriangle className="w-4 h-4" /> : <FileText className="w-4 h-4" />
+                }))
+              ]}
+              placeholder="Filter by status..."
+              className="lg:w-56"
+            />
+            <Combobox
               value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="lg:w-40"
-            >
-              <option value="">All Time</option>
-              <option value="today">Today</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-            </Select>
+              onChange={setDateFilter}
+              options={[
+                { value: '', label: 'All Time', icon: <Calendar className="w-4 h-4" /> },
+                { value: 'today', label: 'Today', icon: <Calendar className="w-4 h-4" /> },
+                { value: 'week', label: 'This Week', icon: <Calendar className="w-4 h-4" /> },
+                { value: 'month', label: 'This Month', icon: <Calendar className="w-4 h-4" /> }
+              ]}
+              placeholder="Filter by date..."
+              className="lg:w-56"
+            />
           </div>
         </CardContent>
       </Card>
@@ -291,14 +296,14 @@ export function Invoices() {
                         <FileText className="w-5 h-5 text-amber-400" />
                       </div>
                       <div>
-                        <p className="font-medium text-slate-200">{invoice.invoiceNumber}</p>
-                        <p className="text-xs text-slate-400">{invoice.items.length} items</p>
+                        <p className="font-medium text-slate-800 dark:text-slate-200">{invoice.invoiceNumber}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">{invoice.items.length} items</p>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-slate-300">{invoice.customerName}</TableCell>
-                  <TableCell className="text-slate-400">{formatDate(invoice.createdAt)}</TableCell>
-                  <TableCell className="text-right font-semibold text-slate-200">
+                  <TableCell className="text-slate-700 dark:text-slate-300">{invoice.customerName}</TableCell>
+                  <TableCell className="text-slate-600 dark:text-slate-400">{formatDate(invoice.createdAt)}</TableCell>
+                  <TableCell className="text-right font-semibold text-slate-800 dark:text-slate-200">
                     {formatCurrency(invoice.total)}
                   </TableCell>
                   <TableCell className="text-right text-emerald-400">
@@ -354,8 +359,8 @@ export function Invoices() {
           </Table>
           {filteredInvoices.length === 0 && (
             <div className="p-8 text-center">
-              <FileText className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-400">No invoices found</p>
+              <FileText className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-600 dark:text-slate-400">No invoices found</p>
             </div>
           )}
         </CardContent>
@@ -372,20 +377,20 @@ export function Invoices() {
           <div className="px-5 sm:px-6 py-5 space-y-5">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-bold text-slate-100">{selectedInvoice.invoiceNumber}</h3>
-                <p className="text-slate-400">{formatDate(selectedInvoice.createdAt)}</p>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{selectedInvoice.invoiceNumber}</h3>
+                <p className="text-slate-600 dark:text-slate-400">{formatDate(selectedInvoice.createdAt)}</p>
               </div>
               {getStatusBadge(selectedInvoice.status)}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg bg-slate-800/50">
-                <p className="text-sm text-slate-400">Customer</p>
-                <p className="font-medium text-slate-200">{selectedInvoice.customerName}</p>
+              <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <p className="text-sm text-slate-600 dark:text-slate-400">Customer</p>
+                <p className="font-medium text-slate-800 dark:text-slate-200">{selectedInvoice.customerName}</p>
               </div>
-              <div className="p-4 rounded-lg bg-slate-800/50">
-                <p className="text-sm text-slate-400">Payment Method</p>
-                <p className="font-medium text-slate-200">
+              <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <p className="text-sm text-slate-600 dark:text-slate-400">Payment Method</p>
+                <p className="font-medium text-slate-800 dark:text-slate-200">
                   {selectedInvoice.paymentMethod?.replace('_', ' ') || 'N/A'}
                 </p>
               </div>
@@ -393,26 +398,26 @@ export function Invoices() {
 
             {/* Items */}
             <div>
-              <h4 className="text-sm font-medium text-slate-400 mb-3">Items</h4>
-              <div className="rounded-lg border border-slate-700 overflow-hidden">
+              <h4 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3">Items</h4>
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
                 <table className="w-full">
-                  <thead className="bg-slate-800/50">
+                  <thead className="bg-slate-100 dark:bg-slate-800/50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Item</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Qty</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Price</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Total</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Item</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Qty</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Price</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Total</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-700/50">
+                  <tbody className="divide-y divide-slate-200 dark:divide-slate-700/50">
                     {selectedInvoice.items.map((item, index) => (
                       <tr key={index}>
-                        <td className="px-4 py-3 text-slate-200">{item.productName}</td>
-                        <td className="px-4 py-3 text-right text-slate-300">{item.quantity}</td>
-                        <td className="px-4 py-3 text-right text-slate-300">
+                        <td className="px-4 py-3 text-slate-800 dark:text-slate-200">{item.productName}</td>
+                        <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">{item.quantity}</td>
+                        <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">
                           {formatCurrency(item.unitPrice)}
                         </td>
-                        <td className="px-4 py-3 text-right text-slate-200">
+                        <td className="px-4 py-3 text-right text-slate-800 dark:text-slate-200">
                           {formatCurrency(item.total)}
                         </td>
                       </tr>
@@ -423,38 +428,38 @@ export function Invoices() {
             </div>
 
             {/* Totals */}
-            <div className="space-y-2 pt-4 border-t border-slate-700">
+            <div className="space-y-2 pt-4 border-t border-slate-200 dark:border-slate-700">
               <div className="flex justify-between text-sm">
-                <span className="text-slate-400">Subtotal</span>
-                <span className="text-slate-200">{formatCurrency(selectedInvoice.subtotal)}</span>
+                <span className="text-slate-600 dark:text-slate-400">Subtotal</span>
+                <span className="text-slate-800 dark:text-slate-200">{formatCurrency(selectedInvoice.subtotal)}</span>
               </div>
               {selectedInvoice.discount > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Discount</span>
+                  <span className="text-slate-600 dark:text-slate-400">Discount</span>
                   <span className="text-red-400">-{formatCurrency(selectedInvoice.discount)}</span>
                 </div>
               )}
               {selectedInvoice.tax > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Tax</span>
-                  <span className="text-slate-200">{formatCurrency(selectedInvoice.tax)}</span>
+                  <span className="text-slate-600 dark:text-slate-400">Tax</span>
+                  <span className="text-slate-800 dark:text-slate-200">{formatCurrency(selectedInvoice.tax)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-lg font-bold pt-3 border-t border-slate-700">
-                <span className="text-slate-200">Total</span>
+              <div className="flex justify-between text-lg font-bold pt-3 border-t border-slate-200 dark:border-slate-700">
+                <span className="text-slate-800 dark:text-slate-200">Total</span>
                 <span className="text-amber-400">{formatCurrency(selectedInvoice.total)}</span>
               </div>
               <div className="flex justify-between text-sm pt-2">
-                <span className="text-slate-400">Paid</span>
+                <span className="text-slate-600 dark:text-slate-400">Paid</span>
                 <span className="text-emerald-400">{formatCurrency(selectedInvoice.amountPaid)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-slate-400">Balance Due</span>
+                <span className="text-slate-600 dark:text-slate-400">Balance Due</span>
                 <span className="text-amber-400">{formatCurrency(selectedInvoice.balanceDue)}</span>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
               <Button variant="ghost" onClick={() => setShowViewModal(false)}>
                 Close
               </Button>
@@ -487,25 +492,25 @@ export function Invoices() {
       >
         {selectedInvoice && (
           <div className="px-5 sm:px-6 py-5 space-y-5">
-            <div className="p-4 rounded-lg bg-slate-800/50 space-y-3">
+            <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50 space-y-3">
               <div className="flex justify-between">
-                <span className="text-slate-400">Invoice</span>
-                <span className="font-medium text-slate-200">{selectedInvoice.invoiceNumber}</span>
+                <span className="text-slate-600 dark:text-slate-400">Invoice</span>
+                <span className="font-medium text-slate-800 dark:text-slate-200">{selectedInvoice.invoiceNumber}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Total Amount</span>
-                <span className="font-medium text-slate-200">
+                <span className="text-slate-600 dark:text-slate-400">Total Amount</span>
+                <span className="font-medium text-slate-800 dark:text-slate-200">
                   {formatCurrency(selectedInvoice.total)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Already Paid</span>
+                <span className="text-slate-600 dark:text-slate-400">Already Paid</span>
                 <span className="font-medium text-emerald-400">
                   {formatCurrency(selectedInvoice.amountPaid)}
                 </span>
               </div>
-              <div className="flex justify-between pt-3 border-t border-slate-700">
-                <span className="text-slate-400">Balance Due</span>
+              <div className="flex justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
+                <span className="text-slate-600 dark:text-slate-400">Balance Due</span>
                 <span className="font-bold text-amber-400">
                   {formatCurrency(selectedInvoice.balanceDue)}
                 </span>
@@ -521,24 +526,23 @@ export function Invoices() {
                 max={selectedInvoice.balanceDue}
               />
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-2">
                   Payment Method
                 </label>
-                <Select
+                <Combobox
                   value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                >
-                  {paymentMethods.map((method) => (
-                    <option key={method} value={method}>
-                      {method.replace('_', ' ').charAt(0).toUpperCase() +
-                        method.replace('_', ' ').slice(1)}
-                    </option>
-                  ))}
-                </Select>
+                  onChange={(val) => setPaymentMethod(val as PaymentMethod)}
+                  options={paymentMethods.map((method) => ({
+                    value: method,
+                    label: method.replace('-', ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+                    icon: method === 'cash' ? <DollarSign className="w-4 h-4" /> : <CreditCard className="w-4 h-4" />
+                  }))}
+                  placeholder="Select payment method..."
+                />
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
               <Button variant="ghost" onClick={() => setShowPaymentModal(false)}>
                 Cancel
               </Button>
@@ -561,14 +565,15 @@ export function Invoices() {
           <div className="flex items-start gap-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
             <AlertTriangle className="w-8 h-8 text-red-400 shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium text-slate-200">Are you sure?</p>
-              <p className="text-sm text-slate-400 mt-1">
+              <p className="font-medium text-slate-800 dark:text-slate-200">Are you sure?</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                 This will permanently delete invoice "{selectedInvoice?.invoiceNumber}". This action
                 cannot be undone.
               </p>
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
+        </div>
+        <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
             <Button variant="ghost" onClick={() => setShowDeleteModal(false)}>
               Cancel
             </Button>
@@ -577,7 +582,6 @@ export function Invoices() {
               Delete
             </Button>
           </div>
-        </div>
       </Modal>
     </div>
   );

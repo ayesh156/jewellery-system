@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, useEffect } from 'react';
 import type { Invoice, Customer, CompanyInfo } from '../types/index';
 import { formatCurrency, formatDate, formatWeight } from '../utils/formatters';
 
@@ -25,6 +25,17 @@ const defaultCompany: CompanyInfo = {
 
 export const PrintableInvoice = forwardRef<HTMLDivElement, PrintableInvoiceProps>(
   ({ invoice, customer, company = defaultCompany }, ref) => {
+    // Auto trigger print dialog when mounted (small timeout to ensure render)
+    useEffect(() => {
+      const t = setTimeout(() => {
+        try {
+          window.print();
+        } catch (e) {
+          // ignore
+        }
+      }, 120);
+      return () => clearTimeout(t);
+    }, []);
     // Calculate totals
     const calculateItemDiscounts = () => {
       return invoice.items.reduce((sum, item) => {

@@ -11,7 +11,9 @@ export function Card({ children, className, hover = false }: CardProps) {
   return (
     <div
       className={cn(
-        'rounded-xl border border-slate-700 bg-slate-800 backdrop-blur-sm',
+        'rounded-xl border backdrop-blur-sm transition-colors',
+        'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700',
+        'shadow-sm dark:shadow-none',
         hover && 'transition-all duration-200 hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/5',
         className
       )}
@@ -28,7 +30,7 @@ interface CardHeaderProps {
 
 export function CardHeader({ children, className }: CardHeaderProps) {
   return (
-    <div className={cn('px-6 py-4 border-b border-slate-700', className)}>
+    <div className={cn('px-6 py-4 border-b border-slate-200 dark:border-slate-700', className)}>
       {children}
     </div>
   );
@@ -41,7 +43,7 @@ interface CardTitleProps {
 
 export function CardTitle({ children, className }: CardTitleProps) {
   return (
-    <h3 className={cn('text-lg font-semibold text-slate-100', className)}>
+    <h3 className={cn('text-lg font-semibold text-slate-900 dark:text-slate-100', className)}>
       {children}
     </h3>
   );
@@ -54,7 +56,7 @@ interface CardDescriptionProps {
 
 export function CardDescription({ children, className }: CardDescriptionProps) {
   return (
-    <p className={cn('text-sm text-slate-400 mt-1', className)}>
+    <p className={cn('text-sm text-slate-600 dark:text-slate-400 mt-1', className)}>
       {children}
     </p>
   );
@@ -76,7 +78,7 @@ interface CardFooterProps {
 
 export function CardFooter({ children, className }: CardFooterProps) {
   return (
-    <div className={cn('px-6 py-4 border-t border-slate-700/50', className)}>
+    <div className={cn('px-6 py-4 border-t border-slate-200 dark:border-slate-700/50', className)}>
       {children}
     </div>
   );

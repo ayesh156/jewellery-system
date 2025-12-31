@@ -8,11 +8,13 @@ import {
   Eye,
   AlertTriangle,
   Gem,
+  Layers,
+  Tag,
 } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
+import { Combobox, type ComboboxOption } from '../components/ui/Combobox';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
@@ -22,6 +24,20 @@ import type { JewelleryItem, MetalType, GoldKarat } from '../types';
 
 const metalTypes: MetalType[] = ['gold', 'silver', 'platinum', 'palladium', 'white-gold', 'rose-gold'];
 const karats: GoldKarat[] = ['24K', '22K', '21K', '18K', '14K', '10K', '9K'];
+
+// Convert categories to ComboboxOption format
+const categoryOptions: ComboboxOption[] = mockCategories.map((cat) => ({
+  value: cat.id,
+  label: cat.name,
+  icon: <Layers className="w-4 h-4" />,
+}));
+
+// Convert metal types to ComboboxOption format
+const metalOptions: ComboboxOption[] = metalTypes.map((metal) => ({
+  value: metal,
+  label: metal.charAt(0).toUpperCase() + metal.slice(1).replace('-', ' '),
+  icon: <Gem className="w-4 h-4" />,
+}));
 
 export function Products() {
   const [products, setProducts] = useState<JewelleryItem[]>(mockProducts);
@@ -149,8 +165,8 @@ export function Products() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-100">Products</h1>
-          <p className="mt-1 text-slate-400">Manage your jewellery inventory</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Products</h1>
+          <p className="mt-1 text-slate-600 dark:text-slate-400">Manage your jewellery inventory</p>
         </div>
         <Button variant="gold" onClick={() => setShowAddModal(true)}>
           <Plus className="w-4 h-4" />
@@ -166,8 +182,8 @@ export function Products() {
               <Package className="w-6 h-6 text-amber-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Total Products</p>
-              <p className="text-2xl font-bold text-slate-100">{products.length}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Total Products</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{products.length}</p>
             </div>
           </CardContent>
         </Card>
@@ -177,8 +193,8 @@ export function Products() {
               <Gem className="w-6 h-6 text-emerald-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Inventory Value</p>
-              <p className="text-2xl font-bold text-slate-100">{formatCurrency(totalValue)}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Inventory Value</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formatCurrency(totalValue)}</p>
             </div>
           </CardContent>
         </Card>
@@ -188,8 +204,8 @@ export function Products() {
               <AlertTriangle className="w-6 h-6 text-red-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Low Stock</p>
-              <p className="text-2xl font-bold text-slate-100">{lowStockCount}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Low Stock</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{lowStockCount}</p>
             </div>
           </CardContent>
         </Card>
@@ -210,30 +226,34 @@ export function Products() {
                 />
               </div>
             </div>
-            <Select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="lg:w-48"
-            >
-              <option value="">All Categories</option>
-              {mockCategories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </Select>
-            <Select
-              value={metalFilter}
-              onChange={(e) => setMetalFilter(e.target.value)}
-              className="lg:w-40"
-            >
-              <option value="">All Metals</option>
-              {metalTypes.map((metal) => (
-                <option key={metal} value={metal}>
-                  {metal.charAt(0).toUpperCase() + metal.slice(1).replace('-', ' ')}
-                </option>
-              ))}
-            </Select>
+            <div className="lg:w-56">
+              <Combobox
+                options={categoryOptions}
+                value={categoryFilter}
+                onChange={(val) => setCategoryFilter(val)}
+                placeholder="All Categories"
+                searchPlaceholder="Search categories..."
+                defaultIcon={<Layers className="w-4 h-4" />}
+                showAllOption
+                allOptionLabel="All Categories"
+                clearable
+                showFooter={false}
+              />
+            </div>
+            <div className="lg:w-48">
+              <Combobox
+                options={metalOptions}
+                value={metalFilter}
+                onChange={(val) => setMetalFilter(val)}
+                placeholder="All Metals"
+                searchPlaceholder="Search metals..."
+                defaultIcon={<Gem className="w-4 h-4" />}
+                showAllOption
+                allOptionLabel="All Metals"
+                clearable
+                showFooter={false}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -263,25 +283,25 @@ export function Products() {
                         <Gem className="w-5 h-5 text-amber-400" />
                       </div>
                       <div>
-                        <p className="font-medium text-slate-200">{product.name}</p>
-                        <p className="text-xs text-slate-400">{product.barcode}</p>
+                        <p className="font-medium text-slate-800 dark:text-slate-200">{product.name}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">{product.barcode}</p>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-slate-300">{product.sku}</TableCell>
+                  <TableCell className="text-slate-700 dark:text-slate-300">{product.sku}</TableCell>
                   <TableCell>
                     <Badge variant="default">{product.categoryName || product.categoryId}</Badge>
                   </TableCell>
                   <TableCell>
-                    <span className="text-slate-300">
+                    <span className="text-slate-700 dark:text-slate-300">
                       {product.metalType.charAt(0).toUpperCase() + product.metalType.slice(1).replace('-', ' ')}
                       {product.karat && ` ${product.karat}`}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right text-slate-300">
+                  <TableCell className="text-right text-slate-700 dark:text-slate-300">
                     {formatWeight(product.metalWeight)}
                   </TableCell>
-                  <TableCell className="text-right font-semibold text-slate-200">
+                  <TableCell className="text-right font-semibold text-slate-800 dark:text-slate-200">
                     {formatCurrency(product.sellingPrice)}
                   </TableCell>
                   <TableCell className="text-center">
@@ -329,8 +349,8 @@ export function Products() {
           </Table>
           {filteredProducts.length === 0 && (
             <div className="p-8 text-center">
-              <Package className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-400">No products found</p>
+              <Package className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-600 dark:text-slate-400">No products found</p>
             </div>
           )}
         </CardContent>
@@ -346,7 +366,7 @@ export function Products() {
         <div className="px-5 sm:px-6 py-5 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Product Name</label>
+              <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">Product Name</label>
               <Input
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
@@ -354,7 +374,7 @@ export function Products() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">SKU</label>
+              <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">SKU</label>
               <Input
                 value={formData.sku}
                 onChange={(e) => handleInputChange('sku', e.target.value)}
@@ -365,7 +385,7 @@ export function Products() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Barcode</label>
+              <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">Barcode</label>
               <Input
                 value={formData.barcode}
                 onChange={(e) => handleInputChange('barcode', e.target.value)}
@@ -373,50 +393,52 @@ export function Products() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Category</label>
-              <Select
+              <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">Category</label>
+              <Combobox
                 value={formData.categoryId}
-                onChange={(e) => handleInputChange('categoryId', e.target.value)}
-              >
-                <option value="">Select Category</option>
-                {mockCategories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </Select>
+                onChange={(val) => handleInputChange('categoryId', val)}
+                options={[
+                  { value: '', label: 'Select Category', icon: <Tag className="w-4 h-4" /> },
+                  ...mockCategories.map((cat) => ({
+                    value: cat.id,
+                    label: cat.name,
+                    icon: <Tag className="w-4 h-4" />
+                  }))
+                ]}
+                placeholder="Select category..."
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Metal Type</label>
-              <Select
+              <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">Metal Type</label>
+              <Combobox
                 value={formData.metalType}
-                onChange={(e) => handleInputChange('metalType', e.target.value)}
-              >
-                {metalTypes.map((metal) => (
-                  <option key={metal} value={metal}>
-                    {metal.charAt(0).toUpperCase() + metal.slice(1).replace('-', ' ')}
-                  </option>
-                ))}
-              </Select>
+                onChange={(val) => handleInputChange('metalType', val)}
+                options={metalTypes.map((metal) => ({
+                  value: metal,
+                  label: metal.charAt(0).toUpperCase() + metal.slice(1).replace('-', ' '),
+                  icon: <Gem className="w-4 h-4" />
+                }))}
+                placeholder="Select metal type..."
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Karat</label>
-              <Select
+              <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">Karat</label>
+              <Combobox
                 value={formData.karat}
-                onChange={(e) => handleInputChange('karat', e.target.value)}
-              >
-                {karats.map((k) => (
-                  <option key={k} value={k}>
-                    {k}
-                  </option>
-                ))}
-              </Select>
+                onChange={(val) => handleInputChange('karat', val)}
+                options={karats.map((k) => ({
+                  value: k,
+                  label: k,
+                  icon: <Gem className="w-4 h-4" />
+                }))}
+                placeholder="Select karat..."
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Metal Weight (g)</label>
+              <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">Metal Weight (g)</label>
               <Input
                 type="number"
                 step="0.01"
@@ -428,7 +450,7 @@ export function Products() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Cost Price</label>
+              <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">Cost Price</label>
               <Input
                 type="number"
                 value={formData.costPrice}
@@ -436,7 +458,7 @@ export function Products() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Selling Price</label>
+              <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">Selling Price</label>
               <Input
                 type="number"
                 value={formData.sellingPrice}
@@ -444,7 +466,7 @@ export function Products() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Making Charges</label>
+              <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">Making Charges</label>
               <Input
                 type="number"
                 value={formData.makingCharges}
@@ -455,7 +477,7 @@ export function Products() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Stock Quantity</label>
+              <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">Stock Quantity</label>
               <Input
                 type="number"
                 value={formData.stockQuantity}
@@ -463,7 +485,7 @@ export function Products() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Reorder Level</label>
+              <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">Reorder Level</label>
               <Input
                 type="number"
                 value={formData.reorderLevel}
@@ -473,9 +495,9 @@ export function Products() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Description</label>
+            <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">Description</label>
             <textarea
-              className="w-full px-4 py-2.5 rounded-lg bg-slate-800/50 border border-slate-700 text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 resize-none"
+              className="w-full px-4 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 resize-none"
               rows={3}
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
@@ -484,7 +506,7 @@ export function Products() {
           </div>
 
         </div>
-        <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-700">
+        <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
           <Button variant="outline" onClick={resetForm}>
             Cancel
           </Button>
@@ -508,44 +530,44 @@ export function Products() {
                 <Gem className="w-8 h-8 text-amber-400" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-slate-100">{selectedProduct.name}</h3>
-                <p className="text-slate-400">SKU: {selectedProduct.sku}</p>
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{selectedProduct.name}</h3>
+                <p className="text-slate-600 dark:text-slate-400">SKU: {selectedProduct.sku}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="p-4 rounded-lg bg-slate-800/50">
-                <p className="text-slate-400">Metal Type</p>
-                <p className="text-slate-200 font-medium mt-1">
+              <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <p className="text-slate-600 dark:text-slate-400">Metal Type</p>
+                <p className="text-slate-800 dark:text-slate-200 font-medium mt-1">
                   {selectedProduct.metalType.charAt(0).toUpperCase() + selectedProduct.metalType.slice(1).replace('-', ' ')}
                   {selectedProduct.karat && ` ${selectedProduct.karat}`}
                 </p>
               </div>
-              <div className="p-4 rounded-lg bg-slate-800/50">
-                <p className="text-slate-400">Metal Weight</p>
-                <p className="text-slate-200 font-medium mt-1">{formatWeight(selectedProduct.metalWeight)}</p>
+              <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <p className="text-slate-600 dark:text-slate-400">Metal Weight</p>
+                <p className="text-slate-800 dark:text-slate-200 font-medium mt-1">{formatWeight(selectedProduct.metalWeight)}</p>
               </div>
-              <div className="p-4 rounded-lg bg-slate-800/50">
-                <p className="text-slate-400">Selling Price</p>
+              <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <p className="text-slate-600 dark:text-slate-400">Selling Price</p>
                 <p className="text-amber-400 font-semibold mt-1">{formatCurrency(selectedProduct.sellingPrice)}</p>
               </div>
-              <div className="p-4 rounded-lg bg-slate-800/50">
-                <p className="text-slate-400">Stock Quantity</p>
-                <p className="text-slate-200 font-medium mt-1">{selectedProduct.stockQuantity}</p>
+              <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <p className="text-slate-600 dark:text-slate-400">Stock Quantity</p>
+                <p className="text-slate-800 dark:text-slate-200 font-medium mt-1">{selectedProduct.stockQuantity}</p>
               </div>
             </div>
 
             {selectedProduct.description && (
-              <div className="p-4 rounded-lg bg-slate-800/50">
-                <p className="text-slate-400 mb-2">Description</p>
-                <p className="text-slate-200">{selectedProduct.description}</p>
+              <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                <p className="text-slate-600 dark:text-slate-400 mb-2">Description</p>
+                <p className="text-slate-800 dark:text-slate-200">{selectedProduct.description}</p>
               </div>
             )}
 
           </div>
         )}
         {selectedProduct && (
-          <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-700">
+          <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
             <Button variant="outline" onClick={() => setShowViewModal(false)}>
               Close
             </Button>
@@ -570,18 +592,19 @@ export function Products() {
         title="Delete Product"
         size="sm"
       >
-        <div className="space-y-4">
+        <div className="px-5 sm:px-6 py-5 space-y-4">
           <div className="flex items-center gap-4 p-4 rounded-lg bg-red-500/10">
             <AlertTriangle className="w-8 h-8 text-red-400" />
             <div>
-              <p className="text-slate-200">Are you sure you want to delete this product?</p>
-              <p className="text-sm text-slate-400 mt-1">{selectedProduct?.name}</p>
+              <p className="text-slate-800 dark:text-slate-200">Are you sure you want to delete this product?</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{selectedProduct?.name}</p>
             </div>
           </div>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             This action cannot be undone. This will permanently delete the product from your inventory.
           </p>
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
+        </div>
+        <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
             <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
               Cancel
             </Button>
@@ -590,7 +613,6 @@ export function Products() {
               Delete Product
             </Button>
           </div>
-        </div>
       </Modal>
     </div>
   );

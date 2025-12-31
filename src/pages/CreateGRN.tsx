@@ -15,7 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
+import { Combobox } from '../components/ui/Combobox';
 import { Badge } from '../components/ui/Badge';
 import { mockProducts, mockSuppliers } from '../data/mockData';
 import { formatCurrency, formatWeight } from '../utils/formatters';
@@ -190,8 +190,8 @@ export function CreateGRN() {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-slate-100">Create GRN</h1>
-            <p className="mt-1 text-slate-400">Record a new goods received note</p>
+            <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Create GRN</h1>
+            <p className="mt-1 text-slate-600 dark:text-slate-400">Record a new goods received note</p>
           </div>
         </div>
         <div className="flex gap-3">
@@ -210,7 +210,7 @@ export function CreateGRN() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Supplier Selection */}
-          <Card className="relative z-20">
+          <Card className="relative z-30 overflow-visible">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Truck className="w-5 h-5 text-blue-400" />
@@ -219,14 +219,14 @@ export function CreateGRN() {
             </CardHeader>
             <CardContent>
               {selectedSupplier ? (
-                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/10 flex items-center justify-center">
                       <Building2 className="w-6 h-6 text-blue-400" />
                     </div>
                     <div>
-                      <p className="font-medium text-slate-200">{selectedSupplier.companyName}</p>
-                      <p className="text-sm text-slate-400">
+                      <p className="font-medium text-slate-800 dark:text-slate-200">{selectedSupplier.companyName}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
                         {selectedSupplier.city}, {selectedSupplier.country}
                       </p>
                       {selectedSupplier.contactPerson && (
@@ -256,27 +256,27 @@ export function CreateGRN() {
                     className="pl-10"
                   />
                   {showSupplierSearch && supplierSearchQuery && (
-                    <div className="absolute z-50 w-full mt-2 rounded-lg bg-slate-800 border border-slate-700 shadow-2xl max-h-64 overflow-y-auto">
+                    <div className="absolute z-[9999] w-full mt-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xl max-h-64 overflow-y-auto">
                       {filteredSuppliers.length > 0 ? (
                         filteredSuppliers.map((supplier) => (
                           <button
                             key={supplier.id}
-                            className="w-full flex items-center gap-3 p-4 hover:bg-slate-700/50 transition-colors text-left border-b border-slate-700/50 last:border-b-0"
+                            className="w-full flex items-center gap-3 p-4 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-200 dark:border-slate-700/50 last:border-b-0"
                             onClick={() => handleSelectSupplier(supplier)}
                           >
                             <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center shrink-0">
                               <Building2 className="w-5 h-5 text-blue-400" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-slate-200 truncate">{supplier.companyName}</p>
-                              <p className="text-xs text-slate-400">
+                              <p className="font-medium text-slate-800 dark:text-slate-200 truncate">{supplier.companyName}</p>
+                              <p className="text-xs text-slate-600 dark:text-slate-400">
                                 {supplier.city}, {supplier.country}
                               </p>
                             </div>
                           </button>
                         ))
                       ) : (
-                        <div className="p-6 text-center text-slate-400">
+                        <div className="p-6 text-center text-slate-600 dark:text-slate-400">
                           <Building2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
                           <p>No suppliers found</p>
                         </div>
@@ -306,14 +306,14 @@ export function CreateGRN() {
                   {grnItems.map((item, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-4 p-4 rounded-lg bg-slate-800/50"
+                      className="flex items-center gap-4 p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50"
                     >
                       <div className="w-12 h-12 rounded-lg bg-amber-500/20 flex items-center justify-center">
                         <Gem className="w-6 h-6 text-amber-400" />
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-slate-200">{item.productName}</p>
-                        <p className="text-sm text-slate-400">
+                        <p className="font-medium text-slate-800 dark:text-slate-200">{item.productName}</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
                           {item.metalType?.charAt(0).toUpperCase() + item.metalType?.slice(1)}{' '}
                           {item.karat} • {item.metalWeight ? formatWeight(item.metalWeight) : 'N/A'}
                         </p>
@@ -326,7 +326,7 @@ export function CreateGRN() {
                         >
                           -
                         </Button>
-                        <span className="w-8 text-center text-slate-200">
+                        <span className="w-8 text-center text-slate-800 dark:text-slate-200">
                           {item.quantity}
                         </span>
                         <Button
@@ -338,8 +338,8 @@ export function CreateGRN() {
                         </Button>
                       </div>
                       <div className="w-24 text-right">
-                        <p className="font-semibold text-slate-200">{formatCurrency(item.total)}</p>
-                        <p className="text-xs text-slate-400">@ {formatCurrency(item.unitCost)}</p>
+                        <p className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(item.total)}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">@ {formatCurrency(item.unitCost)}</p>
                       </div>
                       <Button
                         variant="ghost"
@@ -353,9 +353,9 @@ export function CreateGRN() {
                   ))}
                 </div>
               ) : (
-                <div className="p-8 text-center border-2 border-dashed border-slate-700 rounded-lg">
-                  <Gem className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                  <p className="text-slate-400">Add items to this GRN</p>
+                <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
+                  <Gem className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
+                  <p className="text-slate-600 dark:text-slate-400">Add items to this GRN</p>
                 </div>
               )}
             </CardContent>
@@ -399,23 +399,23 @@ export function CreateGRN() {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Subtotal</span>
-                  <span className="text-slate-200">{formatCurrency(subtotal)}</span>
+                  <span className="text-slate-600 dark:text-slate-400">Subtotal</span>
+                  <span className="text-slate-800 dark:text-slate-200">{formatCurrency(subtotal)}</span>
                 </div>
                 {shippingCost > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Shipping</span>
-                    <span className="text-slate-200">{formatCurrency(shippingCost)}</span>
+                    <span className="text-slate-600 dark:text-slate-400">Shipping</span>
+                    <span className="text-slate-800 dark:text-slate-200">{formatCurrency(shippingCost)}</span>
                   </div>
                 )}
                 {taxAmount > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Tax ({taxRate}%)</span>
-                    <span className="text-slate-200">{formatCurrency(taxAmount)}</span>
+                    <span className="text-slate-600 dark:text-slate-400">Tax ({taxRate}%)</span>
+                    <span className="text-slate-800 dark:text-slate-200">{formatCurrency(taxAmount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-lg font-bold pt-3 border-t border-slate-700">
-                  <span className="text-slate-200">Total</span>
+                <div className="flex justify-between text-lg font-bold pt-3 border-t border-slate-200 dark:border-slate-700">
+                  <span className="text-slate-800 dark:text-slate-200">Total</span>
                   <span className="text-amber-400">{formatCurrency(total)}</span>
                 </div>
               </div>
@@ -429,7 +429,7 @@ export function CreateGRN() {
             </CardHeader>
             <CardContent>
               <textarea
-                className="w-full px-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 resize-none"
+                className="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 resize-none"
                 rows={3}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -443,9 +443,9 @@ export function CreateGRN() {
       {/* Add Item Modal */}
       {showAddItemModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-slate-900 rounded-xl border border-slate-700 w-full max-w-lg mx-4 p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 w-full max-w-lg mx-4 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-slate-100">Add Item</h3>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Add Item</h3>
               <Button variant="ghost" size="icon" onClick={() => setShowAddItemModal(false)}>
                 <X className="w-4 h-4" />
               </Button>
@@ -480,36 +480,36 @@ export function CreateGRN() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Metal Type
                   </label>
-                  <Select
-                    value={newItem.metalType}
-                    onChange={(e) =>
-                      setNewItem((prev) => ({ ...prev, metalType: e.target.value as MetalType }))
+                  <Combobox
+                    value={newItem.metalType || ''}
+                    onChange={(val) =>
+                      setNewItem((prev) => ({ ...prev, metalType: val as MetalType }))
                     }
-                  >
-                    {metalTypes.map((metal) => (
-                      <option key={metal} value={metal}>
-                        {metal.charAt(0).toUpperCase() + metal.slice(1)}
-                      </option>
-                    ))}
-                  </Select>
+                    options={metalTypes.map((metal) => ({
+                      value: metal,
+                      label: metal.charAt(0).toUpperCase() + metal.slice(1),
+                      icon: <Gem className="w-4 h-4" />
+                    }))}
+                    placeholder="Select metal..."
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1.5">Karat</label>
-                  <Select
-                    value={newItem.karat}
-                    onChange={(e) =>
-                      setNewItem((prev) => ({ ...prev, karat: e.target.value as GoldKarat }))
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Karat</label>
+                  <Combobox
+                    value={newItem.karat || ''}
+                    onChange={(val) =>
+                      setNewItem((prev) => ({ ...prev, karat: val as GoldKarat }))
                     }
-                  >
-                    {karats.map((k) => (
-                      <option key={k} value={k}>
-                        {k}
-                      </option>
-                    ))}
-                  </Select>
+                    options={karats.map((k) => ({
+                      value: k,
+                      label: k,
+                      icon: <Gem className="w-4 h-4" />
+                    }))}
+                    placeholder="Select karat..."
+                  />
                 </div>
               </div>
 
@@ -536,7 +536,7 @@ export function CreateGRN() {
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-700/50">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700/50">
                 <Button variant="ghost" onClick={() => setShowAddItemModal(false)}>
                   Cancel
                 </Button>

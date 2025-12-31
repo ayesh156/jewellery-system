@@ -33,6 +33,38 @@ export default defineConfig({
             // Other vendor libraries
             return 'vendor';
           }
+          
+          // Split pages into separate chunks by module
+          if (id.includes('/src/pages/')) {
+            // Pawning module
+            if (id.includes('Pawn') || id.includes('PayInterest') || id.includes('Redeem')) {
+              return 'pages-pawning';
+            }
+            // Repair module
+            if (id.includes('Repair')) {
+              return 'pages-repairs';
+            }
+            // Invoice/Sales module
+            if (id.includes('Invoice') || id.includes('Sales')) {
+              return 'pages-invoices';
+            }
+            // GRN module
+            if (id.includes('GRN')) {
+              return 'pages-grn';
+            }
+            // Other pages
+            return 'pages-misc';
+          }
+          
+          // Split printable components
+          if (id.includes('/src/components/Printable')) {
+            return 'printables';
+          }
+          
+          // Split mock data (often large)
+          if (id.includes('/src/data/')) {
+            return 'mock-data';
+          }
         },
       },
     },
