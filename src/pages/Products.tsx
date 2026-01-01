@@ -17,7 +17,7 @@ import { Input } from '../components/ui/Input';
 import { Combobox, type ComboboxOption } from '../components/ui/Combobox';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, MobileCard, MobileCardHeader, MobileCardContent, MobileCardRow, MobileCardActions, MobileCardsContainer } from '../components/ui/Table';
 import { mockProducts, mockCategories } from '../data/mockData';
 import { formatCurrency, formatWeight } from '../utils/formatters';
 import type { JewelleryItem, MetalType, GoldKarat } from '../types';
@@ -260,7 +260,8 @@ export function Products() {
 
       {/* Products Table */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 md:p-0">
+          {/* Desktop Table */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -347,6 +348,68 @@ export function Products() {
               ))}
             </TableBody>
           </Table>
+
+          {/* Mobile Cards */}
+          <MobileCardsContainer className="p-4">
+            {filteredProducts.map((product) => (
+              <MobileCard key={product.id}>
+                <MobileCardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/10 flex items-center justify-center">
+                      <Gem className="w-6 h-6 text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-800 dark:text-slate-200">{product.name}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{product.sku}</p>
+                    </div>
+                  </div>
+                  <Badge
+                    variant={
+                      product.stockQuantity <= (product.reorderLevel || 2)
+                        ? 'error'
+                        : product.stockQuantity <= (product.reorderLevel || 2) * 2
+                        ? 'warning'
+                        : 'success'
+                    }
+                  >
+                    {product.stockQuantity} in stock
+                  </Badge>
+                </MobileCardHeader>
+                <MobileCardContent>
+                  <MobileCardRow 
+                    label="Category" 
+                    value={<Badge variant="default">{product.categoryName || product.categoryId}</Badge>} 
+                  />
+                  <MobileCardRow 
+                    label="Metal" 
+                    value={`${product.metalType.charAt(0).toUpperCase() + product.metalType.slice(1).replace('-', ' ')}${product.karat ? ` ${product.karat}` : ''}`} 
+                  />
+                  <MobileCardRow 
+                    label="Weight" 
+                    value={formatWeight(product.metalWeight)} 
+                  />
+                  <MobileCardRow 
+                    label="Price" 
+                    value={<span className="text-amber-500 font-bold">{formatCurrency(product.sellingPrice)}</span>} 
+                  />
+                </MobileCardContent>
+                <MobileCardActions>
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => openViewModal(product)}>
+                    <Eye className="w-4 h-4" />
+                    View
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditModal(product)}>
+                    <Edit className="w-4 h-4" />
+                    Edit
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => openDeleteModal(product)} className="text-red-400 hover:text-red-300">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </MobileCardActions>
+              </MobileCard>
+            ))}
+          </MobileCardsContainer>
+
           {filteredProducts.length === 0 && (
             <div className="p-8 text-center">
               <Package className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />

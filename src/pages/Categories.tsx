@@ -402,10 +402,11 @@ export function Categories() {
           {filteredGoldTypes.map((goldType) => (
             <Card key={goldType.id} hover className={!goldType.isActive ? 'opacity-60' : ''}>
               <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  {/* Left: Icon and Title */}
+                  <div className="flex items-center gap-4 flex-1">
                     <div 
-                      className="w-14 h-14 rounded-xl flex items-center justify-center font-bold text-lg"
+                      className="w-14 h-14 rounded-xl flex items-center justify-center font-bold text-lg shrink-0"
                       style={{ 
                         background: `linear-gradient(135deg, ${goldType.color || '#FFD700'}40, ${goldType.color || '#FFD700'}10)`,
                         border: `1px solid ${goldType.color || '#FFD700'}40`
@@ -413,28 +414,38 @@ export function Categories() {
                     >
                       <span style={{ color: goldType.color || '#FFD700' }}>{goldType.karat}</span>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-100 text-lg">{goldType.karat} Gold</h3>
-                      <p className="text-sm text-slate-400">{goldType.description}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-slate-100 text-lg">{goldType.karat} Gold</h3>
+                        <Badge variant={goldType.isActive ? 'success' : 'default'} className="sm:hidden">
+                          {goldType.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-slate-400 truncate">{goldType.description}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-amber-400">{goldType.purityPercentage}%</p>
+                  {/* Middle: Stats - Grid on mobile, flex on desktop */}
+                  <div className="grid grid-cols-2 gap-4 sm:flex sm:items-center sm:gap-6">
+                    <div className="text-center sm:text-center">
+                      <p className="text-xl sm:text-2xl font-bold text-amber-400">{goldType.purityPercentage}%</p>
                       <p className="text-xs text-slate-500">Purity</p>
                     </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-slate-300">{goldType.defaultWastagePercentage}%</p>
+                    <div className="text-center sm:text-center">
+                      <p className="text-xl sm:text-2xl font-bold text-slate-300">{goldType.defaultWastagePercentage}%</p>
                       <p className="text-xs text-slate-500">Default Wastage</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={goldType.isActive ? 'success' : 'default'}>
-                        {goldType.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
+                  </div>
+
+                  {/* Right: Actions */}
+                  <div className="flex items-center justify-between sm:justify-end gap-2 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-700">
+                    <Badge variant={goldType.isActive ? 'success' : 'default'} className="hidden sm:inline-flex">
+                      {goldType.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
+                    <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleToggleGoldTypeActive(goldType.id)}
-                        className="text-slate-400 hover:text-slate-200 transition-colors"
+                        className="text-slate-400 hover:text-slate-200 transition-colors p-1"
                       >
                         {goldType.isActive ? (
                           <ToggleRight className="w-6 h-6 text-green-400" />
@@ -511,8 +522,8 @@ export function Categories() {
         onClose={() => setShowCategoryModal(false)}
         title={editingCategory ? 'Edit Category' : 'Add New Category'}
       >
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <div className="px-5 sm:px-6 py-5 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label="Category Name *"
               value={categoryForm.name}
@@ -556,39 +567,33 @@ export function Categories() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Default Metal</label>
-              <Select
-                value={categoryForm.defaultMetalType}
-                onChange={(e) => setCategoryForm(prev => ({ ...prev, defaultMetalType: e.target.value as MetalType }))}
-              >
-                {metalTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type.charAt(0).toUpperCase() + type.slice(1).replace('-', ' ')}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Default Karat</label>
-              <Select
-                value={categoryForm.defaultKarat}
-                onChange={(e) => setCategoryForm(prev => ({ ...prev, defaultKarat: e.target.value as GoldKarat }))}
-              >
-                {goldKarats.map((k) => (
-                  <option key={k} value={k}>{k}</option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <Input
-                label="Default Wastage %"
-                type="number"
-                value={categoryForm.defaultWastage}
-                onChange={(e) => setCategoryForm(prev => ({ ...prev, defaultWastage: Number(e.target.value) }))}
-              />
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Select
+              label="Default Metal"
+              value={categoryForm.defaultMetalType}
+              onChange={(e) => setCategoryForm(prev => ({ ...prev, defaultMetalType: e.target.value as MetalType }))}
+            >
+              {metalTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type.charAt(0).toUpperCase() + type.slice(1).replace('-', ' ')}
+                </option>
+              ))}
+            </Select>
+            <Select
+              label="Default Karat"
+              value={categoryForm.defaultKarat}
+              onChange={(e) => setCategoryForm(prev => ({ ...prev, defaultKarat: e.target.value as GoldKarat }))}
+            >
+              {goldKarats.map((k) => (
+                <option key={k} value={k}>{k}</option>
+              ))}
+            </Select>
+            <Input
+              label="Default Wastage %"
+              type="number"
+              value={categoryForm.defaultWastage}
+              onChange={(e) => setCategoryForm(prev => ({ ...prev, defaultWastage: Number(e.target.value) }))}
+            />
           </div>
 
           <div className="flex items-center gap-3 p-3 bg-slate-700/30 rounded-lg">
@@ -618,35 +623,31 @@ export function Categories() {
         onClose={() => setShowGoldTypeModal(false)}
         title={editingGoldType ? 'Edit Gold Type' : 'Add New Gold Type'}
       >
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Karat *</label>
-              <Select
-                value={goldTypeForm.karat}
-                onChange={(e) => {
-                  const karat = e.target.value as GoldKarat;
-                  setGoldTypeForm(prev => ({
-                    ...prev,
-                    karat,
-                    purityPercentage: purityMap[karat] || 91.67,
-                  }));
-                }}
-              >
-                {goldKarats.map((k) => (
-                  <option key={k} value={k}>{k}</option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <Input
-                label="Purity Percentage *"
-                type="number"
-                step="0.01"
+        <div className="px-5 sm:px-6 py-5 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select
+              label="Karat *"
+              value={goldTypeForm.karat}
+              onChange={(e) => {
+                const karat = e.target.value as GoldKarat;
+                setGoldTypeForm(prev => ({
+                  ...prev,
+                  karat,
+                  purityPercentage: purityMap[karat] || 91.67,
+                }));
+              }}
+            >
+              {goldKarats.map((k) => (
+                <option key={k} value={k}>{k}</option>
+              ))}
+            </Select>
+            <Input
+              label="Purity Percentage *"
+              type="number"
+              step="0.01"
                 value={goldTypeForm.purityPercentage}
                 onChange={(e) => setGoldTypeForm(prev => ({ ...prev, purityPercentage: Number(e.target.value) }))}
               />
-            </div>
           </div>
 
           <div>

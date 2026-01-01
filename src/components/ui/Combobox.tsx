@@ -382,7 +382,7 @@ export function Combobox({
         {/* Label */}
         <span
           className={cn(
-            'flex-1 text-sm truncate transition-colors duration-150',
+            'flex-1 text-sm transition-colors duration-150 min-w-0',
             isSelected ? 'text-slate-900 dark:text-slate-100 font-medium' : 'text-slate-700 dark:text-slate-300'
           )}
         >
@@ -474,7 +474,7 @@ export function Combobox({
       {createPortal(
         <div
           ref={dropdownRef}
-          style={{ ...dropdownStyle, zIndex: 9999 }}
+          style={{ ...dropdownStyle, zIndex: 9999, minWidth: '200px' }}
           className={cn(
             'fixed rounded-b-lg border border-t-0 overflow-hidden',
             'bg-white dark:bg-slate-800/95 backdrop-blur-xl border-slate-300 dark:border-slate-600 shadow-2xl shadow-black/10 dark:shadow-black/30',

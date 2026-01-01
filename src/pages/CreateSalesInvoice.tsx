@@ -721,7 +721,7 @@ export function CreateSalesInvoice() {
         title="Add Jewellery Item"
         size="lg"
       >
-        <div className="space-y-6">
+        <div className="px-5 sm:px-6 py-5 space-y-6">
           {/* Basic Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
@@ -940,7 +940,7 @@ export function CreateSalesInvoice() {
         onClose={() => { setShowGemstoneModal(false); setCurrentGemstone({}); }}
         title="Add Gemstone"
       >
-        <div className="space-y-4">
+        <div className="px-5 sm:px-6 py-5 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Gemstone Type</label>
@@ -1062,7 +1062,7 @@ export function CreateSalesInvoice() {
         onClose={() => setShowRateInfo(false)}
         title="Today's Gold Rates"
       >
-        <div className="space-y-4">
+        <div className="px-5 sm:px-6 py-5 space-y-4">
           <p className="text-slate-500 dark:text-slate-400 text-sm">Current gold rates per gram (Selling)</p>
           <div className="space-y-2">
             {goldRates.map((rate) => (

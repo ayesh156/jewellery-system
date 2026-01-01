@@ -29,6 +29,12 @@ import {
   TableRow,
   TableHead,
   TableCell,
+  MobileCard,
+  MobileCardHeader,
+  MobileCardContent,
+  MobileCardRow,
+  MobileCardActions,
+  MobileCardsContainer,
 } from '../components/ui/Table';
 import { Combobox } from '../components/ui/Combobox';
 import { Modal, ModalContent, ModalFooter } from '../components/ui/Modal';
@@ -238,16 +244,16 @@ export function Pawning() {
       {/* Interest Rate Info */}
       <Card>
         <CardContent className="py-3">
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm">
             <span className="text-slate-600 dark:text-slate-400">Current Interest Rate:</span>
             <Badge variant="warning">{defaultConfig.ratePerMonth}% per month</Badge>
-            <span className="text-slate-400 dark:text-slate-500">|</span>
+            <span className="hidden sm:inline text-slate-400 dark:text-slate-500">|</span>
             <span className="text-slate-600 dark:text-slate-400">LTV Ratio:</span>
             <Badge variant="info">{(defaultConfig.loanToValueRatio * 100).toFixed(0)}%</Badge>
-            <span className="text-slate-400 dark:text-slate-500">|</span>
+            <span className="hidden sm:inline text-slate-400 dark:text-slate-500">|</span>
             <span className="text-slate-600 dark:text-slate-400">Grace Period:</span>
             <Badge variant="default">{defaultConfig.gracePeriodDays} days</Badge>
-            <Link to="/settings" className="ml-auto text-amber-500 dark:text-amber-400 hover:text-amber-400 dark:hover:text-amber-300">
+            <Link to="/settings" className="ml-auto text-amber-500 dark:text-amber-400 hover:text-amber-400 dark:hover:text-amber-300 whitespace-nowrap">
               Configure Rates →
             </Link>
           </div>
@@ -284,17 +290,15 @@ export function Pawning() {
         <CardHeader>
           <CardTitle>Pawn Tickets ({filteredTickets.length})</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 md:p-0">
+          {/* Desktop Table */}
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Ticket #</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>Items</TableHead>
-                <TableHead className="text-right">Weight</TableHead>
                 <TableHead className="text-right">Principal</TableHead>
-                <TableHead className="text-right">Current Interest</TableHead>
-                <TableHead>Pawn Date</TableHead>
                 <TableHead>Maturity</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -310,37 +314,29 @@ export function Pawning() {
                 return (
                   <TableRow key={ticket.id}>
                     <TableCell>
-                      <span className="font-mono font-medium text-amber-600 dark:text-amber-400">
-                        {ticket.ticketNumber}
-                      </span>
+                      <div>
+                        <span className="font-mono font-medium text-amber-600 dark:text-amber-400">
+                          {ticket.ticketNumber}
+                        </span>
+                        <p className="text-xs text-slate-500 mt-0.5">{ticket.createdByUserId || 'USR-01'}</p>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div>
                         <p className="font-medium text-slate-800 dark:text-slate-200">{ticket.customerName}</p>
-                        <p className="text-xs text-slate-500">{ticket.customerNIC}</p>
+                        <p className="text-xs text-slate-500">{ticket.customerPhone}</p>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="max-w-[200px]">
-                        <p className="text-sm text-slate-700 dark:text-slate-300 truncate">
+                      <div>
+                        <p className="text-sm text-slate-700 dark:text-slate-300">
                           {ticket.items.map(i => i.itemType).join(', ')}
                         </p>
-                        <p className="text-xs text-slate-500">{ticket.items.length} item(s)</p>
+                        <p className="text-xs text-slate-500">{formatWeight(ticket.totalNetWeight)} • {ticket.items.length} item(s)</p>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatWeight(ticket.totalNetWeight)}
-                    </TableCell>
-                    <TableCell className="text-right font-medium text-amber-600 dark:text-amber-400">
+                    <TableCell className="text-right font-bold text-amber-600 dark:text-amber-400">
                       {formatCurrency(ticket.principalAmount)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span className={currentInterest > 0 ? 'text-green-600 dark:text-green-400' : 'text-slate-500 dark:text-slate-400'}>
-                        {formatCurrency(currentInterest)}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-slate-600 dark:text-slate-400">
-                      {formatDate(ticket.pawnDate)}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -410,13 +406,96 @@ export function Pawning() {
               })}
               {filteredTickets.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8 text-slate-500">
+                  <TableCell colSpan={7} className="text-center py-8 text-slate-500">
                     No pawn tickets found matching your criteria
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
+
+          {/* Mobile Cards */}
+          <MobileCardsContainer className="p-4">
+            {filteredTickets.map((ticket) => {
+              const StatusIcon = statusConfig[ticket.status].icon;
+              const daysToMaturity = getDaysUntilMaturity(ticket.maturityDate);
+              const isOverdue = ticket.status === 'active' && isPawnOverdue(ticket.maturityDate, ticket.gracePeriodDays);
+              const currentInterest = getCurrentInterest(ticket);
+
+              return (
+                <MobileCard key={ticket.id}>
+                  <MobileCardHeader>
+                    <div>
+                      <p className="font-mono font-bold text-amber-600 dark:text-amber-400">{ticket.ticketNumber}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{ticket.createdByUserId || 'USR-01'}</p>
+                    </div>
+                    <Badge variant={statusConfig[ticket.status].variant} className="gap-1">
+                      <StatusIcon className="w-3 h-3" />
+                      {statusConfig[ticket.status].label}
+                    </Badge>
+                  </MobileCardHeader>
+                  <MobileCardContent>
+                    <div className="mb-2">
+                      <p className="font-medium text-slate-800 dark:text-slate-200">{ticket.customerName}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{ticket.customerPhone}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {ticket.items.map((i, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">
+                          {i.itemType}
+                        </Badge>
+                      ))}
+                      <span className="text-xs text-slate-500 ml-1">• {formatWeight(ticket.totalNetWeight)}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Principal</p>
+                        <p className="font-bold text-amber-600 dark:text-amber-400">{formatCurrency(ticket.principalAmount)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Maturity</p>
+                        <p className={`font-medium ${isOverdue ? 'text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                          {formatDate(ticket.maturityDate)}
+                        </p>
+                        {ticket.status === 'active' && (
+                          <span className={`text-xs ${
+                            isOverdue ? 'text-red-600 dark:text-red-400' : 
+                            daysToMaturity <= 7 ? 'text-yellow-600 dark:text-yellow-400' : 'text-slate-500'
+                          }`}>
+                            ({daysToMaturity > 0 ? `${daysToMaturity}d left` : `${Math.abs(daysToMaturity)}d overdue`})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </MobileCardContent>
+                  <MobileCardActions>
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => handleViewDetails(ticket)}>
+                      <Eye className="w-4 h-4" />
+                      View
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handlePrint(ticket)}>
+                      <Printer className="w-4 h-4" />
+                    </Button>
+                    {(ticket.status === 'active' || ticket.status === 'extended') && (
+                      <>
+                        <Button variant="ghost" size="icon" onClick={() => handlePayInterest(ticket)} className="text-amber-500 hover:text-amber-400">
+                          <Receipt className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleRedeem(ticket)} className="text-green-500 hover:text-green-400">
+                          <DollarSign className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
+                  </MobileCardActions>
+                </MobileCard>
+              );
+            })}
+            {filteredTickets.length === 0 && (
+              <div className="text-center py-8 text-slate-500">
+                No pawn tickets found matching your criteria
+              </div>
+            )}
+          </MobileCardsContainer>
         </CardContent>
       </Card>
 

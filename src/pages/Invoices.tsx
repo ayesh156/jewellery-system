@@ -23,7 +23,7 @@ import { Input } from '../components/ui/Input';
 import { Combobox } from '../components/ui/Combobox';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, MobileCard, MobileCardHeader, MobileCardContent, MobileCardRow, MobileCardActions, MobileCardsContainer } from '../components/ui/Table';
 import { mockInvoices, mockCustomers } from '../data/mockData';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import type { Invoice, InvoiceStatus, PaymentMethod } from '../types';
@@ -273,7 +273,8 @@ export function Invoices() {
 
       {/* Invoices Table */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 md:p-0">
+          {/* Desktop Table */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -357,6 +358,62 @@ export function Invoices() {
               ))}
             </TableBody>
           </Table>
+
+          {/* Mobile Cards */}
+          <MobileCardsContainer className="p-4">
+            {filteredInvoices.map((invoice) => (
+              <MobileCard key={invoice.id}>
+                <MobileCardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/10 flex items-center justify-center">
+                      <FileText className="w-6 h-6 text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-800 dark:text-slate-200">{invoice.invoiceNumber}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">{invoice.customerName}</p>
+                    </div>
+                  </div>
+                  {getStatusBadge(invoice.status)}
+                </MobileCardHeader>
+                <MobileCardContent>
+                  <MobileCardRow label="Date" value={formatDate(invoice.createdAt)} />
+                  <MobileCardRow label="Items" value={`${invoice.items.length} items`} />
+                  <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700/50">
+                    <div className="text-center">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Total</p>
+                      <p className="font-bold text-slate-800 dark:text-slate-200">{formatCurrency(invoice.total)}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Paid</p>
+                      <p className="font-bold text-emerald-500">{formatCurrency(invoice.amountPaid)}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Balance</p>
+                      <p className="font-bold text-amber-500">{formatCurrency(invoice.balanceDue)}</p>
+                    </div>
+                  </div>
+                </MobileCardContent>
+                <MobileCardActions>
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => openViewModal(invoice)}>
+                    <Eye className="w-4 h-4" />
+                    View
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => handlePrint(invoice)}>
+                    <Printer className="w-4 h-4" />
+                  </Button>
+                  {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
+                    <Button variant="ghost" size="icon" onClick={() => openPaymentModal(invoice)} className="text-emerald-400 hover:text-emerald-300">
+                      <DollarSign className="w-4 h-4" />
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="icon" onClick={() => openDeleteModal(invoice)} className="text-red-400 hover:text-red-300">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </MobileCardActions>
+              </MobileCard>
+            ))}
+          </MobileCardsContainer>
+
           {filteredInvoices.length === 0 && (
             <div className="p-8 text-center">
               <FileText className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />

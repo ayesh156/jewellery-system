@@ -27,6 +27,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  MobileCard,
+  MobileCardHeader,
+  MobileCardContent,
+  MobileCardRow,
+  MobileCardActions,
+  MobileCardsContainer,
 } from '../components/ui/Table';
 import type { Customer, CustomerType } from '../types';
 
@@ -413,7 +419,8 @@ export function Customers() {
 
       {/* Customers Table */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 md:p-0">
+          {/* Desktop Table */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -508,6 +515,78 @@ export function Customers() {
               })}
             </TableBody>
           </Table>
+
+          {/* Mobile Cards */}
+          <MobileCardsContainer className="p-4">
+            {filteredCustomers.map((customer) => {
+              const stats = getCustomerStats(customer.id);
+              return (
+                <MobileCard key={customer.id}>
+                  <MobileCardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/10 flex items-center justify-center">
+                        <span className="text-lg font-semibold text-blue-400">
+                          {getInitials(customer.name)}
+                        </span>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-slate-800 dark:text-slate-200">{customer.name}</p>
+                          {getCustomerTypeIcon(customer.customerType)}
+                        </div>
+                        {customer.businessName && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{customer.businessName}</p>
+                        )}
+                      </div>
+                    </div>
+                    {getCustomerTypeBadge(customer.customerType)}
+                  </MobileCardHeader>
+                  <MobileCardContent>
+                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                      <Phone className="w-4 h-4" />
+                      {formatPhone(customer.phone)}
+                    </div>
+                    {customer.email && (
+                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                        <Mail className="w-4 h-4" />
+                        <span className="truncate">{customer.email}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                      <MapPin className="w-4 h-4" />
+                      {customer.city}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700/50">
+                      <div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Total Purchased</p>
+                        <p className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(stats.totalSpent)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Credit Balance</p>
+                        <p className={`font-semibold ${customer.creditBalance && customer.creditBalance > 0 ? 'text-amber-500' : 'text-slate-600 dark:text-slate-400'}`}>
+                          {formatCurrency(customer.creditBalance || 0)}
+                        </p>
+                      </div>
+                    </div>
+                  </MobileCardContent>
+                  <MobileCardActions>
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => openViewModal(customer)}>
+                      <Eye className="w-4 h-4" />
+                      View
+                    </Button>
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditModal(customer)}>
+                      <Edit className="w-4 h-4" />
+                      Edit
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => openDeleteModal(customer)} className="text-red-400 hover:text-red-300">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </MobileCardActions>
+                </MobileCard>
+              );
+            })}
+          </MobileCardsContainer>
+
           {filteredCustomers.length === 0 && (
             <div className="p-8 text-center">
               <Users className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />

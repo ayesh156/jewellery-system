@@ -99,7 +99,11 @@ const Select = ({
   // Handle click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const clickedInContainer = containerRef.current?.contains(target);
+      const clickedInDropdown = dropdownRef.current?.contains(target);
+      
+      if (!clickedInContainer && !clickedInDropdown) {
         setIsOpen(false);
       }
     };
@@ -129,15 +133,27 @@ const Select = ({
   // Position dropdown in a portal to avoid clipping
   useLayoutEffect(() => {
     if (!isOpen || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const style: React.CSSProperties = {
-      top: rect.bottom + window.scrollY,
-      left: rect.left + window.scrollX,
-      width: rect.width,
-      // ensure it sits above other elements
-      zIndex: 9999,
+
+    const updatePosition = () => {
+      const rect = containerRef.current!.getBoundingClientRect();
+      const style: React.CSSProperties = {
+        position: 'fixed',
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: Math.max(rect.width, 180),
+        zIndex: 9999,
+      };
+      setDropdownStyle(style);
     };
-    setDropdownStyle(style);
+
+    updatePosition();
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
   }, [isOpen]);
 
   const handleToggle = useCallback(() => {
@@ -228,15 +244,54 @@ const Select = ({
   };
 
   return (
-    <div className={cn('relative', className)} ref={containerRef}>
+    <div className={cn('relative w-full', className)} ref={containerRef}>
       {/* Label */}
+      {label && (
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+          {label}
+          {required && <span className="text-red-400 ml-1">*</span>}
+        </label>
+      )}
+
+      {/* Trigger Button */}
+      <div
+        role="combobox"
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        tabIndex={disabled ? -1 : 0}
+        className={cn(
+          'relative flex items-center justify-between h-10 w-full rounded-lg border px-3 py-2',
+          'bg-white dark:bg-slate-800/80 transition-all duration-200 cursor-pointer',
+          'focus:outline-none focus:ring-2 focus:ring-amber-500/50 dark:focus:ring-slate-600 focus:border-amber-500 dark:focus:border-slate-600',
+          disabled && 'cursor-not-allowed opacity-50',
+          error
+            ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500'
+            : 'border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600'
+        )}
+        onClick={handleToggle}
+        onKeyDown={handleKeyDown}
+      >
+        <span className={cn(
+          'text-sm truncate flex-1',
+          selectedOption ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'
+        )}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        <ChevronDown
+          className={cn(
+            'w-4 h-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 shrink-0 ml-2',
+            isOpen && 'rotate-180'
+          )}
+        />
+      </div>
+
       {/* Dropdown Menu (portal) */}
       {createPortal(
         <div
           ref={dropdownRef}
           className={cn(
-            'absolute z-50 rounded-md overflow-hidden',
-            'bg-white dark:bg-slate-700 shadow-xl shadow-black/10 dark:shadow-black/30 border border-slate-200 dark:border-slate-600',
+            'rounded-lg overflow-hidden',
+            'bg-white dark:bg-slate-800 shadow-xl shadow-black/10 dark:shadow-black/30 border border-slate-200 dark:border-slate-600',
             'transition-all duration-150 ease-out origin-top',
             isOpen ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-95 pointer-events-none'
           )}

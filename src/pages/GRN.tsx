@@ -21,7 +21,7 @@ import { Input } from '../components/ui/Input';
 import { Combobox } from '../components/ui/Combobox';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, MobileCard, MobileCardHeader, MobileCardContent, MobileCardRow, MobileCardActions, MobileCardsContainer } from '../components/ui/Table';
 import { mockGRNs, mockSuppliers } from '../data/mockData';
 import { formatCurrency, formatDate, formatWeight } from '../utils/formatters';
 import type { GRN, GRNStatus } from '../types';
@@ -234,7 +234,8 @@ export function GRNPage() {
 
       {/* GRN Table */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 md:p-0">
+          {/* Desktop Table */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -314,6 +315,55 @@ export function GRNPage() {
               ))}
             </TableBody>
           </Table>
+
+          {/* Mobile Cards */}
+          <MobileCardsContainer className="p-4">
+            {filteredGRNs.map((grn) => (
+              <MobileCard key={grn.id}>
+                <MobileCardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/10 flex items-center justify-center">
+                      <Truck className="w-6 h-6 text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-800 dark:text-slate-200">{grn.grnNumber}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">{grn.supplierName}</p>
+                    </div>
+                  </div>
+                  {getStatusBadge(grn.status)}
+                </MobileCardHeader>
+                <MobileCardContent>
+                  {grn.purchaseOrderNumber && (
+                    <MobileCardRow label="PO Number" value={grn.purchaseOrderNumber} />
+                  )}
+                  <MobileCardRow label="Date" value={formatDate(grn.createdAt)} />
+                  <MobileCardRow label="Items" value={`${grn.items.length} items`} />
+                  <MobileCardRow 
+                    label="Total" 
+                    value={<span className="text-amber-500 font-bold">{formatCurrency(grn.total)}</span>} 
+                  />
+                </MobileCardContent>
+                <MobileCardActions>
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => openViewModal(grn)}>
+                    <Eye className="w-4 h-4" />
+                    View
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => handlePrint(grn)}>
+                    <Printer className="w-4 h-4" />
+                  </Button>
+                  {grn.status === 'pending' && (
+                    <Button variant="ghost" size="icon" onClick={() => handleUpdateStatus(grn.id, 'received')} className="text-emerald-400 hover:text-emerald-300">
+                      <CheckCircle className="w-4 h-4" />
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="icon" onClick={() => openDeleteModal(grn)} className="text-red-400 hover:text-red-300">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </MobileCardActions>
+              </MobileCard>
+            ))}
+          </MobileCardsContainer>
+
           {filteredGRNs.length === 0 && (
             <div className="p-8 text-center">
               <Truck className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
@@ -362,40 +412,73 @@ export function GRNPage() {
             {/* Items */}
             <div>
               <h4 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3">Items Received</h4>
-              <div className="rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-slate-100 dark:bg-slate-800/50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Item</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Qty</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Weight</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Cost</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200 dark:divide-slate-700/50">
-                    {selectedGRN.items.map((item, index) => (
-                      <tr key={index}>
-                        <td className="px-4 py-3">
-                          <p className="text-slate-800 dark:text-slate-200">{item.productName}</p>
-                          <p className="text-xs text-slate-600 dark:text-slate-400">{item.sku}</p>
-                        </td>
-                        <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">
-                          {item.quantity}
-                        </td>
-                        <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">
-                          {item.metalWeight ? formatWeight(item.metalWeight) : '-'}
-                        </td>
-                        <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">
-                          {formatCurrency(item.unitCost)}
-                        </td>
-                        <td className="px-4 py-3 text-right text-slate-800 dark:text-slate-200">
-                          {formatCurrency(item.total)}
-                        </td>
+              
+              {/* Mobile Cards View */}
+              <div className="space-y-3 sm:hidden">
+                {selectedGRN.items.map((item, index) => (
+                  <div key={index} className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-slate-800 dark:text-slate-200 truncate">{item.productName}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">{item.sku}</p>
+                      </div>
+                      <p className="text-lg font-bold text-amber-500 dark:text-amber-400 ml-3">{formatCurrency(item.total)}</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 text-sm">
+                      <div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-0.5">Qty</p>
+                        <p className="font-medium text-slate-700 dark:text-slate-300">{item.quantity}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-0.5">Weight</p>
+                        <p className="font-medium text-slate-700 dark:text-slate-300">{item.metalWeight ? formatWeight(item.metalWeight) : '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-0.5">Unit Cost</p>
+                        <p className="font-medium text-slate-700 dark:text-slate-300">{formatCurrency(item.unitCost)}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden sm:block rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[500px]">
+                    <thead className="bg-slate-100 dark:bg-slate-800/50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Item</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 dark:text-slate-400 uppercase whitespace-nowrap">Qty</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 dark:text-slate-400 uppercase whitespace-nowrap">Weight</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 dark:text-slate-400 uppercase whitespace-nowrap">Cost</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 dark:text-slate-400 uppercase whitespace-nowrap">Total</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 dark:divide-slate-700/50">
+                      {selectedGRN.items.map((item, index) => (
+                        <tr key={index}>
+                          <td className="px-4 py-3">
+                            <p className="text-slate-800 dark:text-slate-200">{item.productName}</p>
+                            <p className="text-xs text-slate-600 dark:text-slate-400">{item.sku}</p>
+                          </td>
+                          <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                            {item.quantity}
+                          </td>
+                          <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                            {item.metalWeight ? formatWeight(item.metalWeight) : '-'}
+                          </td>
+                          <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                            {formatCurrency(item.unitCost)}
+                          </td>
+                          <td className="px-4 py-3 text-right text-slate-800 dark:text-slate-200 font-semibold whitespace-nowrap">
+                            {formatCurrency(item.total)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 

@@ -199,24 +199,26 @@ export function CreateInvoice() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" onClick={() => navigate('/invoices')}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Create Invoice</h1>
-            <p className="mt-1 text-slate-600 dark:text-slate-400">Create a new sales invoice</p>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Create Invoice</h1>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Create a new sales invoice</p>
           </div>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={() => handleSaveInvoice('draft')}>
+        <div className="flex gap-2 sm:gap-3">
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none sm:size-default" onClick={() => handleSaveInvoice('draft')}>
             <Save className="w-4 h-4" />
-            Save Draft
+            <span className="hidden sm:inline">Save Draft</span>
+            <span className="sm:hidden">Draft</span>
           </Button>
-          <Button variant="gold" onClick={() => handleSaveInvoice('pending')}>
+          <Button variant="gold" size="sm" className="flex-1 sm:flex-none sm:size-default" onClick={() => handleSaveInvoice('pending')}>
             <FileText className="w-4 h-4" />
-            Create Invoice
+            <span className="hidden sm:inline">Create Invoice</span>
+            <span className="sm:hidden">Create</span>
           </Button>
         </div>
       </div>
@@ -312,12 +314,12 @@ export function CreateInvoice() {
 
           {/* Product Selection */}
           <Card className="relative z-20 overflow-visible">
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center gap-4">
               <CardTitle className="flex items-center gap-2">
                 <Gem className="w-5 h-5 text-amber-400" />
                 Items
               </CardTitle>
-              <div className="relative w-80">
+              <div className="relative w-full sm:w-80 sm:ml-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
                   placeholder="Add product..."
@@ -331,7 +333,7 @@ export function CreateInvoice() {
                   className="pl-10"
                 />
                 {showProductSearch && productSearchQuery && (
-                  <div className="absolute z-[9999] w-80 mt-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xl max-h-64 overflow-y-auto right-0">
+                  <div className="absolute z-[9999] w-full sm:w-80 mt-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xl max-h-64 overflow-y-auto right-0">
                     {filteredProducts.length > 0 ? (
                       filteredProducts.map((product) => (
                         <button
@@ -370,48 +372,55 @@ export function CreateInvoice() {
                   {invoiceItems.map((item) => (
                     <div
                       key={item.productId}
-                      className="flex items-center gap-4 p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50"
+                      className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50"
                     >
-                      <div className="w-12 h-12 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                        <Gem className="w-6 h-6 text-amber-400" />
+                      {/* Product info */}
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
+                          <Gem className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-slate-800 dark:text-slate-200 truncate">{item.productName}</p>
+                          <p className="text-sm text-slate-600 dark:text-slate-400 truncate">{item.description}</p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-slate-800 dark:text-slate-200">{item.productName}</p>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">{item.description}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
+                      
+                      {/* Quantity, Price, and Remove */}
+                      <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleUpdateQuantity(item.productId!, item.quantity - 1)}
+                          >
+                            -
+                          </Button>
+                          <span className="w-8 text-center text-slate-800 dark:text-slate-200">{item.quantity}</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleUpdateQuantity(item.productId!, item.quantity + 1)}
+                          >
+                            +
+                          </Button>
+                        </div>
+                        <div className="text-right min-w-[80px]">
+                          <p className="font-semibold text-slate-800 dark:text-slate-200">
+                            {formatCurrency(item.total)}
+                          </p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400">
+                            @ {formatCurrency(item.unitPrice)}
+                          </p>
+                        </div>
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="icon"
-                          onClick={() => handleUpdateQuantity(item.productId!, item.quantity - 1)}
+                          onClick={() => handleRemoveItem(item.productId!)}
+                          className="text-red-400 hover:text-red-300"
                         >
-                          -
-                        </Button>
-                        <span className="w-8 text-center text-slate-800 dark:text-slate-200">{item.quantity}</span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleUpdateQuantity(item.productId!, item.quantity + 1)}
-                        >
-                          +
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                      <div className="w-24 text-right">
-                        <p className="font-semibold text-slate-800 dark:text-slate-200">
-                          {formatCurrency(item.total)}
-                        </p>
-                        <p className="text-xs text-slate-600 dark:text-slate-400">
-                          @ {formatCurrency(item.unitPrice)}
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveItem(item.productId!)}
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
                     </div>
                   ))}
                 </div>

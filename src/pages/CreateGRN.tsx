@@ -184,24 +184,26 @@ export function CreateGRN() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" onClick={() => navigate('/grn')}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Create GRN</h1>
-            <p className="mt-1 text-slate-600 dark:text-slate-400">Record a new goods received note</p>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Create GRN</h1>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Record a new goods received note</p>
           </div>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={() => handleSaveGRN('pending')}>
+        <div className="flex gap-2 sm:gap-3">
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={() => handleSaveGRN('pending')}>
             <Save className="w-4 h-4" />
-            Save as Pending
+            <span className="hidden sm:inline">Save as Pending</span>
+            <span className="sm:hidden">Pending</span>
           </Button>
-          <Button variant="gold" onClick={() => handleSaveGRN('received')}>
+          <Button variant="gold" size="sm" className="flex-1 sm:flex-none" onClick={() => handleSaveGRN('received')}>
             <FileText className="w-4 h-4" />
-            Mark as Received
+            <span className="hidden sm:inline">Mark as Received</span>
+            <span className="sm:hidden">Received</span>
           </Button>
         </div>
       </div>

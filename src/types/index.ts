@@ -200,6 +200,7 @@ export interface Invoice {
   
   // Tracking
   createdBy?: string;
+  createdByUserId?: string;  // Unique user identifier (e.g., USR-01)
   createdAt: string;
   updatedAt?: string;
 }
@@ -474,6 +475,7 @@ export interface RepairJob {
   
   // Tracking
   receivedBy: string;
+  receivedByUserId?: string;  // Unique user identifier (e.g., USR-01)
   assignedTo?: string;
   createdAt: string;
   updatedAt: string;
@@ -627,6 +629,7 @@ export interface PawnTicket {
   
   // Tracking
   createdBy: string;
+  createdByUserId?: string;  // Unique user identifier (e.g., USR-01)
   createdAt: string;
   updatedAt: string;
 }

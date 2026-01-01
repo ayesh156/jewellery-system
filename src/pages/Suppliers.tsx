@@ -22,7 +22,7 @@ import { Input } from '../components/ui/Input';
 import { Combobox } from '../components/ui/Combobox';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, MobileCard, MobileCardHeader, MobileCardContent, MobileCardRow, MobileCardActions, MobileCardsContainer } from '../components/ui/Table';
 import { mockSuppliers, mockGRNs } from '../data/mockData';
 import { formatCurrency, formatPhone, formatDate } from '../utils/formatters';
 import type { Supplier } from '../types';
@@ -243,7 +243,8 @@ export function Suppliers() {
 
       {/* Suppliers Table */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 md:p-0">
+          {/* Desktop Table */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -333,6 +334,73 @@ export function Suppliers() {
               })}
             </TableBody>
           </Table>
+
+          {/* Mobile Cards */}
+          <MobileCardsContainer className="p-4">
+            {filteredSuppliers.map((supplier) => {
+              const stats = getSupplierStats(supplier.id);
+              return (
+                <MobileCard key={supplier.id}>
+                  <MobileCardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/10 flex items-center justify-center">
+                        <Building2 className="w-6 h-6 text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-800 dark:text-slate-200">{supplier.companyName}</p>
+                        {supplier.contactPerson && (
+                          <p className="text-sm text-slate-500 dark:text-slate-400">{supplier.contactPerson}</p>
+                        )}
+                      </div>
+                    </div>
+                    <Badge variant={supplier.isActive ? 'success' : 'error'}>
+                      {supplier.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </MobileCardHeader>
+                  <MobileCardContent>
+                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                      <Phone className="w-4 h-4" />
+                      {formatPhone(supplier.phone)}
+                    </div>
+                    {supplier.email && (
+                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                        <Mail className="w-4 h-4" />
+                        <span className="truncate">{supplier.email}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                      <Globe className="w-4 h-4" />
+                      {supplier.city}, {supplier.country}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700/50">
+                      <div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Total Purchases</p>
+                        <p className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(stats.totalPurchases)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">GRNs</p>
+                        <p className="font-semibold text-slate-800 dark:text-slate-200">{stats.grnCount}</p>
+                      </div>
+                    </div>
+                  </MobileCardContent>
+                  <MobileCardActions>
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => openViewModal(supplier)}>
+                      <Eye className="w-4 h-4" />
+                      View
+                    </Button>
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditModal(supplier)}>
+                      <Edit className="w-4 h-4" />
+                      Edit
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => openDeleteModal(supplier)} className="text-red-400 hover:text-red-300">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </MobileCardActions>
+                </MobileCard>
+              );
+            })}
+          </MobileCardsContainer>
+
           {filteredSuppliers.length === 0 && (
             <div className="p-8 text-center">
               <Truck className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />

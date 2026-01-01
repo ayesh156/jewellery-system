@@ -8,4 +8,17 @@ export { DateCombobox, type DateComboboxProps } from './DateCombobox';
 export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './Card';
 export { Badge } from './Badge';
 export { Modal, ModalContent, ModalFooter } from './Modal';
-export { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './Table';
+export { 
+  Table, 
+  TableHeader, 
+  TableBody, 
+  TableRow, 
+  TableHead, 
+  TableCell,
+  MobileCard,
+  MobileCardHeader,
+  MobileCardContent,
+  MobileCardRow,
+  MobileCardActions,
+  MobileCardsContainer,
+} from './Table';

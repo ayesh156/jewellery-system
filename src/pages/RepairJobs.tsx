@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
+import { Combobox } from '../components/ui/Combobox';
 import { Badge } from '../components/ui/Badge';
 import { Modal, ModalContent } from '../components/ui/Modal';
 import { mockRepairJobs } from '../data/mockData';
@@ -538,23 +539,23 @@ export function RepairJobs() {
         title="Update Job Status"
       >
         {selectedJob && (
-          <div className="space-y-4">
+          <div className="px-5 sm:px-6 py-5 space-y-4">
             <div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Current Status</p>
               {getStatusBadge(selectedJob.status)}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">New Status</label>
-              <Select
-                value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value as RepairStatus)}
-              >
-                {Object.entries(statusConfig).map(([key, config]) => (
-                  <option key={key} value={key}>{config.label}</option>
-                ))}
-              </Select>
-            </div>
+            <Combobox
+              label="New Status"
+              value={newStatus}
+              onChange={(val) => setNewStatus(val as RepairStatus)}
+              options={Object.entries(statusConfig).map(([key, config]) => ({
+                value: key,
+                label: config.label,
+                icon: <div className={`w-2 h-2 rounded-full ${config.color}`} />
+              }))}
+              placeholder="Select new status..."
+            />
 
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Notes (Optional)</label>
@@ -566,7 +567,7 @@ export function RepairJobs() {
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-4">
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
               <Button variant="outline" onClick={() => setShowUpdateModal(false)}>
                 Cancel
               </Button>

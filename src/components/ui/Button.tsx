@@ -23,12 +23,12 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             'bg-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:ring-slate-500': variant === 'ghost',
             'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500': variant === 'destructive',
           },
-          // Sizes
+          // Sizes - responsive text sizing to prevent text breaks on mobile
           {
-            'h-8 px-3 text-sm': size === 'sm',
-            'h-10 px-4 text-sm': size === 'md',
-            'h-12 px-6 text-base': size === 'lg',
-            'h-10 w-10 p-0': size === 'icon',
+            'h-8 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap': size === 'sm',
+            'h-9 sm:h-10 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap': size === 'md',
+            'h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base whitespace-nowrap': size === 'lg',
+            'h-9 w-9 sm:h-10 sm:w-10 p-0': size === 'icon',
           },
           className
         )}

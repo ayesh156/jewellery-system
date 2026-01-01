@@ -309,29 +309,29 @@ export function CreatePawnTicket() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/pawning')}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">New Pawn Ticket</h1>
-            <p className="text-slate-600 dark:text-slate-400 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">New Pawn Ticket</h1>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
               Ticket #: <span className="font-mono text-amber-600 dark:text-amber-400">{ticketNumber}</span>
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => navigate('/pawning')}>
+          <Button variant="outline" size="sm" className="hidden sm:flex" onClick={() => navigate('/pawning')}>
             Cancel
           </Button>
-          <Button variant="secondary" onClick={() => handleSave(true)}>
-            <Printer className="w-4 h-4 mr-2" />
-            Save & Print
+          <Button variant="secondary" size="sm" onClick={() => handleSave(true)}>
+            <Printer className="w-4 h-4" />
+            <span className="hidden sm:inline ml-2">Save & Print</span>
           </Button>
-          <Button variant="primary" onClick={() => handleSave(false)}>
-            <Save className="w-4 h-4 mr-2" />
-            Save Ticket
+          <Button variant="primary" size="sm" onClick={() => handleSave(false)}>
+            <Save className="w-4 h-4" />
+            <span className="hidden sm:inline ml-2">Save Ticket</span>
           </Button>
         </div>
       </div>
