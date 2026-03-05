@@ -16,7 +16,7 @@ This is a **Jewellery Management System** (React SPA) for the Sri Lankan retail 
 - **Lucide React** — icon library
 - **Radix UI** — accessible select primitives
 - **clsx + tailwind-merge** — class name composition via `cn()` utility
-- **pnpm** — package manager (NOT npm or yarn)
+- **npm** — package manager
 
 ---
 
@@ -128,14 +128,14 @@ Key route patterns:
 ## Build & Deployment
 
 ```bash
-pnpm install          # Install dependencies
-pnpm run dev          # Dev server at http://localhost:5173
-pnpm run build        # TypeScript check + Vite production build → dist/
-pnpm run preview      # Preview production build locally
+npm install          # Install dependencies
+npm run dev          # Dev server at http://localhost:5173
+npm run build        # TypeScript check + Vite production build → dist/
+npm run preview      # Preview production build locally
 ```
 
 **Deployed on Render.com** as a static site (see `render.yaml`):
-- Build: `pnpm install && pnpm run build`
+- Build: `npm install && npm run build`
 - Publish: `./dist`
 - SPA rewrite: `/*` → `/index.html`
 
