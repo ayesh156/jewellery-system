@@ -20,27 +20,34 @@ This is a **Jewellery Management System** (React SPA) for the Sri Lankan retail 
 
 ---
 
-## Project Structure
+## Project Structure (Monorepo)
 
 ```
-src/
-├── main.tsx                    # Entry — StrictMode + BrowserRouter + ThemeProvider
-├── App.tsx                     # All 20+ routes defined here
-├── index.css                   # Tailwind directives
-├── types/index.ts              # Complete type system (600+ lines)
-├── utils/
-│   ├── cn.ts                   # cn() = clsx + tailwind-merge
-│   ├── formatters.ts           # 18 formatting functions (currency, date, weight, etc.)
-│   └── pawnCalculations.ts     # 15+ pawn interest calculation functions
-├── contexts/ThemeContext.tsx    # Dark/Light/System theme provider
-├── data/
-│   ├── mockData.ts             # 50+ mock records (all business entities)
-│   └── sampleData.ts           # Sample data structures
-├── components/
-│   ├── Layout.tsx              # Sidebar nav with collapsible submenus + theme toggle
-│   ├── Printable*.tsx          # 6 print templates (A5 & 80mm thermal)
-│   └── ui/                     # 12 reusable UI components (Button, Card, Table, Modal, etc.)
-└── pages/                      # 18 page components
+├── frontend/                   # React SPA (Vite)
+│   ├── src/
+│   │   ├── main.tsx            # Entry — StrictMode + BrowserRouter + ThemeProvider
+│   │   ├── App.tsx             # All 20+ routes defined here
+│   │   ├── index.css           # Tailwind directives
+│   │   ├── types/index.ts      # Complete type system (600+ lines)
+│   │   ├── utils/
+│   │   │   ├── cn.ts           # cn() = clsx + tailwind-merge
+│   │   │   ├── formatters.ts   # 18 formatting functions (currency, date, weight, etc.)
+│   │   │   └── pawnCalculations.ts  # 15+ pawn interest calculation functions
+│   │   ├── contexts/ThemeContext.tsx # Dark/Light/System theme provider
+│   │   ├── data/
+│   │   │   ├── mockData.ts     # 50+ mock records (all business entities)
+│   │   │   └── sampleData.ts   # Sample data structures
+│   │   ├── components/
+│   │   │   ├── Layout.tsx      # Sidebar nav with collapsible submenus + theme toggle
+│   │   │   ├── Printable*.tsx  # 6 print templates (A5 & 80mm thermal)
+│   │   │   └── ui/            # 12 reusable UI components (Button, Card, Table, Modal, etc.)
+│   │   └── pages/             # 18 page components
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── vercel.json
+│   └── tsconfig.json
+├── backend/                    # (planned) Backend API
+└── README.md
 ```
 
 ---
@@ -128,13 +135,15 @@ Key route patterns:
 ## Build & Deployment
 
 ```bash
+cd frontend
 npm install          # Install dependencies
 npm run dev          # Dev server at http://localhost:5173
 npm run build        # TypeScript check + Vite production build → dist/
 npm run preview      # Preview production build locally
 ```
 
-**Deployed on Vercel** as a static site (see `vercel.json`):
+**Deployed on Vercel** as a static site (see `frontend/vercel.json`):
+- Root Directory: `frontend` (set in Vercel dashboard)
 - Build: `npm install && npm run build`
 - Output: `dist/`
 - SPA rewrite: `/*` → `/index.html`
