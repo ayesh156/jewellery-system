@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Package,
   Plus,
@@ -10,6 +10,9 @@ import {
   Gem,
   Layers,
   Tag,
+  Loader2,
+  RefreshCw,
+  X,
 } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -17,38 +20,71 @@ import { Input } from '../components/ui/Input';
 import { Combobox, type ComboboxOption } from '../components/ui/Combobox';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
+import { Pagination } from '../components/ui/Pagination';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, MobileCard, MobileCardHeader, MobileCardContent, MobileCardRow, MobileCardActions, MobileCardsContainer } from '../components/ui/Table';
-import { mockProducts, mockCategories } from '../data/mockData';
+import { categoriesApi, productsApi } from '../services/api';
 import { formatCurrency, formatWeight } from '../utils/formatters';
-import type { JewelleryItem, MetalType, GoldKarat } from '../types';
+import toast from 'react-hot-toast';
+import type { JewelleryItem, JewelleryCategory, MetalType, GoldKarat } from '../types';
 
 const metalTypes: MetalType[] = ['gold', 'silver', 'platinum', 'palladium', 'white-gold', 'rose-gold'];
 const karats: GoldKarat[] = ['24K', '22K', '21K', '18K', '14K', '10K', '9K'];
 
-// Convert categories to ComboboxOption format
-const categoryOptions: ComboboxOption[] = mockCategories.map((cat) => ({
-  value: cat.id,
-  label: cat.name,
-  icon: <Layers className="w-4 h-4" />,
-}));
-
-// Convert metal types to ComboboxOption format
 const metalOptions: ComboboxOption[] = metalTypes.map((metal) => ({
   value: metal,
   label: metal.charAt(0).toUpperCase() + metal.slice(1).replace('-', ' '),
   icon: <Gem className="w-4 h-4" />,
 }));
 
+// Convert API numeric strings to frontend numbers
+function toProduct(raw: any): JewelleryItem {
+  return {
+    ...raw,
+    metalWeight: Number(raw.metalWeight),
+    metalPurity: raw.metalPurity != null ? Number(raw.metalPurity) : undefined,
+    metalRate: Number(raw.metalRate),
+    makingCharges: Number(raw.makingCharges),
+    gemstoneValue: raw.gemstoneValue != null ? Number(raw.gemstoneValue) : undefined,
+    otherCharges: raw.otherCharges != null ? Number(raw.otherCharges) : undefined,
+    sellingPrice: Number(raw.sellingPrice),
+    costPrice: Number(raw.costPrice),
+    totalGemstoneWeight: raw.totalGemstoneWeight != null ? Number(raw.totalGemstoneWeight) : undefined,
+  };
+}
+
+// Convert frontend numbers to API numeric strings, stripping nulls
+function toApiData(data: Partial<JewelleryItem>) {
+  const out: Record<string, unknown> = {};
+  const numericKeys = new Set(['metalWeight', 'metalPurity', 'metalRate', 'makingCharges', 'gemstoneValue', 'otherCharges', 'sellingPrice', 'costPrice', 'totalGemstoneWeight']);
+  for (const [key, value] of Object.entries(data)) {
+    if (value === null || value === undefined) continue;
+    out[key] = numericKeys.has(key) ? String(value) : value;
+  }
+  return out;
+}
+
 export function Products() {
-  const [products, setProducts] = useState<JewelleryItem[]>(mockProducts);
+  // Data state
+  const [products, setProducts] = useState<JewelleryItem[]>([]);
+  const [categories, setCategories] = useState<JewelleryCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [metalFilter, setMetalFilter] = useState('');
+
+  // Modals
   const [showAddModal, setShowAddModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<JewelleryItem | null>(null);
   const [editMode, setEditMode] = useState(false);
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(6);
 
   // Form state
   const [formData, setFormData] = useState<Partial<JewelleryItem>>({
@@ -69,6 +105,40 @@ export function Products() {
     hasGemstones: false,
   });
 
+  // ==========================================
+  // Data Loading
+  // ==========================================
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [productsRes, categoriesRes] = await Promise.all([
+        productsApi.getAll({ limit: 100 }),
+        categoriesApi.getAll(),
+      ]);
+      setProducts(productsRes.data.map(toProduct));
+      setCategories(categoriesRes.data);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Dynamic category options from API data
+  const categoryOptions: ComboboxOption[] = useMemo(() =>
+    categories.map((cat) => ({
+      value: cat.id,
+      label: cat.name,
+      icon: <Layers className="w-4 h-4" />,
+    })),
+    [categories]
+  );
+
   // Filter products
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -84,6 +154,17 @@ export function Products() {
     });
   }, [products, searchQuery, categoryFilter, metalFilter]);
 
+  // Paginated products
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredProducts.slice(start, start + pageSize);
+  }, [filteredProducts, currentPage, pageSize]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, categoryFilter, metalFilter]);
+
   // Stats
   const totalValue = products.reduce((sum, p) => sum + p.sellingPrice * p.stockQuantity, 0);
   const lowStockCount = products.filter((p) => p.stockQuantity <= (p.reorderLevel || 2)).length;
@@ -92,31 +173,51 @@ export function Products() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
-    if (editMode && selectedProduct) {
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === selectedProduct.id ? { ...p, ...formData, lastUpdated: new Date().toISOString() } : p
-        )
-      );
-    } else {
-      const newProduct: JewelleryItem = {
-        ...formData,
-        id: `JI${String(products.length + 1).padStart(3, '0')}`,
-        dateAdded: new Date().toISOString(),
-        lastUpdated: new Date().toISOString(),
-        metalRate: 18500,
-      } as JewelleryItem;
-      setProducts((prev) => [...prev, newProduct]);
+  const handleSubmit = async () => {
+    if (!formData.name || !formData.sku || !formData.categoryId) {
+      toast.error('Please fill in required fields: Name, SKU, and Category');
+      return;
     }
-    resetForm();
+    setSaving(true);
+    try {
+      if (editMode && selectedProduct) {
+        const { id: _id, dateAdded: _da, lastUpdated: _lu, categoryName: _cn, ...updateData } = formData as any;
+        const res = await productsApi.update(selectedProduct.id, toApiData(updateData));
+        setProducts((prev) =>
+          prev.map((p) => (p.id === selectedProduct.id ? toProduct(res.data) : p))
+        );
+        toast.success('Product updated successfully');
+      } else {
+        const createData = {
+          ...toApiData(formData),
+          id: `prod-${Date.now()}`,
+          metalRate: String(formData.metalRate || 18500),
+        };
+        const res = await productsApi.create(createData);
+        setProducts((prev) => [...prev, toProduct(res.data)]);
+        toast.success('Product added successfully');
+      }
+      resetForm();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save product');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDelete = () => {
-    if (selectedProduct) {
+  const handleDelete = async () => {
+    if (!selectedProduct) return;
+    setSaving(true);
+    try {
+      await productsApi.delete(selectedProduct.id);
       setProducts((prev) => prev.filter((p) => p.id !== selectedProduct.id));
       setShowDeleteModal(false);
       setSelectedProduct(null);
+      toast.success('Product deleted successfully');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete product');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -145,7 +246,19 @@ export function Products() {
 
   const openEditModal = (product: JewelleryItem) => {
     setSelectedProduct(product);
-    setFormData(product);
+    setFormData({
+      ...product,
+      barcode: product.barcode ?? '',
+      description: product.description ?? '',
+      karat: product.karat ?? undefined,
+      metalPurity: product.metalPurity ?? undefined,
+      totalGemstoneWeight: product.totalGemstoneWeight ?? undefined,
+      gemstoneValue: product.gemstoneValue ?? undefined,
+      otherCharges: product.otherCharges ?? undefined,
+      reorderLevel: product.reorderLevel ?? 2,
+      supplierId: product.supplierId ?? undefined,
+      supplierName: product.supplierName ?? undefined,
+    });
     setEditMode(true);
     setShowAddModal(true);
   };
@@ -160,6 +273,17 @@ export function Products() {
     setShowDeleteModal(true);
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-10 h-10 text-amber-500 animate-spin mx-auto" />
+          <p className="text-slate-600 dark:text-slate-400">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -168,10 +292,15 @@ export function Products() {
           <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Products</h1>
           <p className="mt-1 text-slate-600 dark:text-slate-400">Manage your jewellery inventory</p>
         </div>
-        <Button variant="gold" onClick={() => setShowAddModal(true)}>
-          <Plus className="w-4 h-4" />
-          Add Product
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={fetchData}>
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+          <Button variant="gold" onClick={() => setShowAddModal(true)}>
+            <Plus className="w-4 h-4" />
+            Add Product
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -222,11 +351,20 @@ export function Products() {
                   placeholder="Search by name, SKU, or barcode..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 pr-9"
                 />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
-            <div className="lg:w-56">
+            <div className="lg:w-64">
               <Combobox
                 options={categoryOptions}
                 value={categoryFilter}
@@ -240,7 +378,7 @@ export function Products() {
                 showFooter={false}
               />
             </div>
-            <div className="lg:w-48">
+            <div className="lg:w-56">
               <Combobox
                 options={metalOptions}
                 value={metalFilter}
@@ -276,7 +414,7 @@ export function Products() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProducts.map((product) => (
+              {paginatedProducts.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -351,7 +489,7 @@ export function Products() {
 
           {/* Mobile Cards */}
           <MobileCardsContainer className="p-4">
-            {filteredProducts.map((product) => (
+            {paginatedProducts.map((product) => (
               <MobileCard key={product.id}>
                 <MobileCardHeader>
                   <div className="flex items-center gap-3">
@@ -416,6 +554,19 @@ export function Products() {
               <p className="text-slate-600 dark:text-slate-400">No products found</p>
             </div>
           )}
+
+          {/* Pagination */}
+          {filteredProducts.length > 0 && (
+            <div className="border-t border-slate-200 dark:border-slate-700">
+              <Pagination
+                currentPage={currentPage}
+                totalItems={filteredProducts.length}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={setPageSize}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -431,7 +582,7 @@ export function Products() {
             <div>
               <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">Product Name</label>
               <Input
-                value={formData.name}
+                value={formData.name ?? ''}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 placeholder="e.g., Gold Wedding Ring"
               />
@@ -439,7 +590,7 @@ export function Products() {
             <div>
               <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">SKU</label>
               <Input
-                value={formData.sku}
+                value={formData.sku ?? ''}
                 onChange={(e) => handleInputChange('sku', e.target.value)}
                 placeholder="e.g., GWR-001"
               />
@@ -450,19 +601,19 @@ export function Products() {
             <div>
               <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">Barcode</label>
               <Input
-                value={formData.barcode}
+                value={formData.barcode ?? ''}
                 onChange={(e) => handleInputChange('barcode', e.target.value)}
                 placeholder="e.g., 8901234567890"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">Category</label>
+              <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">Category *</label>
               <Combobox
                 value={formData.categoryId}
                 onChange={(val) => handleInputChange('categoryId', val)}
                 options={[
                   { value: '', label: 'Select Category', icon: <Tag className="w-4 h-4" /> },
-                  ...mockCategories.map((cat) => ({
+                  ...categories.map((cat) => ({
                     value: cat.id,
                     label: cat.name,
                     icon: <Tag className="w-4 h-4" />
@@ -562,7 +713,7 @@ export function Products() {
             <textarea
               className="w-full px-4 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 resize-none"
               rows={3}
-              value={formData.description}
+              value={formData.description ?? ''}
               onChange={(e) => handleInputChange('description', e.target.value)}
               placeholder="Enter product description..."
             />
@@ -570,10 +721,11 @@ export function Products() {
 
         </div>
         <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
-          <Button variant="outline" onClick={resetForm}>
+          <Button variant="outline" onClick={resetForm} disabled={saving}>
             Cancel
           </Button>
-          <Button variant="gold" onClick={handleSubmit}>
+          <Button variant="gold" onClick={handleSubmit} disabled={saving}>
+            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
             {editMode ? 'Update Product' : 'Add Product'}
           </Button>
         </div>
@@ -668,10 +820,11 @@ export function Products() {
           </p>
         </div>
         <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
-            <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
+            <Button variant="outline" onClick={() => setShowDeleteModal(false)} disabled={saving}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button variant="destructive" onClick={handleDelete} disabled={saving}>
+              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               <Trash2 className="w-4 h-4" />
               Delete Product
             </Button>

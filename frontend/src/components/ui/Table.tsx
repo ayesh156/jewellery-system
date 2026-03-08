@@ -79,8 +79,9 @@ export function MobileCard({ children, className, onClick }: MobileCardProps) {
     <div
       onClick={onClick}
       className={cn(
-        'md:hidden p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700/50',
-        'shadow-sm hover:shadow-md transition-all duration-200',
+        'md:hidden p-4 bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700',
+        'shadow-md hover:shadow-lg transition-all duration-200',
+        'ring-1 ring-slate-900/5 dark:ring-slate-100/5',
         onClick && 'cursor-pointer active:scale-[0.99]',
         className
       )}
@@ -152,7 +153,7 @@ interface MobileCardsContainerProps {
 
 export function MobileCardsContainer({ children, className }: MobileCardsContainerProps) {
   return (
-    <div className={cn('md:hidden space-y-3', className)}>
+    <div className={cn('md:hidden space-y-4', className)}>
       {children}
     </div>
   );

@@ -1,13 +1,15 @@
-# Copilot Instructions — Royal Gems & Jewellers
+# Copilot Instructions — Onelka Jewellery
 
 ## Project Overview
 This is a **Jewellery Management System** (React SPA) for the Sri Lankan retail jewellery market. It handles inventory, sales invoicing, supplier purchases (GRN), repair job tracking, gold loan pawning with precise interest calculations, and business reporting.
 
-**Business:** Royal Gems & Jewellers | **Currency:** Sri Lankan Rupees (Rs.) | **Language:** English
+**Business:** Onelka Jewellery | **Currency:** Sri Lankan Rupees (Rs.) | **Language:** English
 
 ---
 
 ## Tech Stack
+
+### Frontend
 - **React 19.2.0** with React Compiler enabled (babel-plugin-react-compiler)
 - **TypeScript 5.9.3** in strict mode
 - **Vite 7.2.4** — build tool with manual chunk splitting
@@ -16,6 +18,13 @@ This is a **Jewellery Management System** (React SPA) for the Sri Lankan retail 
 - **Lucide React** — icon library
 - **Radix UI** — accessible select primitives
 - **clsx + tailwind-merge** — class name composition via `cn()` utility
+
+### Backend
+- **Node.js + Express.js** — REST API
+- **TypeScript** in strict mode
+- **Drizzle ORM** — lightweight TypeScript-native ORM
+- **Neon PostgreSQL** — serverless Postgres database
+- **Zod** — request validation
 - **npm** — package manager
 
 ---
@@ -46,7 +55,26 @@ This is a **Jewellery Management System** (React SPA) for the Sri Lankan retail 
 │   ├── vite.config.ts
 │   ├── vercel.json
 │   └── tsconfig.json
-├── backend/                    # (planned) Backend API
+├── backend/                    # Node.js + Express API
+│   ├── src/
+│   │   ├── index.ts            # Express server entry point
+│   │   ├── db/
+│   │   │   ├── schema.ts       # Drizzle ORM schema (all tables)
+│   │   │   └── index.ts        # Neon DB connection
+│   │   ├── routes/
+│   │   │   ├── categories.ts   # CRUD /api/categories
+│   │   │   ├── products.ts     # CRUD /api/products (search, pagination)
+│   │   │   ├── gold.ts         # /api/gold/rates, /api/gold/types
+│   │   │   └── company.ts      # /api/company (single-row config)
+│   │   ├── middleware/
+│   │   │   └── errorHandler.ts # AppError class + error middleware
+│   │   └── seed/
+│   │       ├── data.ts         # All seed data (categories, products, etc.)
+│   │       └── index.ts        # Seed runner script
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── drizzle.config.ts
+│   └── .env.example
 └── README.md
 ```
 
@@ -134,6 +162,7 @@ Key route patterns:
 
 ## Build & Deployment
 
+### Frontend
 ```bash
 cd frontend
 npm install          # Install dependencies
@@ -147,6 +176,20 @@ npm run preview      # Preview production build locally
 - Build: `npm install && npm run build`
 - Output: `dist/`
 - SPA rewrite: `/*` → `/index.html`
+
+### Backend
+```bash
+cd backend
+npm install          # Install dependencies
+npm run dev          # Dev server at http://localhost:3000 (tsx watch)
+npm run build        # TypeScript compile → dist/
+npm run db:push      # Push schema to Neon DB
+npm run db:seed      # Seed database with initial data
+npm run db:studio    # Open Drizzle Studio GUI
+```
+
+**Database:** Neon PostgreSQL (neon.tech) — connection via `DATABASE_URL` env var
+**API Base:** `http://localhost:3000/api`
 
 ---
 

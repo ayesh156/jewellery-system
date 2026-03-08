@@ -26,6 +26,7 @@ import { PrintablePawnTicket } from './components/PrintablePawnTicket';
 import { PrintableRedemptionReceipt } from './components/PrintableRedemptionReceipt';
 import { PrintableInterestReceipt } from './components/PrintableInterestReceipt';
 import { mockInvoices, mockGRNs, mockRepairJobs, mockPawnTickets, mockPawnRedemptions } from './data/mockData';
+import { Toaster } from 'react-hot-toast';
 import './index.css';
 
 // Wrapper component for PrintableInvoice that gets the invoice from mock data or localStorage
@@ -190,6 +191,30 @@ function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: 'var(--toast-bg, #1e293b)',
+              color: 'var(--toast-color, #f1f5f9)',
+              border: '1px solid var(--toast-border, #334155)',
+              borderRadius: '12px',
+              padding: '14px 18px',
+              fontSize: '14px',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+            },
+            success: {
+              iconTheme: { primary: '#f59e0b', secondary: '#1e293b' },
+              style: { borderColor: 'rgba(245,158,11,0.3)' },
+            },
+            error: {
+              duration: 5000,
+              iconTheme: { primary: '#ef4444', secondary: '#1e293b' },
+              style: { borderColor: 'rgba(239,68,68,0.3)' },
+            },
+          }}
+        />
         <Routes>
         {/* Print Routes - No Layout */}
         <Route path="/invoices/:id/print" element={<PrintInvoicePage />} />

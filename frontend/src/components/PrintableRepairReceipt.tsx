@@ -214,13 +214,8 @@ export function PrintableRepairReceipt({ job }: PrintableRepairReceiptProps) {
         <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600">
           <h3 className="font-bold text-gray-700 uppercase tracking-wider mb-2">Terms & Conditions</h3>
           <ol className="list-decimal list-inside space-y-1">
-            <li>This receipt must be presented when collecting the repaired item(s).</li>
-            <li>Items will be held for 30 days after completion. After this period, storage charges may apply.</li>
-            <li>The shop is not responsible for uncollected items after 90 days.</li>
-            <li>Final weight may vary slightly after repair work due to polishing or material addition.</li>
-            <li>Estimated completion dates are approximate and may change based on work complexity.</li>
-            <li>Additional charges may apply if extra work is required beyond the initial assessment.</li>
-            <li>All gemstones are handled with care, but we are not liable for pre-existing damage or inclusions.</li>
+            <li>This receipt must be presented when collecting the repaired item(s). Items held for 30 days after completion.</li>
+            <li>Estimated completion dates are approximate. Additional charges may apply if extra work is required.</li>
           </ol>
         </div>
 
@@ -305,16 +300,37 @@ export function PrintableRepairReceipt({ job }: PrintableRepairReceiptProps) {
       {/* Print Styles */}
       <style>{`
         @media print {
+          @page {
+            size: A5 portrait;
+            margin: 6mm 8mm;
+          }
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
           body {
-            print-color-adjust: exact;
-            -webkit-print-color-adjust: exact;
+            margin: 0;
+            padding: 0;
+            background: white;
+          }
+          .min-h-screen {
+            min-height: auto !important;
+            width: 100%;
+            max-width: 132mm;
+            padding: 0 !important;
+            margin: 0 auto;
+          }
+          .max-w-\\[800px\\] {
+            max-width: 132mm !important;
           }
           .page-break-before {
             page-break-before: always;
           }
-          @page {
-            margin: 10mm;
-            size: A4;
+          .no-print {
+            display: none !important;
+          }
+          table {
+            page-break-inside: avoid;
           }
         }
       `}</style>

@@ -440,7 +440,7 @@ export function Combobox({
               {selectedOption.label}
             </span>
             {selectedOption.count !== undefined && (
-              <span className="px-1.5 py-0.5 text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-700 rounded">
+              <span className="shrink-0 px-1.5 py-0.5 text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-700 rounded whitespace-nowrap">
                 {selectedOption.count}
               </span>
             )}

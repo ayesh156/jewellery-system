@@ -10,15 +10,15 @@ interface PrintableInvoiceProps {
 
 // Default company info for the jewellery store
 const defaultCompany: CompanyInfo = {
-  name: 'Royal Gems & Jewellers',
+  name: 'Onelka Jewellery',
   tagline: 'Exquisite Craftsmanship Since 1985',
   address: 'No. 123, Galle Road',
   city: 'Colombo 03, Sri Lanka',
   country: 'Sri Lanka',
   phone: '+94 11 234 5678',
   phone2: '+94 77 123 4567',
-  email: 'info@royalgems.lk',
-  website: 'www.royalgems.lk',
+  email: 'info@onelkajewellery.lk',
+  website: 'www.onelkajewellery.lk',
   registrationNumber: 'REG-2024-001',
   taxNumber: 'TIN-123456789',
 };
@@ -719,9 +719,7 @@ export const PrintableInvoice = forwardRef<HTMLDivElement, PrintableInvoiceProps
           <label>Terms & Conditions</label>
           <ul>
             <li>All jewellery items are hallmarked and certified.</li>
-            <li>Exchange within 7 days with original receipt.</li>
-            <li>No refunds on custom-made items.</li>
-            <li>Prices based on prevailing gold rates at time of purchase.</li>
+            <li>Exchange within 7 days with original receipt. No refunds on custom-made items.</li>
           </ul>
         </div>
 

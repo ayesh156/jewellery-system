@@ -9,9 +9,10 @@ interface ModalProps {
   children: ReactNode;
   title?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  closeOnOverlayClick?: boolean;
 }
 
-export function Modal({ isOpen, onClose, children, title, size = 'md' }: ModalProps) {
+export function Modal({ isOpen, onClose, children, title, size = 'md', closeOnOverlayClick = false }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,7 +34,7 @@ export function Modal({ isOpen, onClose, children, title, size = 'md' }: ModalPr
   if (!isOpen) return null;
 
   const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === overlayRef.current) {
+    if (closeOnOverlayClick && e.target === overlayRef.current) {
       onClose();
     }
   };

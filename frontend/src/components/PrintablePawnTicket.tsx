@@ -10,15 +10,15 @@ interface PrintablePawnTicketProps {
 
 // Default company info
 const defaultCompany: CompanyInfo = {
-  name: 'Royal Gems & Jewellers',
+  name: 'Onelka Jewellery',
   tagline: 'Exquisite Craftsmanship Since 1985',
   address: 'No. 123, Galle Road',
   city: 'Colombo 03, Sri Lanka',
   country: 'Sri Lanka',
   phone: '+94 11 234 5678',
   phone2: '+94 77 123 4567',
-  email: 'info@royalgems.lk',
-  website: 'www.royalgems.lk',
+  email: 'info@onelkajewellery.lk',
+  website: 'www.onelkajewellery.lk',
   registrationNumber: 'REG-2024-001',
   taxNumber: 'TIN-123456789',
 };
@@ -476,13 +476,8 @@ export const PrintablePawnTicket = forwardRef<HTMLDivElement, PrintablePawnTicke
         <div className="terms-section">
           <div className="terms-title">Terms & Conditions</div>
           <ol className="terms-list">
-            <li>Interest of {ticket.interestRatePerMonth}% is charged even for one day of borrowing.</li>
-            <li>After the first month, daily pro-rata interest applies at {(ticket.interestRatePerMonth / 30).toFixed(4)}% per day.</li>
-            <li>Items must be redeemed within the loan period plus grace period.</li>
-            <li>Original ticket and valid ID required for redemption.</li>
-            <li>Items not redeemed after grace period may be forfeited/auctioned.</li>
-            <li>The pledger certifies ownership of all pledged items.</li>
-            <li>Company is not liable for loss due to natural disasters or theft beyond control.</li>
+            <li>Interest of {ticket.interestRatePerMonth}% is charged per month, even for one day. Daily pro-rata applies after the first month.</li>
+            <li>Items must be redeemed within the loan period plus grace period with original ticket and valid ID. Unredeemed items may be forfeited.</li>
           </ol>
         </div>
 

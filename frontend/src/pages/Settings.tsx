@@ -16,6 +16,7 @@ import {
   Monitor,
   Check,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -58,7 +59,7 @@ export function Settings() {
 
   const handleSave = () => {
     // In a real app, save settings to backend
-    alert('Settings saved successfully!');
+    toast.success('Settings saved successfully!');
   };
 
   const renderCompanySettings = () => (

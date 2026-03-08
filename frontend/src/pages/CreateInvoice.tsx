@@ -15,6 +15,7 @@ import {
   CreditCard,
   Percent,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -149,7 +150,7 @@ export function CreateInvoice() {
 
   const handleSaveInvoice = (status: 'draft' | 'pending') => {
     if (!selectedCustomer || invoiceItems.length === 0) {
-      alert('Please select a customer and add at least one item');
+      toast.error('Please select a customer and add at least one item');
       return;
     }
 

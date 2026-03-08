@@ -8,6 +8,7 @@ export { DateCombobox, type DateComboboxProps } from './DateCombobox';
 export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './Card';
 export { Badge } from './Badge';
 export { Modal, ModalContent, ModalFooter } from './Modal';
+export { Pagination, type PaginationProps } from './Pagination';
 export { 
   Table, 
   TableHeader, 

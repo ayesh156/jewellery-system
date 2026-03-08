@@ -19,6 +19,7 @@ import {
   ChevronUp,
   RefreshCw,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -233,7 +234,7 @@ export function CreateSalesInvoice() {
 
   const handleAddItem = () => {
     if (!itemForm.productName || itemForm.metalWeight <= 0) {
-      alert('Please enter product name and valid metal weight');
+      toast.error('Please enter product name and valid metal weight');
       return;
     }
 
@@ -271,7 +272,7 @@ export function CreateSalesInvoice() {
 
   const handleSaveInvoice = (status: 'draft' | 'pending') => {
     if (!selectedCustomer || invoiceItems.length === 0) {
-      alert('Please select a customer and add at least one item');
+      toast.error('Please select a customer and add at least one item');
       return;
     }
 

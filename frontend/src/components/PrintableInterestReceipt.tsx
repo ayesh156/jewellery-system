@@ -48,18 +48,21 @@ export function PrintableInterestReceipt() {
       <style>{`
         @media print {
           @page {
-            size: 80mm auto;
-            margin: 5mm;
+            size: A5 portrait;
+            margin: 6mm 8mm;
           }
           body {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
+          .no-print {
+            display: none !important;
+          }
         }
         
         .print-container {
           font-family: 'Courier New', monospace;
-          width: 80mm;
+          width: 132mm;
           margin: 0 auto;
           padding: 5mm;
           background: white;
@@ -177,8 +180,8 @@ export function PrintableInterestReceipt() {
 
       {/* Header */}
       <div className="header">
-        <div className="company-name">SRI LANKA GEMS & JEWELLERS</div>
-        <div style={{ fontSize: '10px' }}>123 Main Street, Colombo 03</div>
+        <div className="company-name">ONELKA JEWELLERY</div>
+        <div style={{ fontSize: '10px' }}>No. 123, Galle Road, Colombo 03</div>
         <div style={{ fontSize: '10px' }}>Tel: +94 11 234 5678</div>
         <div className="receipt-type">INTEREST PAYMENT RECEIPT</div>
         <div style={{ fontSize: '12px', fontWeight: 'bold' }}>

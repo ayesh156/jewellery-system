@@ -11,6 +11,10 @@
    * tailwind.config.ts expects the following color variables to be expressed as HSL values.
   */
   :root {
+    --toast-bg: #1e293b;
+    --toast-color: #f1f5f9;
+    --toast-border: #334155;
+
     --background: 222 47% 6%;
     --foreground: 210 40% 98%;
 
@@ -53,6 +57,10 @@
 
   /* Light theme */
   .light {
+    --toast-bg: #ffffff;
+    --toast-color: #1e293b;
+    --toast-border: #e2e8f0;
+
     --background: 210 40% 98%;
     --foreground: 222 47% 11%;
 
@@ -93,6 +101,10 @@
 
   /* Dark theme */
   .dark {
+    --toast-bg: #1e293b;
+    --toast-color: #f1f5f9;
+    --toast-border: #334155;
+
     --background: 222 47% 6%;
     --foreground: 210 40% 98%;
 

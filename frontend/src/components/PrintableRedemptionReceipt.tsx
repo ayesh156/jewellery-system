@@ -10,15 +10,15 @@ interface PrintableRedemptionReceiptProps {
 
 // Default company info
 const defaultCompany: CompanyInfo = {
-  name: 'Royal Gems & Jewellers',
+  name: 'Onelka Jewellery',
   tagline: 'Exquisite Craftsmanship Since 1985',
   address: 'No. 123, Galle Road',
   city: 'Colombo 03, Sri Lanka',
   country: 'Sri Lanka',
   phone: '+94 11 234 5678',
   phone2: '+94 77 123 4567',
-  email: 'info@royalgems.lk',
-  website: 'www.royalgems.lk',
+  email: 'info@onelkajewellery.lk',
+  website: 'www.onelkajewellery.lk',
   registrationNumber: 'REG-2024-001',
   taxNumber: 'TIN-123456789',
 };

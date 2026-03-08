@@ -12,6 +12,7 @@ import {
   X,
   Building2,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -136,7 +137,7 @@ export function CreateGRN() {
 
   const handleSaveGRN = (status: 'pending' | 'received') => {
     if (!selectedSupplier || grnItems.length === 0) {
-      alert('Please select a supplier and add at least one item');
+      toast.error('Please select a supplier and add at least one item');
       return;
     }
 

@@ -18,6 +18,7 @@ import {
   User,
   Package,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -573,7 +574,7 @@ export function RepairJobs() {
               </Button>
               <Button onClick={() => {
                 // In a real app, update the status
-                alert(`Status updated to: ${statusConfig[newStatus].label}`);
+                toast.success(`Status updated to: ${statusConfig[newStatus].label}`);
                 setShowUpdateModal(false);
               }}>
                 Update Status

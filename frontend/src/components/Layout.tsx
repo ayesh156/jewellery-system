@@ -123,7 +123,7 @@ export function Layout() {
             <Gem className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-lg text-slate-800 dark:text-slate-100">Royal Gems</h1>
+            <h1 className="font-bold text-lg text-slate-800 dark:text-slate-100">Onelka</h1>
             <p className="text-xs text-slate-500">Jewellery System</p>
           </div>
           <button
@@ -205,7 +205,7 @@ export function Layout() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">Admin</p>
-              <p className="text-xs text-slate-500 truncate">admin@royalgems.lk</p>
+              <p className="text-xs text-slate-500 truncate">admin@onelkajewellery.lk</p>
             </div>
             <button className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">
               <LogOut className="w-4 h-4" />

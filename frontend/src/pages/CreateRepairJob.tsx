@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   Clock,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -170,7 +171,7 @@ export function CreateRepairJob() {
 
   const handleAddItem = () => {
     if (!itemForm.itemType || itemForm.initialWeight <= 0 || itemForm.repairTypes.length === 0) {
-      alert('Please fill in all required fields and select at least one repair type');
+      toast.error('Please fill in all required fields and select at least one repair type');
       return;
     }
 
@@ -214,15 +215,15 @@ export function CreateRepairJob() {
   const handleSaveJob = (printReceipt: boolean = false) => {
     // Validation
     if (customerMode === 'existing' && !selectedCustomer) {
-      alert('Please select a customer');
+      toast.error('Please select a customer');
       return;
     }
     if (customerMode === 'new' && (!newCustomer.name || !newCustomer.phone)) {
-      alert('Please enter customer name and phone number');
+      toast.error('Please enter customer name and phone number');
       return;
     }
     if (items.length === 0) {
-      alert('Please add at least one item for repair');
+      toast.error('Please add at least one item for repair');
       return;
     }
 

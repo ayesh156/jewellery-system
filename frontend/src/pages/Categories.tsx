@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Plus,
   Search,
@@ -18,6 +18,8 @@ import {
   AlertCircle,
   ToggleLeft,
   ToggleRight,
+  Loader2,
+  RefreshCw,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -25,7 +27,8 @@ import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
-import { mockCategories, mockGoldTypes } from '../data/mockData';
+import { categoriesApi, goldApi } from '../services/api';
+import toast from 'react-hot-toast';
 import type { ProductCategory, GoldTypeConfig, GoldKarat, MetalType } from '../types';
 
 const metalTypes: MetalType[] = ['gold', 'silver', 'platinum', 'white-gold', 'rose-gold'];
@@ -48,6 +51,15 @@ const categoryIcons: Record<string, string> = {
   'Watches': '⌚',
 };
 
+// Convert API gold type (numeric strings) → frontend GoldTypeConfig (numbers)
+function toGoldType(raw: any): GoldTypeConfig {
+  return {
+    ...raw,
+    purityPercentage: Number(raw.purityPercentage),
+    defaultWastagePercentage: Number(raw.defaultWastagePercentage),
+  };
+}
+
 export function Categories() {
   // View mode
   const [viewMode, setViewMode] = useState<'categories' | 'goldTypes'>('categories');
@@ -55,24 +67,15 @@ export function Categories() {
   // Search
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Loading state
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
   // Categories state
-  const [categories, setCategories] = useState<ProductCategory[]>(mockCategories.map((c, i) => ({
-    id: c.id,
-    name: c.name,
-    code: c.id.replace('cat-', '').toUpperCase(),
-    description: c.description,
-    icon: categoryIcons[c.name] || '💎',
-    defaultMetalType: 'gold',
-    defaultKarat: '22K',
-    defaultWastage: 8,
-    sortOrder: i + 1,
-    isActive: c.isActive,
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01',
-  })));
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
 
   // Gold types state
-  const [goldTypes, setGoldTypes] = useState<GoldTypeConfig[]>(mockGoldTypes);
+  const [goldTypes, setGoldTypes] = useState<GoldTypeConfig[]>([]);
 
   // Category modal
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -98,6 +101,43 @@ export function Categories() {
     defaultWastagePercentage: 8,
     isActive: true,
   });
+
+  // ==========================================
+  // Data Loading
+  // ==========================================
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [catRes, goldRes] = await Promise.all([
+        categoriesApi.getAll(),
+        goldApi.getTypes(),
+      ]);
+      setCategories(catRes.data.map((c: any, i: number) => ({
+        id: c.id,
+        name: c.name,
+        code: c.id.replace('cat-', '').toUpperCase(),
+        description: c.description,
+        icon: categoryIcons[c.name] || c.icon || '💎',
+        defaultMetalType: 'gold' as MetalType,
+        defaultKarat: '22K' as GoldKarat,
+        defaultWastage: 8,
+        sortOrder: i + 1,
+        isActive: c.isActive,
+        createdAt: c.createdAt || '',
+        updatedAt: c.updatedAt || '',
+      })));
+      setGoldTypes(goldRes.data.map(toGoldType));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Filtered categories
   const filteredCategories = useMemo(() => {
@@ -146,46 +186,96 @@ export function Categories() {
     setShowCategoryModal(true);
   };
 
-  const handleSaveCategory = () => {
+  const handleSaveCategory = async () => {
     if (!categoryForm.name || !categoryForm.code) {
-      alert('Please enter category name and code');
+      toast.error('Please enter category name and code');
       return;
     }
-
-    if (editingCategory) {
-      setCategories(prev => prev.map(c => 
-        c.id === editingCategory.id
-          ? {
-              ...c,
-              ...categoryForm,
-              updatedAt: new Date().toISOString(),
-            }
-          : c
-      ));
-    } else {
-      const newCategory: ProductCategory = {
-        id: `cat-${Date.now()}`,
-        ...categoryForm,
-        sortOrder: categories.length + 1,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setCategories(prev => [...prev, newCategory]);
+    setSaving(true);
+    try {
+      if (editingCategory) {
+        const res = await categoriesApi.update(editingCategory.id, {
+          name: categoryForm.name,
+          description: categoryForm.description || undefined,
+          icon: categoryForm.icon,
+          isActive: categoryForm.isActive,
+        });
+        setCategories(prev => prev.map(c =>
+          c.id === editingCategory.id
+            ? {
+                ...c,
+                name: res.data.name,
+                description: res.data.description,
+                icon: categoryIcons[res.data.name] || res.data.icon || '💎',
+                isActive: res.data.isActive,
+                updatedAt: res.data.updatedAt || new Date().toISOString(),
+                // Keep front-end only fields from form
+                code: categoryForm.code,
+                defaultMetalType: categoryForm.defaultMetalType,
+                defaultKarat: categoryForm.defaultKarat,
+                defaultWastage: categoryForm.defaultWastage,
+              }
+            : c
+        ));
+      } else {
+        const newId = `cat-${categoryForm.code.toLowerCase()}`;
+        const res = await categoriesApi.create({
+          id: newId,
+          name: categoryForm.name,
+          description: categoryForm.description || undefined,
+          icon: categoryForm.icon,
+          isActive: categoryForm.isActive,
+        });
+        const newCategory: ProductCategory = {
+          id: res.data.id,
+          name: res.data.name,
+          code: categoryForm.code,
+          description: res.data.description,
+          icon: categoryIcons[res.data.name] || res.data.icon || '💎',
+          defaultMetalType: categoryForm.defaultMetalType,
+          defaultKarat: categoryForm.defaultKarat,
+          defaultWastage: categoryForm.defaultWastage,
+          sortOrder: categories.length + 1,
+          isActive: res.data.isActive,
+          createdAt: res.data.createdAt || new Date().toISOString(),
+          updatedAt: res.data.updatedAt || new Date().toISOString(),
+        };
+        setCategories(prev => [...prev, newCategory]);
+      }
+      setShowCategoryModal(false);
+      toast.success(editingCategory ? 'Category updated successfully' : 'Category added successfully');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save category');
+    } finally {
+      setSaving(false);
     }
-
-    setShowCategoryModal(false);
   };
 
-  const handleDeleteCategory = (id: string) => {
-    if (confirm('Are you sure you want to delete this category?')) {
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this category?')) return;
+    setSaving(true);
+    try {
+      await categoriesApi.delete(id);
       setCategories(prev => prev.filter(c => c.id !== id));
+      toast.success('Category deleted successfully');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete category');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleToggleCategoryActive = (id: string) => {
-    setCategories(prev => prev.map(c => 
-      c.id === id ? { ...c, isActive: !c.isActive } : c
-    ));
+  const handleToggleCategoryActive = async (id: string) => {
+    const cat = categories.find(c => c.id === id);
+    if (!cat) return;
+    try {
+      await categoriesApi.update(id, { isActive: !cat.isActive });
+      setCategories(prev => prev.map(c =>
+        c.id === id ? { ...c, isActive: !c.isActive } : c
+      ));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update category');
+    }
   };
 
   // Gold type handlers
@@ -213,28 +303,40 @@ export function Categories() {
     setShowGoldTypeModal(true);
   };
 
-  const handleSaveGoldType = () => {
+  const handleSaveGoldType = async () => {
     if (!goldTypeForm.karat) {
-      alert('Please select a karat');
+      toast.error('Please select a karat');
       return;
     }
-
-    if (editingGoldType) {
-      setGoldTypes(prev => prev.map(g => 
-        g.id === editingGoldType.id
-          ? { ...g, ...goldTypeForm }
-          : g
-      ));
-    } else {
-      const newGoldType: GoldTypeConfig = {
-        id: `gold-${Date.now()}`,
-        ...goldTypeForm,
-        color: '#FFD700',
-      };
-      setGoldTypes(prev => [...prev, newGoldType]);
+    setSaving(true);
+    try {
+      if (editingGoldType) {
+        const res = await goldApi.updateType(editingGoldType.id, {
+          purityPercentage: String(goldTypeForm.purityPercentage),
+          description: goldTypeForm.description,
+          isActive: goldTypeForm.isActive,
+          defaultWastagePercentage: String(goldTypeForm.defaultWastagePercentage),
+        });
+        setGoldTypes(prev => prev.map(g =>
+          g.id === editingGoldType.id ? toGoldType(res.data) : g
+        ));
+      } else {
+        // Gold types don't have a create endpoint in the backend yet
+        // For now, add locally
+        const newGoldType: GoldTypeConfig = {
+          id: `gold-${Date.now()}`,
+          ...goldTypeForm,
+          color: '#FFD700',
+        };
+        setGoldTypes(prev => [...prev, newGoldType]);
+      }
+      setShowGoldTypeModal(false);
+      toast.success(editingGoldType ? 'Gold type updated successfully' : 'Gold type added successfully');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save gold type');
+    } finally {
+      setSaving(false);
     }
-
-    setShowGoldTypeModal(false);
   };
 
   const handleDeleteGoldType = (id: string) => {
@@ -243,10 +345,17 @@ export function Categories() {
     }
   };
 
-  const handleToggleGoldTypeActive = (id: string) => {
-    setGoldTypes(prev => prev.map(g => 
-      g.id === id ? { ...g, isActive: !g.isActive } : g
-    ));
+  const handleToggleGoldTypeActive = async (id: string) => {
+    const gt = goldTypes.find(g => g.id === id);
+    if (!gt) return;
+    try {
+      await goldApi.updateType(id, { isActive: !gt.isActive });
+      setGoldTypes(prev => prev.map(g =>
+        g.id === id ? { ...g, isActive: !g.isActive } : g
+      ));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update gold type');
+    }
   };
 
   // Purity percentages
@@ -260,6 +369,17 @@ export function Categories() {
     '9K': 37.5,
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-10 h-10 text-amber-500 animate-spin mx-auto" />
+          <p className="text-slate-600 dark:text-slate-400">Loading categories...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -269,6 +389,9 @@ export function Categories() {
           <p className="text-slate-400 text-sm mt-1">Manage product categories and gold type configurations</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={fetchData}>
+            <RefreshCw className="w-4 h-4" />
+          </Button>
           <Button
             variant={viewMode === 'categories' ? 'default' : 'outline'}
             onClick={() => setViewMode('categories')}
@@ -607,10 +730,11 @@ export function Categories() {
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
-            <Button variant="outline" onClick={() => setShowCategoryModal(false)}>
+            <Button variant="outline" onClick={() => setShowCategoryModal(false)} disabled={saving}>
               Cancel
             </Button>
-            <Button onClick={handleSaveCategory}>
+            <Button onClick={handleSaveCategory} disabled={saving}>
+              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               {editingCategory ? 'Update' : 'Create'} Category
             </Button>
           </div>
@@ -681,10 +805,11 @@ export function Categories() {
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
-            <Button variant="outline" onClick={() => setShowGoldTypeModal(false)}>
+            <Button variant="outline" onClick={() => setShowGoldTypeModal(false)} disabled={saving}>
               Cancel
             </Button>
-            <Button onClick={handleSaveGoldType}>
+            <Button onClick={handleSaveGoldType} disabled={saving}>
+              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               {editingGoldType ? 'Update' : 'Create'} Gold Type
             </Button>
           </div>
