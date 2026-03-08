@@ -134,9 +134,9 @@ npm run build        # TypeScript check + Vite production build → dist/
 npm run preview      # Preview production build locally
 ```
 
-**Deployed on Render.com** as a static site (see `render.yaml`):
+**Deployed on Vercel** as a static site (see `vercel.json`):
 - Build: `npm install && npm run build`
-- Publish: `./dist`
+- Output: `dist/`
 - SPA rewrite: `/*` → `/index.html`
 
 ---
