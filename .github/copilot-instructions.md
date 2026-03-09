@@ -1,7 +1,7 @@
 # Copilot Instructions — Onelka Jewellery
 
 ## Project Overview
-This is a **Jewellery Management System** (React SPA) for the Sri Lankan retail jewellery market. It handles inventory, sales invoicing, supplier purchases (GRN), repair job tracking, gold loan pawning with precise interest calculations, and business reporting.
+This is a **Jewellery Management System** (React SPA) for the Sri Lankan retail jewellery market. It handles inventory, sales invoicing, clearance sales, and business reporting.
 
 **Business:** Onelka Jewellery | **Currency:** Sri Lankan Rupees (Rs.) | **Language:** English
 
@@ -18,6 +18,8 @@ This is a **Jewellery Management System** (React SPA) for the Sri Lankan retail 
 - **Lucide React** — icon library
 - **Radix UI** — accessible select primitives
 - **clsx + tailwind-merge** — class name composition via `cn()` utility
+- **react-hot-toast** — toast notifications
+- **jsPDF** — PDF report generation (ink-optimized B&W layout)
 
 ### Backend
 - **Node.js + Express.js** — REST API
@@ -35,22 +37,27 @@ This is a **Jewellery Management System** (React SPA) for the Sri Lankan retail 
 ├── frontend/                   # React SPA (Vite)
 │   ├── src/
 │   │   ├── main.tsx            # Entry — StrictMode + BrowserRouter + ThemeProvider
-│   │   ├── App.tsx             # All 20+ routes defined here
+│   │   ├── App.tsx             # All routes defined here
 │   │   ├── index.css           # Tailwind directives
-│   │   ├── types/index.ts      # Complete type system (600+ lines)
+│   │   ├── types/index.ts      # Complete type system
 │   │   ├── utils/
 │   │   │   ├── cn.ts           # cn() = clsx + tailwind-merge
-│   │   │   ├── formatters.ts   # 18 formatting functions (currency, date, weight, etc.)
-│   │   │   └── pawnCalculations.ts  # 15+ pawn interest calculation functions
+│   │   │   ├── formatters.ts   # Formatting functions (currency, date, weight, etc.)
+│   │   │   ├── reportPdf.ts    # jsPDF report generator (ink-optimized B&W)
+│   │   │   └── pawnCalculations.ts  # Pawn interest calculations (kept for future)
 │   │   ├── contexts/ThemeContext.tsx # Dark/Light/System theme provider
 │   │   ├── data/
-│   │   │   ├── mockData.ts     # 50+ mock records (all business entities)
+│   │   │   ├── mockData.ts     # Mock records (kept for reference)
 │   │   │   └── sampleData.ts   # Sample data structures
+│   │   ├── services/
+│   │   │   └── api.ts          # API service (invoiceApi, clearanceApi, etc.)
 │   │   ├── components/
 │   │   │   ├── Layout.tsx      # Sidebar nav with collapsible submenus + theme toggle
-│   │   │   ├── Printable*.tsx  # 6 print templates (A5 & 80mm thermal)
-│   │   │   └── ui/            # 12 reusable UI components (Button, Card, Table, Modal, etc.)
-│   │   └── pages/             # 18 page components
+│   │   │   ├── PrintableInvoice.tsx    # Invoice print template
+│   │   │   ├── PrintableClearance.tsx  # Clearance sale print template
+│   │   │   ├── Printable*.tsx  # Other print templates (kept for future)
+│   │   │   └── ui/            # Reusable UI components (Button, Card, Table, Modal, etc.)
+│   │   └── pages/             # Page components
 │   ├── package.json
 │   ├── vite.config.ts
 │   ├── vercel.json
@@ -65,11 +72,14 @@ This is a **Jewellery Management System** (React SPA) for the Sri Lankan retail 
 │   │   │   ├── categories.ts   # CRUD /api/categories
 │   │   │   ├── products.ts     # CRUD /api/products (search, pagination)
 │   │   │   ├── gold.ts         # /api/gold/rates, /api/gold/types
-│   │   │   └── company.ts      # /api/company (single-row config)
+│   │   │   ├── company.ts      # /api/company (single-row config)
+│   │   │   ├── customers.ts    # CRUD /api/customers
+│   │   │   ├── invoices.ts     # CRUD /api/invoices
+│   │   │   └── clearance.ts    # CRUD /api/clearance
 │   │   ├── middleware/
 │   │   │   └── errorHandler.ts # AppError class + error middleware
 │   │   └── seed/
-│   │       ├── data.ts         # All seed data (categories, products, etc.)
+│   │       ├── data.ts         # All seed data (categories, products, clearances, etc.)
 │   │       └── index.ts        # Seed runner script
 │   ├── package.json
 │   ├── tsconfig.json
@@ -77,6 +87,28 @@ This is a **Jewellery Management System** (React SPA) for the Sri Lankan retail 
 │   └── .env.example
 └── README.md
 ```
+
+---
+
+## Active Modules
+
+### Currently Active
+- **Dashboard** — Real-time API-driven overview: revenue stats, today/month sales, collection rate, recent invoices, recent clearances, inventory by category, top customers, outstanding balances, total inventory value
+- **Products** — Inventory management with search, pagination
+- **Customers** — Customer CRUD with types (retail/wholesale/vip/credit), credit management
+- **Sales (Invoices)** — Full invoice lifecycle (create/edit/print/payments)
+- **Clearance Sales** — Discounted sales with clearance reason tracking
+- **Categories** — Product category management
+- **Gold Types** — Gold karat configuration & rates
+- **Reports** — Business reporting with period selection (daily/custom/monthly/yearly), jsPDF PDF download
+- **Settings** — Company info, numbering, user profile, appearance (horizontal tab layout)
+
+### Removed from UI (files kept for future)
+- **Pawning** — pages: `Pawning.tsx`, `CreatePawnTicket.tsx`, `RedeemPawnTicket.tsx`, `PayInterest.tsx`; components: `PrintablePawnTicket.tsx`, `PrintableRedemptionReceipt.tsx`, `PrintableInterestReceipt.tsx`; utils: `pawnCalculations.ts`
+- **Repairs** — pages: `RepairJobs.tsx`, `CreateRepairJob.tsx`; components: `PrintableRepairReceipt.tsx`
+- **GRN (Goods Received Notes)** — pages: `GRN.tsx`, `CreateGRN.tsx`; components: `PrintableGRN.tsx`
+- **Suppliers** — pages: `Suppliers.tsx`
+- None of the above have routes in `App.tsx` or sidebar entries in `Layout.tsx`
 
 ---
 
@@ -105,10 +137,11 @@ This is a **Jewellery Management System** (React SPA) for the Sri Lankan retail 
 - Responsive: mobile-first approach, sidebar collapses on mobile
 
 ### Data & State
-- Currently **client-side only** with mock data in `src/data/mockData.ts`
-- Print data flows via `localStorage` → fallback to mockData
-- No backend API — all data is mocked
+- **Backend API** for all data (invoices, clearances, products, customers, etc.)
+- **API returns numeric fields as strings** — always wrap with `Number()` before arithmetic (e.g., `Number(invoice.total)`)
+- Print data flows via `localStorage` → API fallback
 - State management: React hooks only (no Redux, Zustand, etc.)
+- API service in `src/services/api.ts` — all API calls go through this
 
 ### Formatting
 - Currency: use `formatCurrency()` → `Rs. 50,000.00`
@@ -128,35 +161,65 @@ This is a **Jewellery Management System** (React SPA) for the Sri Lankan retail 
 
 ### Business Entities
 - `Customer`: id, name, phone, customerType (retail/wholesale/vip/credit), creditLimit
-- `Supplier`: id, companyName, contactPerson, paymentTerms, bankDetails
 - `Invoice`: invoiceNumber, customerId, items[], totals, status, payment info
-- `GRN`: grnNumber, supplierId, items[], quality check, totals
-- `RepairJob`: jobNumber, 9-stage workflow status, items[], estimate, priority
-- `PawnTicket`: ticketNumber, customerNIC, items[], principal, interest rate, maturity date
+- `Clearance`: clearanceNumber, customerId, clearanceReason, items[], totals, status
 
-### Pawning (Most Complex Module)
-- `InterestCalculation`: standard interest (5% per month default)
-- `PreciseInterestCalculation`: time-precise down to minutes
-- `InterestPayment`: partial interest payment records
-- `PawnRedemption`: full settlement with interest breakdown
+### Shared Types
+- `InvoiceItem` — used by both Invoice and Clearance items
+- `InvoiceStatus`: draft | pending | partial | paid | cancelled | overdue
+- `PaymentMethod`: cash | card | bank-transfer | cheque | credit | mobile-payment
 
 ---
 
 ## Routing (src/App.tsx)
 
-Key route patterns:
-- List pages: `/invoices`, `/pawning`, `/repairs`, `/grn`
-- Create pages: `/invoices/create`, `/pawning/create`, `/repairs/create`
-- Print pages: `/invoices/:id/print`, `/pawning/:id/print` (bypass Layout, auto-trigger print)
-- Action pages: `/pawning/:id/redeem`, `/pawning/:ticketId/pay-interest`
+### Print routes (no Layout wrapper)
+- `/invoices/:id/print` — Invoice print
+- `/clearance/:id/print` — Clearance print
+
+### Main routes (inside Layout)
+- `/dashboard` — Dashboard
+- `/products` — Products list
+- `/customers` — Customers list
+- `/invoices` — Invoice list
+- `/invoices/create` — Create invoice
+- `/invoices/:id/edit` — Edit invoice
+- `/clearance` — Clearance list
+- `/clearance/create` — Create clearance
+- `/clearance/:id/edit` — Edit clearance
+- `/categories` — Categories
+- `/gold-types` — Gold types & rates
+- `/reports` — Reports
+- `/settings` — Settings (tabs: Company, Numbering, User Profile, Appearance)
 
 ---
 
 ## Print System
-- 6 printable components render as A5 (148×210mm) or 80mm thermal format
+- Print templates render as A5 format with print-specific CSS
 - Print routes bypass sidebar layout
 - `window.print()` triggered on component mount
 - CSS `@media print` rules with 6mm margins, color preservation
+- Data passed via `localStorage`, with API fallback
+
+---
+
+## Counter / Numbering System
+- Each entity type has auto-increment counters per shop code
+- Default prefixes: invoice=INV, clearance=CLR, product=PROD, category=CAT, customer=CUS
+- ID format: `{shopCode}-{prefix}-{paddedNumber}` (e.g., `a-inv-0001`)
+- Shop codes: 1-3 uppercase letters (A, B, HQ, etc.)
+- Managed in Settings → Numbering tab
+
+---
+
+## Settings Page
+- **Horizontal tab bar** layout (not sidebar) with 4 tabs:
+  - Company — business info, logo, billing defaults
+  - Numbering — shop code & sequence number management
+  - User Profile — name, email, role, password
+  - Appearance — theme (light/dark/system), accent color, font size
+- Save button in page header
+- Full-width content area, 2-column grid on desktop, responsive on mobile
 
 ---
 
@@ -165,7 +228,7 @@ Key route patterns:
 ### Frontend
 ```bash
 cd frontend
-npm install          # Install dependencies
+npm install          # Install dependencies (uses pnpm-lock.yaml)
 npm run dev          # Dev server at http://localhost:5173
 npm run build        # TypeScript check + Vite production build → dist/
 npm run preview      # Preview production build locally
@@ -191,6 +254,39 @@ npm run db:studio    # Open Drizzle Studio GUI
 **Database:** Neon PostgreSQL (neon.tech) — connection via `DATABASE_URL` env var
 **API Base:** `http://localhost:3000/api`
 
+### Seed Data (backend/src/seed/data.ts)
+The seed script (`npm run db:seed`) populates the database with:
+- 1 company info record (Onelka Jewellery)
+- 14 jewellery categories (Necklaces, Earrings, Rings, Bangles, etc.)
+- 7 gold type configurations (24K–9K with purity & wastage %)
+- 7 gold rates (buying/selling per gram in LKR)
+- 10 jewellery products with pricing & stock
+- 4 gemstone records linked to products
+- 5 customers (1 VIP, 2 retail, 1 wholesale, 1 credit)
+- 3 invoices with 5 line items and 2 payment records
+- 7 clearance sales with 8 line items and 6 payment records
+- 5 counter sequences (shop code 'M')
+
+---
+
+## Database Schema (backend/src/db/schema.ts)
+
+### Tables
+- `companyInfo` — single-row company configuration
+- `categories` — product categories
+- `goldTypeConfigs` — gold karat configurations
+- `goldRates` — daily gold rates per karat
+- `products` — jewellery inventory
+- `productGemstones` — gemstone details for products
+- `customers` — customer records
+- `invoices` — sales invoices
+- `invoiceItems` — invoice line items
+- `payments` — invoice payments
+- `clearances` — clearance sales (has `clearanceReason` field)
+- `clearanceItems` — clearance line items
+- `clearancePayments` — clearance payments
+- `counters` — auto-increment sequences per shop
+
 ---
 
 ## Vite Code Splitting (vite.config.ts)
@@ -198,5 +294,8 @@ npm run db:studio    # Open Drizzle Studio GUI
 Manual chunks configured:
 - `vendor-react`: react, react-dom, react-router
 - `vendor-icons`: lucide-react
-- `pages-pawning`, `pages-repairs`, `pages-invoices`, `pages-grn`, `pages-misc`
+- `pages-invoices`: Invoice & Sales pages
+- `pages-pawning`, `pages-repairs`, `pages-grn`: kept for future modules
+- `pages-misc`: all other pages (including Clearance)
 - `printables`: all PrintableXxx components
+- `mock-data`: data files

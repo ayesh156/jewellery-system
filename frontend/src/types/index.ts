@@ -205,6 +205,51 @@ export interface Invoice {
   updatedAt?: string;
 }
 
+// Clearance Sale
+export interface Clearance {
+  id: string;
+  clearanceNumber: string;
+  customerId: string;
+  customerName: string;
+  customerPhone?: string;
+  customerAddress?: string;
+
+  items: InvoiceItem[];
+
+  // Financial
+  subtotal: number;
+  discount: number;
+  discountType?: 'percentage' | 'fixed';
+  tax: number;
+  taxRate?: number;
+  total: number;
+
+  // Payment
+  amountPaid: number;
+  balanceDue: number;
+  payments?: Payment[];
+  paymentMethod?: PaymentMethod;
+
+  // Dates
+  issueDate: string;
+  dueDate?: string;
+
+  // Status
+  status: InvoiceStatus;
+
+  // Clearance-specific
+  clearanceReason?: string;
+
+  // Notes
+  notes?: string;
+
+  // Tracking
+  createdBy?: string;
+  createdByUserId?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 // GRN (Goods Received Note) Item
 export interface GRNItem {
   id: string;
@@ -499,6 +544,8 @@ export interface GoldTypeConfig {
   isActive: boolean;
   defaultWastagePercentage: number;
   color?: string; // for UI display
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ProductCategory {

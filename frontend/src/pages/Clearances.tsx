@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  FileText,
+  Tag,
   Plus,
   Search,
   Filter,
@@ -9,7 +9,6 @@ import {
   Trash2,
   Eye,
   Printer,
-  Download,
   AlertTriangle,
   Calendar,
   DollarSign,
@@ -29,16 +28,16 @@ import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { Pagination } from '../components/ui/Pagination';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, MobileCard, MobileCardHeader, MobileCardContent, MobileCardRow, MobileCardActions, MobileCardsContainer } from '../components/ui/Table';
-import { invoicesApi } from '../services/api';
+import { clearanceApi } from '../services/api';
 import { formatCurrency, formatDate } from '../utils/formatters';
-import type { Invoice, InvoiceStatus, PaymentMethod } from '../types';
+import type { Clearance, InvoiceStatus, PaymentMethod } from '../types';
 
-const invoiceStatuses: InvoiceStatus[] = ['draft', 'pending', 'partial', 'paid', 'cancelled'];
+const clearanceStatuses: InvoiceStatus[] = ['draft', 'pending', 'partial', 'paid', 'cancelled'];
 const paymentMethods: PaymentMethod[] = ['cash', 'card', 'bank-transfer', 'cheque', 'credit'];
 
-export function Invoices() {
+export function Clearances() {
   const navigate = useNavigate();
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [clearances, setClearances] = useState<Clearance[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -46,28 +45,27 @@ export function Invoices() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [selectedClearance, setSelectedClearance] = useState<Clearance | null>(null);
   const [paymentAmount, setPaymentAmount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
-  const [moreMenuId, setMoreMenuId] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
+  const [moreMenuId, setMoreMenuId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
 
-  // Helper to convert DB numeric strings to numbers
-  const mapInvoice = (inv: any): Invoice => ({
-    ...inv,
-    subtotal: Number(inv.subtotal),
-    discount: Number(inv.discount),
-    tax: Number(inv.tax),
-    taxRate: inv.taxRate ? Number(inv.taxRate) : undefined,
-    total: Number(inv.total),
-    amountPaid: Number(inv.amountPaid),
-    balanceDue: Number(inv.balanceDue),
-    items: (inv.items || []).map((item: any) => ({
+  const mapClearance = (clr: any): Clearance => ({
+    ...clr,
+    subtotal: Number(clr.subtotal),
+    discount: Number(clr.discount),
+    tax: Number(clr.tax),
+    taxRate: clr.taxRate ? Number(clr.taxRate) : undefined,
+    total: Number(clr.total),
+    amountPaid: Number(clr.amountPaid),
+    balanceDue: Number(clr.balanceDue),
+    items: (clr.items || []).map((item: any) => ({
       ...item,
       metalWeight: item.metalWeight ? Number(item.metalWeight) : 0,
       quantity: Number(item.quantity),
@@ -78,60 +76,59 @@ export function Invoices() {
     })),
   });
 
-  const fetchInvoices = useCallback(async () => {
+  const fetchClearances = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await invoicesApi.getAll({ limit: 100 });
-      setInvoices(res.data.map(mapInvoice));
+      const res = await clearanceApi.getAll({ limit: 100 });
+      setClearances(res.data.map(mapClearance));
     } catch (err: any) {
-      toast.error(err.message || 'Failed to load invoices');
+      toast.error(err.message || 'Failed to load clearances');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { fetchInvoices(); }, [fetchInvoices]);
+  useEffect(() => { fetchClearances(); }, [fetchClearances]);
 
-  // Filter invoices
-  const filteredInvoices = useMemo(() => {
-    return invoices.filter((invoice) => {
+  const filteredClearances = useMemo(() => {
+    return clearances.filter((clr) => {
       const matchesSearch =
-        invoice.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        invoice.customerName.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesStatus = !statusFilter || invoice.status === statusFilter;
-      
-      // Date filter
+        clr.clearanceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        clr.customerName.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesStatus = !statusFilter || clr.status === statusFilter;
+
       let matchesDate = true;
       if (dateFilter) {
-        const invoiceDate = new Date(invoice.createdAt);
+        const clrDate = new Date(clr.createdAt);
         const today = new Date();
         switch (dateFilter) {
           case 'today':
-            matchesDate = invoiceDate.toDateString() === today.toDateString();
+            matchesDate = clrDate.toDateString() === today.toDateString();
             break;
-          case 'week':
+          case 'week': {
             const weekAgo = new Date(today.setDate(today.getDate() - 7));
-            matchesDate = invoiceDate >= weekAgo;
+            matchesDate = clrDate >= weekAgo;
             break;
+          }
           case 'month':
             matchesDate =
-              invoiceDate.getMonth() === today.getMonth() &&
-              invoiceDate.getFullYear() === today.getFullYear();
+              clrDate.getMonth() === today.getMonth() &&
+              clrDate.getFullYear() === today.getFullYear();
             break;
         }
       }
 
       return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [invoices, searchQuery, statusFilter, dateFilter]);
+  }, [clearances, searchQuery, statusFilter, dateFilter]);
 
   // Stats
-  const totalInvoices = invoices.length;
-  const paidInvoices = invoices.filter((i) => i.status === 'paid');
-  const pendingInvoices = invoices.filter((i) => i.status === 'pending' || i.status === 'partial');
-  const totalRevenue = paidInvoices.reduce((sum, i) => sum + i.total, 0);
-  const pendingAmount = pendingInvoices.reduce((sum, i) => sum + i.balanceDue, 0);
+  const totalClearances = clearances.length;
+  const paidClearances = clearances.filter((c) => c.status === 'paid');
+  const pendingClearances = clearances.filter((c) => c.status === 'pending' || c.status === 'partial');
+  const totalRevenue = paidClearances.reduce((sum, c) => sum + c.total, 0);
+  const pendingAmount = pendingClearances.reduce((sum, c) => sum + c.balanceDue, 0);
 
   const getStatusBadge = (status: InvoiceStatus) => {
     switch (status) {
@@ -151,11 +148,11 @@ export function Invoices() {
   };
 
   const handlePayment = async () => {
-    if (selectedInvoice && paymentAmount > 0) {
+    if (selectedClearance && paymentAmount > 0) {
       setPaying(true);
       try {
-        await invoicesApi.recordPayment(selectedInvoice.id, {
-          id: `pay-${Date.now()}`,
+        await clearanceApi.recordPayment(selectedClearance.id, {
+          id: `cpay-${Date.now()}`,
           amount: paymentAmount.toFixed(2),
           method: paymentMethod,
           date: new Date().toISOString().split('T')[0],
@@ -163,8 +160,8 @@ export function Invoices() {
         toast.success('Payment recorded successfully');
         setShowPaymentModal(false);
         setPaymentAmount(0);
-        setSelectedInvoice(null);
-        fetchInvoices();
+        setSelectedClearance(null);
+        fetchClearances();
       } catch (err: any) {
         toast.error(err.message || 'Failed to record payment');
       } finally {
@@ -174,48 +171,48 @@ export function Invoices() {
   };
 
   const handleDelete = async () => {
-    if (selectedInvoice) {
+    if (selectedClearance) {
       setDeleting(true);
       try {
-        await invoicesApi.delete(selectedInvoice.id);
-        toast.success('Invoice deleted');
+        await clearanceApi.delete(selectedClearance.id);
+        toast.success('Clearance deleted');
         setShowDeleteModal(false);
-        setSelectedInvoice(null);
-        fetchInvoices();
+        setSelectedClearance(null);
+        fetchClearances();
       } catch (err: any) {
-        toast.error(err.message || 'Failed to delete invoice');
+        toast.error(err.message || 'Failed to delete clearance');
       } finally {
         setDeleting(false);
       }
     }
   };
 
-  const openViewModal = (invoice: Invoice) => {
-    setSelectedInvoice(invoice);
+  const openViewModal = (clr: Clearance) => {
+    setSelectedClearance(clr);
     setShowViewModal(true);
   };
 
-  const openPaymentModal = (invoice: Invoice) => {
-    setSelectedInvoice(invoice);
-    setPaymentAmount(invoice.balanceDue);
+  const openPaymentModal = (clr: Clearance) => {
+    setSelectedClearance(clr);
+    setPaymentAmount(clr.balanceDue);
     setShowPaymentModal(true);
   };
 
-  const openDeleteModal = (invoice: Invoice) => {
-    setSelectedInvoice(invoice);
+  const openDeleteModal = (clr: Clearance) => {
+    setSelectedClearance(clr);
     setShowDeleteModal(true);
   };
 
-  const handlePrint = (invoice: Invoice) => {
-    localStorage.setItem('printInvoice', JSON.stringify(invoice));
-    window.open(`/invoices/${invoice.id}/print`, '_blank');
+  const handlePrint = (clr: Clearance) => {
+    localStorage.setItem('printClearance', JSON.stringify(clr));
+    window.open(`/clearance/${clr.id}/print`, '_blank');
   };
 
-  // Paginated invoices
-  const paginatedInvoices = useMemo(() => {
+  // Paginated clearances
+  const paginatedClearances = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
-    return filteredInvoices.slice(start, start + pageSize);
-  }, [filteredInvoices, currentPage, pageSize]);
+    return filteredClearances.slice(start, start + pageSize);
+  }, [filteredClearances, currentPage, pageSize]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -226,7 +223,6 @@ export function Invoices() {
   if (loading) {
     return (
       <div className="space-y-6">
-        {/* Header skeleton */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <div className="h-8 w-40 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
@@ -234,8 +230,6 @@ export function Invoices() {
           </div>
           <div className="h-10 w-36 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
         </div>
-
-        {/* Stats skeleton */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
             <Card key={i}>
@@ -251,8 +245,6 @@ export function Invoices() {
             </Card>
           ))}
         </div>
-
-        {/* Filters skeleton */}
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-col lg:flex-row gap-4">
@@ -262,20 +254,16 @@ export function Invoices() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Table skeleton */}
         <Card>
           <CardContent className="p-0 md:p-0">
             <div className="hidden md:block">
-              {/* Header row */}
               <div className="grid grid-cols-8 gap-4 px-6 py-3 border-b border-slate-200 dark:border-slate-700">
                 {[...Array(8)].map((_, i) => (
                   <div key={i} className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
                 ))}
               </div>
-              {/* Data rows */}
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="grid grid-cols-8 gap-4 px-6 py-4 border-b border-slate-100 dark:border-slate-800" style={{ animationDelay: `${i * 100}ms` }}>
+                <div key={i} className="grid grid-cols-8 gap-4 px-6 py-4 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-3 col-span-1">
                     <div className="w-10 h-10 rounded-lg bg-slate-200 dark:bg-slate-700 animate-pulse" />
                     <div className="space-y-1.5 flex-1">
@@ -283,11 +271,9 @@ export function Invoices() {
                       <div className="h-3 w-14 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
                     </div>
                   </div>
-                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse self-center" />
-                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse self-center" />
-                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse self-center" />
-                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse self-center" />
-                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse self-center" />
+                  {[...Array(5)].map((_, j) => (
+                    <div key={j} className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse self-center" />
+                  ))}
                   <div className="h-6 w-16 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse self-center mx-auto" />
                   <div className="flex items-center justify-center gap-1">
                     {[...Array(4)].map((_, j) => (
@@ -297,7 +283,6 @@ export function Invoices() {
                 </div>
               ))}
             </div>
-            {/* Mobile skeleton */}
             <div className="md:hidden p-4 space-y-4">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-4">
@@ -338,13 +323,13 @@ export function Invoices() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Invoices</h1>
-          <p className="mt-1 text-slate-600 dark:text-slate-400">Manage sales and payments</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Clearance Sales</h1>
+          <p className="mt-1 text-slate-600 dark:text-slate-400">Manage clearance sales and payments</p>
         </div>
-        <Link to="/invoices/create">
+        <Link to="/clearance/create">
           <Button variant="gold">
             <Plus className="w-4 h-4" />
-            Create Invoice
+            Create Clearance
           </Button>
         </Link>
       </div>
@@ -354,11 +339,11 @@ export function Invoices() {
         <Card>
           <CardContent className="p-4 flex items-center gap-4">
             <div className="p-3 rounded-xl bg-blue-500/10">
-              <FileText className="w-6 h-6 text-blue-400" />
+              <Tag className="w-6 h-6 text-blue-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Total Invoices</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{totalInvoices}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Total Clearances</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{totalClearances}</p>
             </div>
           </CardContent>
         </Card>
@@ -380,7 +365,7 @@ export function Invoices() {
             </div>
             <div>
               <p className="text-sm text-slate-600 dark:text-slate-400">Pending</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{pendingInvoices.length}</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{pendingClearances.length}</p>
             </div>
           </CardContent>
         </Card>
@@ -405,7 +390,7 @@ export function Invoices() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
-                  placeholder="Search by invoice number or customer..."
+                  placeholder="Search by clearance number or customer..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 pr-9"
@@ -426,10 +411,10 @@ export function Invoices() {
               onChange={setStatusFilter}
               options={[
                 { value: '', label: 'All Status', icon: <Filter className="w-4 h-4" /> },
-                ...invoiceStatuses.map((status) => ({
+                ...clearanceStatuses.map((status) => ({
                   value: status,
                   label: status.charAt(0).toUpperCase() + status.slice(1),
-                  icon: status === 'paid' ? <CheckCircle className="w-4 h-4" /> : status === 'pending' ? <Clock className="w-4 h-4" /> : status === 'cancelled' ? <AlertTriangle className="w-4 h-4" /> : <FileText className="w-4 h-4" />
+                  icon: status === 'paid' ? <CheckCircle className="w-4 h-4" /> : status === 'pending' ? <Clock className="w-4 h-4" /> : status === 'cancelled' ? <AlertTriangle className="w-4 h-4" /> : <Tag className="w-4 h-4" />
                 }))
               ]}
               placeholder="Filter by status..."
@@ -451,14 +436,14 @@ export function Invoices() {
         </CardContent>
       </Card>
 
-      {/* Invoices Table */}
+      {/* Clearances Table */}
       <Card>
         <CardContent className="p-0 md:p-0">
           {/* Desktop Table */}
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Invoice</TableHead>
+                <TableHead>Clearance</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead className="text-right">Total</TableHead>
@@ -469,77 +454,77 @@ export function Invoices() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedInvoices.map((invoice) => (
-                <TableRow key={invoice.id}>
+              {paginatedClearances.map((clr) => (
+                <TableRow key={clr.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500/20 to-yellow-500/10 flex items-center justify-center">
-                        <FileText className="w-5 h-5 text-amber-400" />
+                        <Tag className="w-5 h-5 text-amber-400" />
                       </div>
                       <div>
                         <button
-                          onClick={() => navigate(`/invoices/${invoice.id}/edit`)}
+                          onClick={() => navigate(`/clearance/${clr.id}/edit`)}
                           className="font-medium text-slate-800 dark:text-slate-200 hover:text-amber-500 dark:hover:text-amber-400 transition-colors text-left"
                         >
-                          {invoice.invoiceNumber}
+                          {clr.clearanceNumber}
                         </button>
-                        <p className="text-xs text-slate-600 dark:text-slate-400">{invoice.items.length} items</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">{clr.items.length} items</p>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-slate-700 dark:text-slate-300">{invoice.customerName}</TableCell>
-                  <TableCell className="text-slate-600 dark:text-slate-400">{formatDate(invoice.createdAt)}</TableCell>
+                  <TableCell className="text-slate-700 dark:text-slate-300">{clr.customerName}</TableCell>
+                  <TableCell className="text-slate-600 dark:text-slate-400">{formatDate(clr.createdAt)}</TableCell>
                   <TableCell className="text-right font-semibold text-slate-800 dark:text-slate-200">
-                    {formatCurrency(invoice.total)}
+                    {formatCurrency(clr.total)}
                   </TableCell>
                   <TableCell className="text-right text-emerald-400">
-                    {formatCurrency(invoice.amountPaid)}
+                    {formatCurrency(clr.amountPaid)}
                   </TableCell>
                   <TableCell className="text-right text-amber-400">
-                    {formatCurrency(invoice.balanceDue)}
+                    {formatCurrency(clr.balanceDue)}
                   </TableCell>
-                  <TableCell className="text-center">{getStatusBadge(invoice.status)}</TableCell>
+                  <TableCell className="text-center">{getStatusBadge(clr.status)}</TableCell>
                   <TableCell>
                     <div className="relative">
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setMoreMenuId(moreMenuId === invoice.id ? null : invoice.id)}
+                        onClick={() => setMoreMenuId(moreMenuId === clr.id ? null : clr.id)}
                       >
                         <MoreVertical className="w-4 h-4" />
                       </Button>
-                      {moreMenuId === invoice.id && (
+                      {moreMenuId === clr.id && (
                         <>
                           <div className="fixed inset-0 z-[60]" onClick={() => setMoreMenuId(null)} />
                           <div className="absolute right-0 bottom-full mb-1 z-[70] w-44 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl py-1.5">
                             <button
-                              onClick={() => { openViewModal(invoice); setMoreMenuId(null); }}
+                              onClick={() => { openViewModal(clr); setMoreMenuId(null); }}
                               className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                             >
                               <Eye className="w-4 h-4" /> View
                             </button>
                             <button
-                              onClick={() => { navigate(`/invoices/${invoice.id}/edit`); setMoreMenuId(null); }}
+                              onClick={() => { navigate(`/clearance/${clr.id}/edit`); setMoreMenuId(null); }}
                               className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                             >
                               <Edit className="w-4 h-4" /> Edit
                             </button>
                             <button
-                              onClick={() => { handlePrint(invoice); setMoreMenuId(null); }}
+                              onClick={() => { handlePrint(clr); setMoreMenuId(null); }}
                               className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                             >
                               <Printer className="w-4 h-4" /> Print
                             </button>
-                            {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
+                            {clr.status !== 'paid' && clr.status !== 'cancelled' && (
                               <button
-                                onClick={() => { openPaymentModal(invoice); setMoreMenuId(null); }}
+                                onClick={() => { openPaymentModal(clr); setMoreMenuId(null); }}
                                 className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-emerald-400 hover:bg-emerald-500/10 transition-colors"
                               >
                                 <DollarSign className="w-4 h-4" /> Record Payment
                               </button>
                             )}
                             <button
-                              onClick={() => { openDeleteModal(invoice); setMoreMenuId(null); }}
+                              onClick={() => { openDeleteModal(clr); setMoreMenuId(null); }}
                               className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                             >
                               <Trash2 className="w-4 h-4" /> Delete
@@ -556,51 +541,51 @@ export function Invoices() {
 
           {/* Mobile Cards */}
           <MobileCardsContainer className="p-4">
-            {paginatedInvoices.map((invoice) => (
-              <MobileCard key={invoice.id}>
+            {paginatedClearances.map((clr) => (
+              <MobileCard key={clr.id}>
                 <MobileCardHeader>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/10 flex items-center justify-center">
-                      <FileText className="w-6 h-6 text-amber-400" />
+                      <Tag className="w-6 h-6 text-amber-400" />
                     </div>
                     <div>
                       <button
-                        onClick={() => navigate(`/invoices/${invoice.id}/edit`)}
+                        onClick={() => navigate(`/clearance/${clr.id}/edit`)}
                         className="font-semibold text-slate-800 dark:text-slate-200 hover:text-amber-500 dark:hover:text-amber-400 transition-colors text-left"
                       >
-                        {invoice.invoiceNumber}
+                        {clr.clearanceNumber}
                       </button>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">{invoice.customerName}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">{clr.customerName}</p>
                     </div>
                   </div>
-                  {getStatusBadge(invoice.status)}
+                  {getStatusBadge(clr.status)}
                 </MobileCardHeader>
                 <MobileCardContent>
-                  <MobileCardRow label="Date" value={formatDate(invoice.createdAt)} />
-                  <MobileCardRow label="Items" value={`${invoice.items.length} items`} />
+                  <MobileCardRow label="Date" value={formatDate(clr.createdAt)} />
+                  <MobileCardRow label="Items" value={`${clr.items.length} items`} />
                   <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700/50">
                     <div className="text-center">
                       <p className="text-xs text-slate-500 dark:text-slate-400">Total</p>
-                      <p className="font-bold text-slate-800 dark:text-slate-200">{formatCurrency(invoice.total)}</p>
+                      <p className="font-bold text-slate-800 dark:text-slate-200">{formatCurrency(clr.total)}</p>
                     </div>
                     <div className="text-center">
                       <p className="text-xs text-slate-500 dark:text-slate-400">Paid</p>
-                      <p className="font-bold text-emerald-500">{formatCurrency(invoice.amountPaid)}</p>
+                      <p className="font-bold text-emerald-500">{formatCurrency(clr.amountPaid)}</p>
                     </div>
                     <div className="text-center">
                       <p className="text-xs text-slate-500 dark:text-slate-400">Balance</p>
-                      <p className="font-bold text-amber-500">{formatCurrency(invoice.balanceDue)}</p>
+                      <p className="font-bold text-amber-500">{formatCurrency(clr.balanceDue)}</p>
                     </div>
                   </div>
                 </MobileCardContent>
                 <MobileCardActions>
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => openViewModal(invoice)}>
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => openViewModal(clr)}>
                     <Eye className="w-4 h-4" /> View
                   </Button>
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => navigate(`/invoices/${invoice.id}/edit`)}>
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => navigate(`/clearance/${clr.id}/edit`)}>
                     <Edit className="w-4 h-4" /> Edit
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => openDeleteModal(invoice)} className="text-red-400 hover:text-red-300">
+                  <Button variant="ghost" size="icon" onClick={() => openDeleteModal(clr)} className="text-red-400 hover:text-red-300">
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </MobileCardActions>
@@ -608,19 +593,18 @@ export function Invoices() {
             ))}
           </MobileCardsContainer>
 
-          {filteredInvoices.length === 0 && (
+          {filteredClearances.length === 0 && (
             <div className="p-8 text-center">
-              <FileText className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-600 dark:text-slate-400">No invoices found</p>
+              <Tag className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-600 dark:text-slate-400">No clearances found</p>
             </div>
           )}
 
-          {/* Pagination */}
-          {filteredInvoices.length > 0 && (
+          {filteredClearances.length > 0 && (
             <div className="border-t border-slate-200 dark:border-slate-700">
               <Pagination
                 currentPage={currentPage}
-                totalItems={filteredInvoices.length}
+                totalItems={filteredClearances.length}
                 pageSize={pageSize}
                 onPageChange={setCurrentPage}
                 onPageSizeChange={setPageSize}
@@ -630,37 +614,31 @@ export function Invoices() {
         </CardContent>
       </Card>
 
-      {/* View Invoice Modal */}
-      <Modal
-        isOpen={showViewModal}
-        onClose={() => setShowViewModal(false)}
-        title="Invoice Details"
-        size="lg"
-      >
-        {selectedInvoice && (
+      {/* View Clearance Modal */}
+      <Modal isOpen={showViewModal} onClose={() => setShowViewModal(false)} title="Clearance Details" size="lg">
+        {selectedClearance && (
           <div className="px-5 sm:px-6 py-5 space-y-5">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{selectedInvoice.invoiceNumber}</h3>
-                <p className="text-slate-600 dark:text-slate-400">{formatDate(selectedInvoice.createdAt)}</p>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{selectedClearance.clearanceNumber}</h3>
+                <p className="text-slate-600 dark:text-slate-400">{formatDate(selectedClearance.createdAt)}</p>
               </div>
-              {getStatusBadge(selectedInvoice.status)}
+              {getStatusBadge(selectedClearance.status)}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
                 <p className="text-sm text-slate-600 dark:text-slate-400">Customer</p>
-                <p className="font-medium text-slate-800 dark:text-slate-200">{selectedInvoice.customerName}</p>
+                <p className="font-medium text-slate-800 dark:text-slate-200">{selectedClearance.customerName}</p>
               </div>
               <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
                 <p className="text-sm text-slate-600 dark:text-slate-400">Payment Method</p>
                 <p className="font-medium text-slate-800 dark:text-slate-200">
-                  {selectedInvoice.paymentMethod?.replace('_', ' ') || 'N/A'}
+                  {selectedClearance.paymentMethod?.replace('_', ' ') || 'N/A'}
                 </p>
               </div>
             </div>
 
-            {/* Items */}
             <div>
               <h4 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3">Items</h4>
               <div className="rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
@@ -674,16 +652,12 @@ export function Invoices() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-700/50">
-                    {selectedInvoice.items.map((item, index) => (
+                    {selectedClearance.items.map((item, index) => (
                       <tr key={index}>
                         <td className="px-4 py-3 text-slate-800 dark:text-slate-200">{item.productName}</td>
                         <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">{item.quantity}</td>
-                        <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">
-                          {formatCurrency(item.unitPrice)}
-                        </td>
-                        <td className="px-4 py-3 text-right text-slate-800 dark:text-slate-200">
-                          {formatCurrency(item.total)}
-                        </td>
+                        <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">{formatCurrency(item.unitPrice)}</td>
+                        <td className="px-4 py-3 text-right text-slate-800 dark:text-slate-200">{formatCurrency(item.total)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -691,56 +665,45 @@ export function Invoices() {
               </div>
             </div>
 
-            {/* Totals */}
             <div className="space-y-2 pt-4 border-t border-slate-200 dark:border-slate-700">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-600 dark:text-slate-400">Subtotal</span>
-                <span className="text-slate-800 dark:text-slate-200">{formatCurrency(selectedInvoice.subtotal)}</span>
+                <span className="text-slate-800 dark:text-slate-200">{formatCurrency(selectedClearance.subtotal)}</span>
               </div>
-              {selectedInvoice.discount > 0 && (
+              {selectedClearance.discount > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600 dark:text-slate-400">Discount</span>
-                  <span className="text-red-400">-{formatCurrency(selectedInvoice.discount)}</span>
+                  <span className="text-red-400">-{formatCurrency(selectedClearance.discount)}</span>
                 </div>
               )}
-              {selectedInvoice.tax > 0 && (
+              {selectedClearance.tax > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600 dark:text-slate-400">Tax</span>
-                  <span className="text-slate-800 dark:text-slate-200">{formatCurrency(selectedInvoice.tax)}</span>
+                  <span className="text-slate-800 dark:text-slate-200">{formatCurrency(selectedClearance.tax)}</span>
                 </div>
               )}
               <div className="flex justify-between text-lg font-bold pt-3 border-t border-slate-200 dark:border-slate-700">
                 <span className="text-slate-800 dark:text-slate-200">Total</span>
-                <span className="text-amber-400">{formatCurrency(selectedInvoice.total)}</span>
+                <span className="text-amber-400">{formatCurrency(selectedClearance.total)}</span>
               </div>
               <div className="flex justify-between text-sm pt-2">
                 <span className="text-slate-600 dark:text-slate-400">Paid</span>
-                <span className="text-emerald-400">{formatCurrency(selectedInvoice.amountPaid)}</span>
+                <span className="text-emerald-400">{formatCurrency(selectedClearance.amountPaid)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-slate-600 dark:text-slate-400">Balance Due</span>
-                <span className="text-amber-400">{formatCurrency(selectedInvoice.balanceDue)}</span>
+                <span className="text-amber-400">{formatCurrency(selectedClearance.balanceDue)}</span>
               </div>
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-              <Button variant="ghost" onClick={() => setShowViewModal(false)}>
-                Close
+              <Button variant="ghost" onClick={() => setShowViewModal(false)}>Close</Button>
+              <Button variant="outline" onClick={() => handlePrint(selectedClearance)}>
+                <Printer className="w-4 h-4" /> Print
               </Button>
-              <Button variant="outline" onClick={() => handlePrint(selectedInvoice)}>
-                <Printer className="w-4 h-4" />
-                Print
-              </Button>
-              {selectedInvoice.status !== 'paid' && selectedInvoice.status !== 'cancelled' && (
-                <Button
-                  variant="gold"
-                  onClick={() => {
-                    setShowViewModal(false);
-                    openPaymentModal(selectedInvoice);
-                  }}
-                >
-                  <DollarSign className="w-4 h-4" />
-                  Record Payment
+              {selectedClearance.status !== 'paid' && selectedClearance.status !== 'cancelled' && (
+                <Button variant="gold" onClick={() => { setShowViewModal(false); openPaymentModal(selectedClearance); }}>
+                  <DollarSign className="w-4 h-4" /> Record Payment
                 </Button>
               )}
             </div>
@@ -749,50 +712,31 @@ export function Invoices() {
       </Modal>
 
       {/* Payment Modal */}
-      <Modal
-        isOpen={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
-        title="Record Payment"
-      >
-        {selectedInvoice && (
+      <Modal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} title="Record Payment">
+        {selectedClearance && (
           <div className="px-5 sm:px-6 py-5 space-y-5">
             <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50 space-y-3">
               <div className="flex justify-between">
-                <span className="text-slate-600 dark:text-slate-400">Invoice</span>
-                <span className="font-medium text-slate-800 dark:text-slate-200">{selectedInvoice.invoiceNumber}</span>
+                <span className="text-slate-600 dark:text-slate-400">Clearance</span>
+                <span className="font-medium text-slate-800 dark:text-slate-200">{selectedClearance.clearanceNumber}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-600 dark:text-slate-400">Total Amount</span>
-                <span className="font-medium text-slate-800 dark:text-slate-200">
-                  {formatCurrency(selectedInvoice.total)}
-                </span>
+                <span className="font-medium text-slate-800 dark:text-slate-200">{formatCurrency(selectedClearance.total)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-600 dark:text-slate-400">Already Paid</span>
-                <span className="font-medium text-emerald-400">
-                  {formatCurrency(selectedInvoice.amountPaid)}
-                </span>
+                <span className="font-medium text-emerald-400">{formatCurrency(selectedClearance.amountPaid)}</span>
               </div>
               <div className="flex justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
                 <span className="text-slate-600 dark:text-slate-400">Balance Due</span>
-                <span className="font-bold text-amber-400">
-                  {formatCurrency(selectedInvoice.balanceDue)}
-                </span>
+                <span className="font-bold text-amber-400">{formatCurrency(selectedClearance.balanceDue)}</span>
               </div>
             </div>
-
             <div className="space-y-4">
-              <Input
-                label="Payment Amount"
-                type="number"
-                value={paymentAmount}
-                onChange={(e) => setPaymentAmount(parseFloat(e.target.value))}
-                max={selectedInvoice.balanceDue}
-              />
+              <Input label="Payment Amount" type="number" value={paymentAmount} onChange={(e) => setPaymentAmount(parseFloat(e.target.value))} max={selectedClearance.balanceDue} />
               <div>
-                <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-2">
-                  Payment Method
-                </label>
+                <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-2">Payment Method</label>
                 <Combobox
                   value={paymentMethod}
                   onChange={(val) => setPaymentMethod(val as PaymentMethod)}
@@ -805,11 +749,8 @@ export function Invoices() {
                 />
               </div>
             </div>
-
             <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-              <Button variant="ghost" onClick={() => setShowPaymentModal(false)} disabled={paying}>
-                Cancel
-              </Button>
+              <Button variant="ghost" onClick={() => setShowPaymentModal(false)} disabled={paying}>Cancel</Button>
               <Button variant="gold" onClick={handlePayment} disabled={paying}>
                 {paying ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                 Confirm Payment
@@ -820,32 +761,25 @@ export function Invoices() {
       </Modal>
 
       {/* Delete Modal */}
-      <Modal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        title="Delete Invoice"
-      >
+      <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Delete Clearance">
         <div className="px-5 sm:px-6 py-5 space-y-5">
           <div className="flex items-start gap-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
             <AlertTriangle className="w-8 h-8 text-red-400 shrink-0 mt-0.5" />
             <div>
               <p className="font-medium text-slate-800 dark:text-slate-200">Are you sure?</p>
               <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                This will permanently delete invoice "{selectedInvoice?.invoiceNumber}". This action
-                cannot be undone.
+                This will permanently delete clearance "{selectedClearance?.clearanceNumber}". This action cannot be undone.
               </p>
             </div>
           </div>
         </div>
         <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
-            <Button variant="ghost" onClick={() => setShowDeleteModal(false)} disabled={deleting}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-              Delete
-            </Button>
-          </div>
+          <Button variant="ghost" onClick={() => setShowDeleteModal(false)} disabled={deleting}>Cancel</Button>
+          <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+            {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            Delete
+          </Button>
+        </div>
       </Modal>
     </div>
   );

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { formatTimeElapsed } from '../utils/pawnCalculations';
-import type { InterestPayment, PawnTicket, PreciseInterestCalculation } from '../types';
+import type { CompanyInfo, InterestPayment, PawnTicket, PreciseInterestCalculation } from '../types';
+import { companyInfo as defaultCompanyInfo } from '../data/mockData';
 
 interface PrintData {
   receipt: InterestPayment;
@@ -14,7 +15,8 @@ interface PrintData {
   };
 }
 
-export function PrintableInterestReceipt() {
+export function PrintableInterestReceipt({ company }: { company?: CompanyInfo }) {
+  const companyInfo = company || defaultCompanyInfo;
   const [data, setData] = useState<PrintData | null>(null);
 
   useEffect(() => {
@@ -23,15 +25,6 @@ export function PrintableInterestReceipt() {
       setData(JSON.parse(storedData));
     }
   }, []);
-
-  useEffect(() => {
-    if (data) {
-      // Trigger print after render
-      setTimeout(() => {
-        window.print();
-      }, 500);
-    }
-  }, [data]);
 
   if (!data) {
     return (
@@ -48,8 +41,8 @@ export function PrintableInterestReceipt() {
       <style>{`
         @media print {
           @page {
-            size: A5 portrait;
-            margin: 6mm 8mm;
+            size: A4 portrait;
+            margin: 25.4mm;
           }
           body {
             -webkit-print-color-adjust: exact !important;
@@ -62,13 +55,14 @@ export function PrintableInterestReceipt() {
         
         .print-container {
           font-family: 'Courier New', monospace;
-          width: 132mm;
+          width: 210mm;
+          min-height: 297mm;
           margin: 0 auto;
-          padding: 5mm;
+          padding: 25.4mm;
           background: white;
           color: black;
-          font-size: 11px;
-          line-height: 1.4;
+          font-size: 14px;
+          line-height: 1.5;
         }
         
         .header {
@@ -79,17 +73,17 @@ export function PrintableInterestReceipt() {
         }
         
         .company-name {
-          font-size: 16px;
+          font-size: 24px;
           font-weight: bold;
           margin-bottom: 2px;
         }
         
         .receipt-type {
-          font-size: 13px;
+          font-size: 18px;
           font-weight: bold;
           background: #000;
           color: #fff;
-          padding: 3px 8px;
+          padding: 4px 12px;
           display: inline-block;
           margin: 8px 0;
         }
@@ -103,7 +97,7 @@ export function PrintableInterestReceipt() {
           border-bottom: 1px solid #ccc;
           padding-bottom: 2px;
           margin-bottom: 5px;
-          font-size: 11px;
+          font-size: 15px;
         }
         
         .row {
@@ -129,12 +123,12 @@ export function PrintableInterestReceipt() {
         }
         
         .highlight-box .amount {
-          font-size: 18px;
+          font-size: 28px;
           font-weight: bold;
         }
         
         .highlight-box .label {
-          font-size: 10px;
+          font-size: 14px;
           color: #555;
         }
         
@@ -145,7 +139,7 @@ export function PrintableInterestReceipt() {
         
         .footer {
           text-align: center;
-          font-size: 10px;
+          font-size: 13px;
           margin-top: 15px;
           padding-top: 10px;
           border-top: 1px dashed #000;
@@ -160,7 +154,7 @@ export function PrintableInterestReceipt() {
           border: 1px solid #ddd;
           padding: 8px;
           margin: 10px 0;
-          font-size: 10px;
+          font-size: 13px;
         }
         
         .barcode {
@@ -180,11 +174,11 @@ export function PrintableInterestReceipt() {
 
       {/* Header */}
       <div className="header">
-        <div className="company-name">ONELKA JEWELLERY</div>
-        <div style={{ fontSize: '10px' }}>No. 123, Galle Road, Colombo 03</div>
-        <div style={{ fontSize: '10px' }}>Tel: +94 11 234 5678</div>
+        <div className="company-name">{companyInfo.name}</div>
+        <div style={{ fontSize: '13px' }}>{companyInfo.address}</div>
+        <div style={{ fontSize: '13px' }}>Tel: {companyInfo.phone}</div>
         <div className="receipt-type">INTEREST PAYMENT RECEIPT</div>
-        <div style={{ fontSize: '12px', fontWeight: 'bold' }}>
+        <div style={{ fontSize: '15px', fontWeight: 'bold' }}>
           #{receipt.receiptNumber}
         </div>
       </div>
@@ -305,7 +299,7 @@ export function PrintableInterestReceipt() {
           <br />
           Additional Interest: <strong>{formatCurrency(remainingToMaturity.remainingInterest)}</strong>
           <br />
-          <em style={{ fontSize: '9px' }}>
+          <em style={{ fontSize: '12px' }}>
             (Interest continues to accrue until full redemption)
           </em>
         </div>
@@ -332,7 +326,7 @@ export function PrintableInterestReceipt() {
       {receipt.notes && (
         <div className="section">
           <div className="section-title">NOTES</div>
-          <p style={{ fontSize: '10px' }}>{receipt.notes}</p>
+          <p style={{ fontSize: '13px' }}>{receipt.notes}</p>
         </div>
       )}
 

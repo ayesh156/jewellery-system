@@ -115,6 +115,7 @@ export function Combobox({
   const listRef = useRef<HTMLUListElement>(null);
   const optionRefs = useRef<Map<number, HTMLLIElement>>(new Map());
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+  const [openUpward, setOpenUpward] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Create "All" option if enabled
@@ -195,12 +196,20 @@ export function Combobox({
 
     const updatePosition = () => {
       const rect = containerRef.current!.getBoundingClientRect();
+      const dropdownHeight = dropdownRef.current?.offsetHeight || 320;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const shouldOpenUp = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+      setOpenUpward(shouldOpenUp);
+
       const style: React.CSSProperties = {
         position: 'fixed',
-        top: rect.bottom,
         left: rect.left,
         width: rect.width,
         zIndex: 50,
+        ...(shouldOpenUp
+          ? { bottom: window.innerHeight - rect.top }
+          : { top: rect.bottom }),
       };
       setDropdownStyle(style);
     };
@@ -425,7 +434,8 @@ export function Combobox({
           error
             ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500'
             : 'border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600',
-          isOpen && 'rounded-b-none border-amber-500 dark:border-slate-600'
+          isOpen && !openUpward && 'rounded-b-none border-amber-500 dark:border-slate-600',
+          isOpen && openUpward && 'rounded-t-none border-amber-500 dark:border-slate-600'
         )}
         onClick={handleOpen}
         onKeyDown={handleKeyDown}
@@ -476,9 +486,12 @@ export function Combobox({
           ref={dropdownRef}
           style={{ ...dropdownStyle, zIndex: 9999, minWidth: '200px' }}
           className={cn(
-            'fixed rounded-b-lg border border-t-0 overflow-hidden',
+            'fixed overflow-hidden border',
+            openUpward
+              ? 'rounded-t-lg border-b-0 origin-bottom'
+              : 'rounded-b-lg border-t-0 origin-top',
             'bg-white dark:bg-slate-800/95 backdrop-blur-xl border-slate-300 dark:border-slate-600 shadow-2xl shadow-black/10 dark:shadow-black/30',
-            'transition-all duration-200 ease-out origin-top',
+            'transition-all duration-200 ease-out',
             isOpen ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-95 pointer-events-none'
           )}
         >

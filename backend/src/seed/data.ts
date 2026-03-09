@@ -1,10 +1,18 @@
-import type {
+﻿import type {
   categories,
   products,
   productGemstones,
   goldTypeConfigs,
   goldRates,
   companyInfo,
+  customers,
+  invoices,
+  invoiceItems,
+  payments,
+  counters,
+  clearances,
+  clearanceItems,
+  clearancePayments,
 } from '../db/schema.js';
 
 type CategoryInsert = typeof categories.$inferInsert;
@@ -13,6 +21,14 @@ type GemstoneInsert = typeof productGemstones.$inferInsert;
 type GoldTypeInsert = typeof goldTypeConfigs.$inferInsert;
 type GoldRateInsert = typeof goldRates.$inferInsert;
 type CompanyInfoInsert = typeof companyInfo.$inferInsert;
+type CustomerInsert = typeof customers.$inferInsert;
+type InvoiceInsert = typeof invoices.$inferInsert;
+type InvoiceItemInsert = typeof invoiceItems.$inferInsert;
+type PaymentInsert = typeof payments.$inferInsert;
+type CounterInsert = typeof counters.$inferInsert;
+type ClearanceInsert = typeof clearances.$inferInsert;
+type ClearanceItemInsert = typeof clearanceItems.$inferInsert;
+type ClearancePaymentInsert = typeof clearancePayments.$inferInsert;
 
 // ==========================================
 // Company Info
@@ -34,24 +50,24 @@ export const seedCompanyInfo: CompanyInfoInsert = {
 };
 
 // ==========================================
-// Categories — 14 jewellery categories
+// Categories â€” 14 jewellery categories
 // ==========================================
 
 export const seedCategories: CategoryInsert[] = [
-  { id: 'cat-001', name: 'Necklaces',           description: 'Gold, silver and platinum necklaces',   isActive: true },
-  { id: 'cat-002', name: 'Earrings',            description: 'Studs, drops, hoops and danglers',      isActive: true },
-  { id: 'cat-003', name: 'Rings',               description: 'Engagement, wedding and fashion rings', isActive: true },
-  { id: 'cat-004', name: 'Bangles & Bracelets', description: 'Traditional and modern bangles',        isActive: true },
-  { id: 'cat-005', name: 'Pendants',            description: 'Gold and gemstone pendants',            isActive: true },
-  { id: 'cat-006', name: 'Chains',              description: 'Gold and silver chains',                isActive: true },
-  { id: 'cat-007', name: 'Anklets',             description: 'Traditional and designer anklets',      isActive: true },
-  { id: 'cat-008', name: 'Nose Pins',           description: 'Diamond and gold nose pins',            isActive: true },
-  { id: 'cat-009', name: 'Mangalsutra',         description: 'Traditional wedding jewellery',         isActive: true },
-  { id: 'cat-010', name: 'Sets',                description: 'Complete jewellery sets',               isActive: true },
-  { id: 'cat-011', name: "Men's Jewellery",     description: 'Rings, chains and bracelets for men',   isActive: true },
-  { id: 'cat-012', name: 'Silver Items',        description: 'Silver jewellery and articles',         isActive: true },
-  { id: 'cat-013', name: 'Coins & Bars',        description: 'Gold and silver coins and bars',        isActive: true },
-  { id: 'cat-014', name: 'Watches',             description: 'Luxury watches',                       isActive: true },
+  { id: 'm-cat-0001', name: 'Necklaces',           description: 'Gold, silver and platinum necklaces',   isActive: true },
+  { id: 'm-cat-0002', name: 'Earrings',            description: 'Studs, drops, hoops and danglers',      isActive: true },
+  { id: 'm-cat-0003', name: 'Rings',               description: 'Engagement, wedding and fashion rings', isActive: true },
+  { id: 'm-cat-0004', name: 'Bangles & Bracelets', description: 'Traditional and modern bangles',        isActive: true },
+  { id: 'm-cat-0005', name: 'Pendants',            description: 'Gold and gemstone pendants',            isActive: true },
+  { id: 'm-cat-0006', name: 'Chains',              description: 'Gold and silver chains',                isActive: true },
+  { id: 'm-cat-0007', name: 'Anklets',             description: 'Traditional and designer anklets',      isActive: true },
+  { id: 'm-cat-0008', name: 'Nose Pins',           description: 'Diamond and gold nose pins',            isActive: true },
+  { id: 'm-cat-0009', name: 'Mangalsutra',         description: 'Traditional wedding jewellery',         isActive: true },
+  { id: 'm-cat-0010', name: 'Sets',                description: 'Complete jewellery sets',               isActive: true },
+  { id: 'm-cat-0011', name: "Men's Jewellery",     description: 'Rings, chains and bracelets for men',   isActive: true },
+  { id: 'm-cat-0012', name: 'Silver Items',        description: 'Silver jewellery and articles',         isActive: true },
+  { id: 'm-cat-0013', name: 'Coins & Bars',        description: 'Gold and silver coins and bars',        isActive: true },
+  { id: 'm-cat-0014', name: 'Watches',             description: 'Luxury watches',                       isActive: true },
 ];
 
 // ==========================================
@@ -83,14 +99,14 @@ export const seedGoldRates: GoldRateInsert[] = [
 ];
 
 // ==========================================
-// Products — 10 jewellery items
+// Products â€” 10 jewellery items
 // ==========================================
 
 export const seedProducts: ProductInsert[] = [
   {
-    id: 'prod-001', sku: 'RG-NL-22K-001', name: '22K Gold Traditional Necklace',
+    id: 'm-prod-0001', sku: 'M00001', name: '22K Gold Traditional Necklace',
     description: 'Handcrafted traditional Sri Lankan necklace with intricate floral design',
-    categoryId: 'cat-001', metalType: 'gold', karat: '22K',
+    categoryId: 'm-cat-0001', metalType: 'gold', karat: '22K',
     metalWeight: '35.500', metalPurity: '91.67',
     hasGemstones: false,
     metalRate: '18500.00', makingCharges: '45000.00',
@@ -100,9 +116,9 @@ export const seedProducts: ProductInsert[] = [
     dateAdded: new Date('2024-01-15'),
   },
   {
-    id: 'prod-002', sku: 'RG-ER-18K-002', name: '18K Gold Diamond Earrings',
+    id: 'm-prod-0002', sku: 'M00002', name: '18K Gold Diamond Earrings',
     description: 'Elegant diamond stud earrings set in 18K gold, perfect for formal occasions',
-    categoryId: 'cat-002', metalType: 'gold', karat: '18K',
+    categoryId: 'm-cat-0002', metalType: 'gold', karat: '18K',
     metalWeight: '8.200', metalPurity: '75.00',
     hasGemstones: true, totalGemstoneWeight: '1.000',
     metalRate: '14000.00', makingCharges: '25000.00',
@@ -113,9 +129,9 @@ export const seedProducts: ProductInsert[] = [
     dateAdded: new Date('2024-02-20'),
   },
   {
-    id: 'prod-003', sku: 'RG-RG-18K-003', name: '18K White Gold Solitaire Ring',
+    id: 'm-prod-0003', sku: 'M00003', name: '18K White Gold Solitaire Ring',
     description: 'Stunning solitaire diamond ring in white gold setting',
-    categoryId: 'cat-003', metalType: 'white-gold', karat: '18K',
+    categoryId: 'm-cat-0003', metalType: 'white-gold', karat: '18K',
     metalWeight: '5.500', metalPurity: '75.00',
     hasGemstones: true, totalGemstoneWeight: '1.000',
     metalRate: '14500.00', makingCharges: '35000.00',
@@ -126,9 +142,9 @@ export const seedProducts: ProductInsert[] = [
     dateAdded: new Date('2024-03-10'),
   },
   {
-    id: 'prod-004', sku: 'RG-BG-22K-004', name: '22K Gold Bangles Set (6 pcs)',
+    id: 'm-prod-0004', sku: 'M00004', name: '22K Gold Bangles Set (6 pcs)',
     description: 'Set of 6 traditional gold bangles with embossed patterns',
-    categoryId: 'cat-004', metalType: 'gold', karat: '22K',
+    categoryId: 'm-cat-0004', metalType: 'gold', karat: '22K',
     metalWeight: '72.000', metalPurity: '91.67',
     hasGemstones: false,
     metalRate: '18500.00', makingCharges: '65000.00',
@@ -138,9 +154,9 @@ export const seedProducts: ProductInsert[] = [
     dateAdded: new Date('2024-04-05'),
   },
   {
-    id: 'prod-005', sku: 'RG-PD-22K-005', name: '22K Gold Ruby Pendant',
+    id: 'm-prod-0005', sku: 'M00005', name: '22K Gold Ruby Pendant',
     description: 'Beautiful ruby pendant set in 22K gold with filigree work',
-    categoryId: 'cat-005', metalType: 'gold', karat: '22K',
+    categoryId: 'm-cat-0005', metalType: 'gold', karat: '22K',
     metalWeight: '12.500', metalPurity: '91.67',
     hasGemstones: true, totalGemstoneWeight: '2.500',
     metalRate: '18500.00', makingCharges: '28000.00',
@@ -151,9 +167,9 @@ export const seedProducts: ProductInsert[] = [
     dateAdded: new Date('2024-05-12'),
   },
   {
-    id: 'prod-006', sku: 'RG-CH-22K-006', name: '22K Gold Rope Chain 24"',
+    id: 'm-prod-0006', sku: 'M00006', name: '22K Gold Rope Chain 24"',
     description: 'Classic rope pattern gold chain, 24 inches length',
-    categoryId: 'cat-006', metalType: 'gold', karat: '22K',
+    categoryId: 'm-cat-0006', metalType: 'gold', karat: '22K',
     metalWeight: '25.000', metalPurity: '91.67',
     hasGemstones: false,
     metalRate: '18500.00', makingCharges: '15000.00',
@@ -163,9 +179,9 @@ export const seedProducts: ProductInsert[] = [
     dateAdded: new Date('2024-06-01'),
   },
   {
-    id: 'prod-007', sku: 'RG-MR-22K-007', name: '22K Gold Men\'s Ring',
+    id: 'm-prod-0007', sku: 'M00007', name: '22K Gold Men\'s Ring',
     description: 'Classic men\'s gold ring with matte finish',
-    categoryId: 'cat-011', metalType: 'gold', karat: '22K',
+    categoryId: 'm-cat-0011', metalType: 'gold', karat: '22K',
     metalWeight: '15.000', metalPurity: '91.67',
     hasGemstones: false,
     metalRate: '18500.00', makingCharges: '12000.00',
@@ -175,9 +191,9 @@ export const seedProducts: ProductInsert[] = [
     dateAdded: new Date('2024-07-15'),
   },
   {
-    id: 'prod-008', sku: 'RG-CB-24K-008', name: '24K Gold Bar 100g',
+    id: 'm-prod-0008', sku: 'M00008', name: '24K Gold Bar 100g',
     description: '100 gram 24K pure gold bar, hallmarked and certified',
-    categoryId: 'cat-013', metalType: 'gold', karat: '24K',
+    categoryId: 'm-cat-0013', metalType: 'gold', karat: '24K',
     metalWeight: '100.000', metalPurity: '99.99',
     hasGemstones: false,
     metalRate: '19500.00', makingCharges: '0.00',
@@ -187,9 +203,9 @@ export const seedProducts: ProductInsert[] = [
     dateAdded: new Date('2024-08-01'),
   },
   {
-    id: 'prod-009', sku: 'RG-SL-925-009', name: '925 Silver Anklet Pair',
+    id: 'm-prod-0009', sku: 'M00009', name: '925 Silver Anklet Pair',
     description: 'Traditional silver anklets with bell charms',
-    categoryId: 'cat-012', metalType: 'silver',
+    categoryId: 'm-cat-0012', metalType: 'silver',
     metalWeight: '85.000', metalPurity: '92.50',
     hasGemstones: false,
     metalRate: '120.00', makingCharges: '2500.00',
@@ -199,9 +215,9 @@ export const seedProducts: ProductInsert[] = [
     dateAdded: new Date('2024-09-10'),
   },
   {
-    id: 'prod-010', sku: 'RG-ER-RG-010', name: '18K Rose Gold Hoop Earrings',
+    id: 'm-prod-0010', sku: 'M00010', name: '18K Rose Gold Hoop Earrings',
     description: 'Modern rose gold hoop earrings with brushed finish',
-    categoryId: 'cat-002', metalType: 'rose-gold', karat: '18K',
+    categoryId: 'm-cat-0002', metalType: 'rose-gold', karat: '18K',
     metalWeight: '6.800', metalPurity: '75.00',
     hasGemstones: false,
     metalRate: '15000.00', makingCharges: '18000.00',
@@ -217,13 +233,385 @@ export const seedProducts: ProductInsert[] = [
 // ==========================================
 
 export const seedGemstones: GemstoneInsert[] = [
-  // prod-002: 18K Gold Diamond Earrings
-  { id: 'gem-001', productId: 'prod-002', name: 'Diamond', type: 'diamond', carat: '0.500', clarity: 'VVS1', cut: 'Excellent', color: 'D', certified: true, certificateNumber: 'GIA-12345' },
-  { id: 'gem-002', productId: 'prod-002', name: 'Diamond', type: 'diamond', carat: '0.500', clarity: 'VVS1', cut: 'Excellent', color: 'D', certified: true, certificateNumber: 'GIA-12346' },
+  // m-prod-0002: 18K Gold Diamond Earrings
+  { id: 'm-gem-0001', productId: 'm-prod-0002', name: 'Diamond', type: 'diamond', carat: '0.500', clarity: 'VVS1', cut: 'Excellent', color: 'D', certified: true, certificateNumber: 'GIA-12345' },
+  { id: 'm-gem-0002', productId: 'm-prod-0002', name: 'Diamond', type: 'diamond', carat: '0.500', clarity: 'VVS1', cut: 'Excellent', color: 'D', certified: true, certificateNumber: 'GIA-12346' },
 
-  // prod-003: 18K White Gold Solitaire Ring
-  { id: 'gem-003', productId: 'prod-003', name: 'Diamond', type: 'diamond', carat: '1.000', clarity: 'VS1', cut: 'Ideal', color: 'E', certified: true, certificateNumber: 'GIA-12347' },
+  // m-prod-0003: 18K White Gold Solitaire Ring
+  { id: 'm-gem-0003', productId: 'm-prod-0003', name: 'Diamond', type: 'diamond', carat: '1.000', clarity: 'VS1', cut: 'Ideal', color: 'E', certified: true, certificateNumber: 'GIA-12347' },
 
-  // prod-005: 22K Gold Ruby Pendant
-  { id: 'gem-004', productId: 'prod-005', name: 'Ruby', type: 'ruby', carat: '2.500', clarity: 'Eye Clean', color: 'Pigeon Blood', origin: 'Myanmar', certified: true, certificateNumber: 'GRS-78901' },
+  // m-prod-0005: 22K Gold Ruby Pendant
+  { id: 'm-gem-0004', productId: 'm-prod-0005', name: 'Ruby', type: 'ruby', carat: '2.500', clarity: 'Eye Clean', color: 'Pigeon Blood', origin: 'Myanmar', certified: true, certificateNumber: 'GRS-78901' },
+];
+
+// ==========================================
+// Customers â€” 5 Sri Lankan customers
+// ==========================================
+
+export const seedCustomers: CustomerInsert[] = [
+  {
+    id: 'm-cus-0001', name: 'Chaminda Perera', businessName: 'Perera Jewellers',
+    email: 'chaminda@pererajewellers.lk', phone: '+94 77 234 5678',
+    address: '45 Temple Road', city: 'Kandy',
+    registrationDate: '2023-01-15', totalPurchased: '2500000',
+    customerType: 'vip', isActive: true,
+    creditLimit: '500000', creditBalance: '0',
+  },
+  {
+    id: 'm-cus-0002', name: 'Malini Fernando',
+    email: 'malini.f@gmail.com', phone: '+94 71 345 6789',
+    address: '78 Lake Drive', city: 'Colombo',
+    registrationDate: '2023-03-22', totalPurchased: '850000',
+    customerType: 'retail', isActive: true,
+  },
+  {
+    id: 'm-cus-0003', name: 'Kamal Dissanayake', businessName: 'KD Gold House',
+    email: 'kamal@kdgold.lk', phone: '+94 76 456 7890',
+    address: '156 Main Street', city: 'Galle',
+    registrationDate: '2022-08-10', totalPurchased: '4200000',
+    customerType: 'wholesale', isActive: true,
+    creditLimit: '1000000', creditBalance: '350000',
+  },
+  {
+    id: 'm-cus-0004', name: 'Nirosha Wijesinghe',
+    email: 'nirosha.w@yahoo.com', phone: '+94 72 567 8901',
+    address: '23 Hill Street', city: 'Nuwara Eliya',
+    registrationDate: '2024-01-05', totalPurchased: '175000',
+    customerType: 'retail', isActive: true,
+  },
+  {
+    id: 'm-cus-0005', name: 'Ruwan Jayawardena', businessName: 'Jayawardena & Sons',
+    email: 'ruwan@jayawardenasons.lk', phone: '+94 77 678 9012',
+    address: '89 Station Road', city: 'Matara',
+    registrationDate: '2022-05-18', totalPurchased: '3100000',
+    customerType: 'credit', isActive: true,
+    creditLimit: '750000', creditBalance: '225000',
+  },
+];
+
+// ==========================================
+// Invoices â€” 3 sample invoices
+// ==========================================
+
+export const seedInvoices: InvoiceInsert[] = [
+  {
+    id: 'm-inv-0001', invoiceNumber: 'M00001',
+    customerId: 'm-cus-0001', customerName: 'Chaminda Perera',
+    customerPhone: '+94 77 234 5678', customerAddress: '45 Temple Road, Kandy',
+    subtotal: '992050', discount: '50000', discountType: 'fixed',
+    tax: '0', total: '942050',
+    amountPaid: '942050', balanceDue: '0',
+    paymentMethod: 'bank-transfer',
+    issueDate: '2024-12-28', status: 'paid',
+    notes: 'VIP customer - loyalty discount applied',
+    createdBy: 'Admin', createdByUserId: 'USR-01',
+    createdAt: new Date('2024-12-28T10:30:00Z'),
+  },
+  {
+    id: 'm-inv-0002', invoiceNumber: 'M00002',
+    customerId: 'm-cus-0003', customerName: 'Kamal Dissanayake',
+    customerPhone: '+94 76 456 7890', customerAddress: '156 Main Street, Galle',
+    subtotal: '4226500', discount: '200000', discountType: 'fixed',
+    tax: '0', total: '4026500',
+    amountPaid: '2500000', balanceDue: '1526500',
+    paymentMethod: 'credit',
+    issueDate: '2024-12-29', dueDate: '2025-01-29', status: 'partial',
+    notes: 'Wholesale order - partial payment received',
+    createdBy: 'Admin', createdByUserId: 'USR-02',
+    createdAt: new Date('2024-12-29T14:00:00Z'),
+  },
+  {
+    id: 'm-inv-0003', invoiceNumber: 'M00003',
+    customerId: 'm-cus-0002', customerName: 'Malini Fernando',
+    customerPhone: '+94 71 345 6789', customerAddress: '78 Lake Drive, Colombo',
+    subtotal: '464750', discount: '0',
+    tax: '0', total: '464750',
+    amountPaid: '0', balanceDue: '464750',
+    paymentMethod: 'card',
+    issueDate: '2024-12-30', dueDate: '2025-01-15', status: 'pending',
+    notes: 'Engagement ring - customer to pick up',
+    createdBy: 'Admin', createdByUserId: 'USR-01',
+    createdAt: new Date('2024-12-30T09:15:00Z'),
+  },
+];
+
+// ==========================================
+// Invoice Items
+// ==========================================
+
+export const seedInvoiceItems: InvoiceItemInsert[] = [
+  // m-inv-0001 items
+  {
+    id: 'm-inv-item-0001', invoiceId: 'm-inv-0001', productId: 'm-prod-0001',
+    sku: 'M00001', productName: '22K Gold Traditional Necklace',
+    metalType: 'gold', karat: '22K', metalWeight: '35.500',
+    quantity: 1, unitPrice: '702250', total: '702250',
+  },
+  {
+    id: 'm-inv-item-0002', invoiceId: 'm-inv-0001', productId: 'm-prod-0002',
+    sku: 'M00002', productName: '18K Gold Diamond Earrings',
+    metalType: 'gold', karat: '18K', metalWeight: '8.200',
+    quantity: 1, unitPrice: '289800', total: '289800',
+  },
+  // m-inv-0002 items
+  {
+    id: 'm-inv-item-0003', invoiceId: 'm-inv-0002', productId: 'm-prod-0004',
+    sku: 'M00004', productName: '22K Gold Bangles Set (6 pcs)',
+    metalType: 'gold', karat: '22K', metalWeight: '72.000',
+    quantity: 2, unitPrice: '1397000', total: '2794000',
+  },
+  {
+    id: 'm-inv-item-0004', invoiceId: 'm-inv-0002', productId: 'm-prod-0006',
+    sku: 'M00006', productName: '22K Gold Rope Chain 24"',
+    metalType: 'gold', karat: '22K', metalWeight: '25.000',
+    quantity: 3, unitPrice: '477500', total: '1432500',
+  },
+  // m-inv-0003 items
+  {
+    id: 'm-inv-item-0005', invoiceId: 'm-inv-0003', productId: 'm-prod-0003',
+    sku: 'M00003', productName: '18K White Gold Solitaire Ring',
+    metalType: 'white-gold', karat: '18K', metalWeight: '5.500',
+    quantity: 1, unitPrice: '464750', total: '464750',
+  },
+];
+
+// ==========================================
+// Payments â€” initial payment records
+// ==========================================
+
+export const seedPayments: PaymentInsert[] = [
+  {
+    id: 'm-pay-0001', invoiceId: 'm-inv-0001',
+    amount: '942050', method: 'bank-transfer',
+    date: '2024-12-28', reference: 'BT-20241228-001',
+    notes: 'Full payment via bank transfer',
+  },
+  {
+    id: 'm-pay-0002', invoiceId: 'm-inv-0002',
+    amount: '2500000', method: 'credit',
+    date: '2024-12-29', reference: 'CR-20241229-001',
+    notes: 'Initial payment - wholesale credit',
+  },
+];
+
+// ==========================================
+// Counters â€” Auto-increment sequences
+// ==========================================
+
+export const seedCounters: CounterInsert[] = [
+  { id: 'counter-M-invoice', entityType: 'invoice', shopCode: 'M', prefix: 'INV', lastNumber: 3, paddingLength: 5 },
+  { id: 'counter-M-clearance', entityType: 'clearance', shopCode: 'M', prefix: 'CLR', lastNumber: 7, paddingLength: 5 },
+  { id: 'counter-M-product', entityType: 'product', shopCode: 'M', prefix: 'PROD', lastNumber: 10, paddingLength: 5 },
+  { id: 'counter-M-category', entityType: 'category', shopCode: 'M', prefix: 'CAT', lastNumber: 14, paddingLength: 5 },
+  { id: 'counter-M-customer', entityType: 'customer', shopCode: 'M', prefix: 'CUS', lastNumber: 5, paddingLength: 5 },
+];
+
+// ==========================================
+// Clearances â€” clearance sale records
+// ==========================================
+
+export const seedClearances: ClearanceInsert[] = [
+  {
+    id: 'm-clr-0001', clearanceNumber: 'M00001',
+    customerId: 'm-cus-0002', customerName: 'Malini Fernando',
+    customerPhone: '+94 71 345 6789', customerAddress: '78 Lake Drive, Colombo',
+    clearanceReason: 'End of season clearance',
+    subtotal: '289800', discount: '43470', discountType: 'percentage',
+    tax: '0', total: '246330',
+    amountPaid: '246330', balanceDue: '0',
+    paymentMethod: 'cash',
+    issueDate: '2025-01-10', status: 'paid',
+    notes: 'Seasonal clearance - 15% discount applied',
+    createdBy: 'Admin', createdByUserId: 'USR-01',
+    createdAt: new Date('2025-01-10T11:00:00Z'),
+  },
+  {
+    id: 'm-clr-0002', clearanceNumber: 'M00002',
+    customerId: 'm-cus-0003', customerName: 'Kamal Dissanayake',
+    customerPhone: '+94 76 456 7890', customerAddress: '156 Main Street, Galle',
+    clearanceReason: 'Discontinued design clearance',
+    subtotal: '477500', discount: '95500', discountType: 'fixed',
+    tax: '0', total: '382000',
+    amountPaid: '200000', balanceDue: '182000',
+    paymentMethod: 'credit',
+    issueDate: '2025-01-15', dueDate: '2025-02-15', status: 'partial',
+    notes: 'Wholesale clearance - discontinued designs',
+    createdBy: 'Admin', createdByUserId: 'USR-02',
+    createdAt: new Date('2025-01-15T14:30:00Z'),
+  },
+  {
+    id: 'm-clr-0003', clearanceNumber: 'M00003',
+    customerId: 'm-cus-0001', customerName: 'Chaminda Perera',
+    customerPhone: '+94 77 234 5678', customerAddress: '45 Temple Road, Kandy',
+    clearanceReason: 'Old stock clearance - making room for new collection',
+    subtotal: '1397000', discount: '279400', discountType: 'percentage',
+    tax: '0', total: '1117600',
+    amountPaid: '1117600', balanceDue: '0',
+    paymentMethod: 'bank-transfer',
+    issueDate: '2025-02-05', status: 'paid',
+    notes: 'VIP customer - 20% clearance discount on bangles set',
+    createdBy: 'Admin', createdByUserId: 'USR-01',
+    createdAt: new Date('2025-02-05T10:15:00Z'),
+  },
+  {
+    id: 'm-clr-0004', clearanceNumber: 'M00004',
+    customerId: 'm-cus-0004', customerName: 'Nirosha Wijesinghe',
+    customerPhone: '+94 72 567 8901', customerAddress: '23 Hill Street, Nuwara Eliya',
+    clearanceReason: 'Display model clearance',
+    subtotal: '120000', discount: '30000', discountType: 'fixed',
+    tax: '0', total: '90000',
+    amountPaid: '90000', balanceDue: '0',
+    paymentMethod: 'card',
+    issueDate: '2025-02-12', status: 'paid',
+    notes: 'Display model rose gold earrings - 25% off',
+    createdBy: 'Admin', createdByUserId: 'USR-01',
+    createdAt: new Date('2025-02-12T15:45:00Z'),
+  },
+  {
+    id: 'm-clr-0005', clearanceNumber: 'M00005',
+    customerId: 'm-cus-0005', customerName: 'Ruwan Jayawardena',
+    customerPhone: '+94 77 678 9012', customerAddress: '89 Station Road, Matara',
+    clearanceReason: 'Overstock clearance - silver items',
+    subtotal: '25400', discount: '5080', discountType: 'percentage',
+    tax: '0', total: '20320',
+    amountPaid: '0', balanceDue: '20320',
+    paymentMethod: 'credit',
+    issueDate: '2025-02-20', dueDate: '2025-03-20', status: 'pending',
+    notes: 'Silver anklets overstock - 20% clearance',
+    createdBy: 'Admin', createdByUserId: 'USR-02',
+    createdAt: new Date('2025-02-20T09:30:00Z'),
+  },
+  {
+    id: 'm-clr-0006', clearanceNumber: 'M00006',
+    customerId: 'm-cus-0003', customerName: 'Kamal Dissanayake',
+    customerPhone: '+94 76 456 7890', customerAddress: '156 Main Street, Galle',
+    clearanceReason: 'Bulk clearance - mixed gold items',
+    subtotal: '728750', discount: '145750', discountType: 'percentage',
+    tax: '0', total: '583000',
+    amountPaid: '400000', balanceDue: '183000',
+    paymentMethod: 'credit',
+    issueDate: '2025-03-01', dueDate: '2025-04-01', status: 'partial',
+    notes: 'Wholesale bulk clearance - 20% off men\'s ring + ruby pendant',
+    createdBy: 'Admin', createdByUserId: 'USR-01',
+    createdAt: new Date('2025-03-01T13:00:00Z'),
+  },
+  {
+    id: 'm-clr-0007', clearanceNumber: 'M00007',
+    customerId: 'm-cus-0002', customerName: 'Malini Fernando',
+    customerPhone: '+94 71 345 6789', customerAddress: '78 Lake Drive, Colombo',
+    clearanceReason: 'Scratch & dent clearance',
+    subtotal: '289500', discount: '72375', discountType: 'percentage',
+    tax: '0', total: '217125',
+    amountPaid: '217125', balanceDue: '0',
+    paymentMethod: 'cash',
+    issueDate: '2025-03-05', status: 'paid',
+    notes: 'Minor surface scratches - 25% discount on men\'s ring',
+    createdBy: 'Admin', createdByUserId: 'USR-01',
+    createdAt: new Date('2025-03-05T16:20:00Z'),
+  },
+];
+
+// ==========================================
+// Clearance Items
+// ==========================================
+
+export const seedClearanceItems: ClearanceItemInsert[] = [
+  // m-clr-0001 items
+  {
+    id: 'm-clr-item-0001', clearanceId: 'm-clr-0001', productId: 'm-prod-0002',
+    sku: 'M00002', productName: '18K Gold Diamond Earrings',
+    metalType: 'gold', karat: '18K', metalWeight: '8.200',
+    quantity: 1, unitPrice: '289800', total: '289800',
+  },
+  // m-clr-0002 items
+  {
+    id: 'm-clr-item-0002', clearanceId: 'm-clr-0002', productId: 'm-prod-0006',
+    sku: 'M00006', productName: '22K Gold Rope Chain 24"',
+    metalType: 'gold', karat: '22K', metalWeight: '25.000',
+    quantity: 1, unitPrice: '477500', total: '477500',
+  },
+  // m-clr-0003 items
+  {
+    id: 'm-clr-item-0003', clearanceId: 'm-clr-0003', productId: 'm-prod-0004',
+    sku: 'M00004', productName: '22K Gold Bangles Set (6 pcs)',
+    metalType: 'gold', karat: '22K', metalWeight: '72.000',
+    quantity: 1, unitPrice: '1397000', total: '1397000',
+  },
+  // m-clr-0004 items
+  {
+    id: 'm-clr-item-0004', clearanceId: 'm-clr-0004', productId: 'm-prod-0010',
+    sku: 'M00010', productName: '18K Rose Gold Hoop Earrings',
+    metalType: 'rose-gold', karat: '18K', metalWeight: '6.800',
+    quantity: 1, unitPrice: '120000', total: '120000',
+  },
+  // m-clr-0005 items
+  {
+    id: 'm-clr-item-0005', clearanceId: 'm-clr-0005', productId: 'm-prod-0009',
+    sku: 'M00009', productName: '925 Silver Anklet Pair',
+    metalType: 'silver', metalWeight: '85.000',
+    quantity: 2, unitPrice: '12700', total: '25400',
+  },
+  // m-clr-0006 items (2 items)
+  {
+    id: 'm-clr-item-0006', clearanceId: 'm-clr-0006', productId: 'm-prod-0007',
+    sku: 'M00007', productName: '22K Gold Men\'s Ring',
+    metalType: 'gold', karat: '22K', metalWeight: '15.000',
+    quantity: 1, unitPrice: '289500', total: '289500',
+  },
+  {
+    id: 'm-clr-item-0007', clearanceId: 'm-clr-0006', productId: 'm-prod-0005',
+    sku: 'M00005', productName: '22K Gold Ruby Pendant',
+    metalType: 'gold', karat: '22K', metalWeight: '12.500',
+    quantity: 1, unitPrice: '439250', total: '439250',
+  },
+  // m-clr-0007 items
+  {
+    id: 'm-clr-item-0008', clearanceId: 'm-clr-0007', productId: 'm-prod-0007',
+    sku: 'M00007', productName: '22K Gold Men\'s Ring',
+    metalType: 'gold', karat: '22K', metalWeight: '15.000',
+    quantity: 1, unitPrice: '289500', total: '289500',
+  },
+];
+
+// ==========================================
+// Clearance Payments
+// ==========================================
+
+export const seedClearancePayments: ClearancePaymentInsert[] = [
+  {
+    id: 'm-clr-pay-0001', clearanceId: 'm-clr-0001',
+    amount: '246330', method: 'cash',
+    date: '2025-01-10', reference: 'CLR-20250110-001',
+    notes: 'Full payment - clearance sale',
+  },
+  {
+    id: 'm-clr-pay-0002', clearanceId: 'm-clr-0002',
+    amount: '200000', method: 'credit',
+    date: '2025-01-15', reference: 'CLR-20250115-001',
+    notes: 'Partial payment - wholesale clearance',
+  },
+  {
+    id: 'm-clr-pay-0003', clearanceId: 'm-clr-0003',
+    amount: '1117600', method: 'bank-transfer',
+    date: '2025-02-05', reference: 'BT-20250205-CLR',
+    notes: 'Full payment - VIP clearance sale',
+  },
+  {
+    id: 'm-clr-pay-0004', clearanceId: 'm-clr-0004',
+    amount: '90000', method: 'card',
+    date: '2025-02-12', reference: 'CARD-20250212-CLR',
+    notes: 'Full payment - display model clearance',
+  },
+  {
+    id: 'm-clr-pay-0005', clearanceId: 'm-clr-0006',
+    amount: '400000', method: 'bank-transfer',
+    date: '2025-03-01', reference: 'BT-20250301-CLR',
+    notes: 'Partial payment - bulk clearance order',
+  },
+  {
+    id: 'm-clr-pay-0006', clearanceId: 'm-clr-0007',
+    amount: '217125', method: 'cash',
+    date: '2025-03-05', reference: 'CLR-20250305-001',
+    notes: 'Full payment - scratch & dent clearance',
+  },
 ];

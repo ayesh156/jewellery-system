@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { eq } from 'drizzle-orm';
+import { eq, count } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../db/index.js';
-import { categories } from '../db/schema.js';
+import { categories, products } from '../db/schema.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 const router = Router();
@@ -78,6 +78,18 @@ router.put('/:id', async (req, res, next) => {
 // DELETE /api/categories/:id — Delete category
 router.delete('/:id', async (req, res, next) => {
   try {
+    // Check for products using this category
+    const [productCount] = await db.select({ value: count() }).from(products).where(eq(products.categoryId, req.params.id));
+    if (productCount && productCount.value > 0) {
+      throw new AppError(409, `Cannot delete: ${productCount.value} product(s) are using this category`);
+    }
+
+    // Check for child categories
+    const [childCount] = await db.select({ value: count() }).from(categories).where(eq(categories.parentId, req.params.id));
+    if (childCount && childCount.value > 0) {
+      throw new AppError(409, `Cannot delete: ${childCount.value} sub-category(s) depend on this category`);
+    }
+
     const [deleted] = await db.delete(categories).where(eq(categories.id, req.params.id)).returning();
     if (!deleted) throw new AppError(404, 'Category not found');
     res.json({ status: 'success', data: deleted });

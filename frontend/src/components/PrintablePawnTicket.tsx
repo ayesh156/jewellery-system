@@ -1,4 +1,4 @@
-import { forwardRef, useEffect } from 'react';
+import { forwardRef } from 'react';
 import type { PawnTicket, CompanyInfo } from '../types/index';
 import { formatCurrency, formatDate, formatWeight } from '../utils/formatters';
 import { calculatePawnInterest, estimateInterestForPeriod } from '../utils/pawnCalculations';
@@ -25,17 +25,6 @@ const defaultCompany: CompanyInfo = {
 
 export const PrintablePawnTicket = forwardRef<HTMLDivElement, PrintablePawnTicketProps>(
   ({ ticket, company = defaultCompany }, ref) => {
-    // Auto trigger print dialog
-    useEffect(() => {
-      const t = setTimeout(() => {
-        try {
-          window.print();
-        } catch (e) {
-          // ignore
-        }
-      }, 120);
-      return () => clearTimeout(t);
-    }, []);
 
     // Calculate loan period in months
     const pawnDate = new Date(ticket.pawnDate);
@@ -53,12 +42,10 @@ export const PrintablePawnTicket = forwardRef<HTMLDivElement, PrintablePawnTicke
     return (
       <div ref={ref} className="print-pawn-ticket">
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-          
           @media print {
             @page {
-              size: A5 portrait;
-              margin: 6mm 8mm;
+              size: A4 portrait;
+              margin: 25.4mm;
             }
             
             * {
@@ -74,11 +61,11 @@ export const PrintablePawnTicket = forwardRef<HTMLDivElement, PrintablePawnTicke
             
             .print-pawn-ticket {
               width: 100%;
-              max-width: 132mm;
+              max-width: 159mm;
               padding: 0;
               margin: 0 auto;
               background: white !important;
-              color: #1a1a1a !important;
+              color: #000 !important;
             }
             
             .no-print {
@@ -87,91 +74,90 @@ export const PrintablePawnTicket = forwardRef<HTMLDivElement, PrintablePawnTicke
           }
           
           .print-pawn-ticket {
-            width: 148mm;
-            min-height: 210mm;
-            padding: 6mm 8mm;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 25.4mm;
             margin: 0 auto;
             background: white;
-            font-family: 'Inter', sans-serif;
-            font-size: 9pt;
-            color: #1a1a1a;
-            line-height: 1.4;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            font-size: 11pt;
+            color: #000;
+            line-height: 1.5;
           }
           
           .header {
             text-align: center;
             padding-bottom: 4mm;
-            border-bottom: 2px solid #b8860b;
-            margin-bottom: 4mm;
+            border-bottom: 1.5pt solid #000;
+            margin-bottom: 5mm;
           }
           
           .company-name {
-            font-size: 16pt;
+            font-size: 22pt;
             font-weight: 700;
-            color: #b8860b;
+            color: #000;
             margin: 0;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
           }
           
           .company-tagline {
-            font-size: 8pt;
-            color: #666;
-            margin: 2px 0;
+            font-size: 10pt;
+            color: #444;
+            margin: 1px 0;
+            font-style: italic;
           }
           
           .company-contact {
-            font-size: 7.5pt;
-            color: #555;
+            font-size: 9pt;
+            color: #333;
             margin-top: 2mm;
           }
           
           .document-title {
-            background: linear-gradient(135deg, #b8860b 0%, #daa520 100%);
-            color: white;
             text-align: center;
             padding: 2.5mm 0;
-            font-size: 11pt;
+            font-size: 14pt;
             font-weight: 700;
-            letter-spacing: 1px;
-            margin: 3mm 0;
-            border-radius: 2mm;
+            letter-spacing: 2px;
+            margin: 4mm 0;
+            border: 1.5pt solid #000;
           }
           
           .ticket-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 3mm;
-            padding: 2mm;
-            background: #f8f8f8;
-            border-radius: 1.5mm;
+            margin-bottom: 4mm;
+            padding: 2.5mm 3mm;
+            border: 0.5pt solid #888;
           }
           
           .ticket-number {
-            font-family: monospace;
-            font-size: 11pt;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13pt;
             font-weight: 700;
-            color: #b8860b;
+            color: #000;
           }
           
           .section {
-            margin-bottom: 3mm;
+            margin-bottom: 4mm;
           }
           
           .section-title {
-            font-size: 8.5pt;
-            font-weight: 600;
-            color: #333;
+            font-size: 10pt;
+            font-weight: 700;
+            color: #000;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding-bottom: 1mm;
-            border-bottom: 1px solid #ddd;
-            margin-bottom: 2mm;
+            letter-spacing: 0.8px;
+            padding-bottom: 1.5mm;
+            border-bottom: 0.75pt solid #000;
+            margin-bottom: 2.5mm;
           }
           
           .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1.5mm 4mm;
+            gap: 2mm 6mm;
           }
           
           .info-row {
@@ -180,38 +166,39 @@ export const PrintablePawnTicket = forwardRef<HTMLDivElement, PrintablePawnTicke
           }
           
           .info-label {
-            font-size: 7.5pt;
-            color: #666;
-            min-width: 22mm;
+            font-size: 9.5pt;
+            color: #555;
+            min-width: 24mm;
           }
           
           .info-value {
-            font-size: 8.5pt;
-            color: #1a1a1a;
+            font-size: 10.5pt;
+            color: #000;
             font-weight: 500;
           }
           
           .items-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 2mm 0;
-            font-size: 7.5pt;
+            margin: 3mm 0;
+            font-size: 9.5pt;
           }
           
           .items-table th {
-            background: #f5f5f5;
-            padding: 1.5mm 2mm;
+            padding: 2mm 2.5mm;
             text-align: left;
-            font-weight: 600;
-            font-size: 7pt;
-            color: #555;
+            font-weight: 700;
+            font-size: 8.5pt;
+            color: #000;
             text-transform: uppercase;
-            border-bottom: 1px solid #ddd;
+            letter-spacing: 0.3px;
+            border-top: 1pt solid #000;
+            border-bottom: 1pt solid #000;
           }
           
           .items-table td {
-            padding: 2mm;
-            border-bottom: 1px solid #eee;
+            padding: 2.5mm;
+            border-bottom: 0.5pt solid #ccc;
             vertical-align: top;
           }
           
@@ -220,73 +207,72 @@ export const PrintablePawnTicket = forwardRef<HTMLDivElement, PrintablePawnTicke
           }
           
           .item-desc {
-            font-size: 7pt;
-            color: #666;
+            font-size: 8.5pt;
+            color: #555;
           }
           
           .totals-section {
-            margin-top: 3mm;
-            padding: 2.5mm;
-            background: #f8f8f8;
-            border-radius: 1.5mm;
+            margin-top: 4mm;
+            padding: 3mm;
+            border: 0.5pt solid #888;
           }
           
           .total-row {
             display: flex;
             justify-content: space-between;
-            padding: 1mm 0;
-            font-size: 8pt;
+            padding: 1.5mm 0;
+            font-size: 10pt;
           }
           
           .total-row.highlight {
-            font-size: 10pt;
+            font-size: 13pt;
             font-weight: 700;
-            color: #b8860b;
-            border-top: 1px solid #ddd;
-            padding-top: 2mm;
-            margin-top: 1mm;
+            color: #000;
+            border-top: 1pt solid #000;
+            padding-top: 2.5mm;
+            margin-top: 1.5mm;
           }
           
           .interest-box {
-            margin-top: 3mm;
-            padding: 2.5mm;
-            border: 1.5px dashed #b8860b;
-            border-radius: 1.5mm;
-            background: #fffef5;
+            margin-top: 4mm;
+            padding: 3mm;
+            border: 1pt dashed #555;
           }
           
           .interest-title {
-            font-size: 8pt;
-            font-weight: 600;
-            color: #b8860b;
+            font-size: 10pt;
+            font-weight: 700;
+            color: #000;
             margin-bottom: 2mm;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
           }
           
           .interest-detail {
-            font-size: 7.5pt;
-            color: #555;
-            margin: 1mm 0;
+            font-size: 9.5pt;
+            color: #333;
+            margin: 1.5mm 0;
           }
           
           .terms-section {
-            margin-top: 4mm;
-            padding: 2mm;
-            background: #f5f5f5;
-            border-radius: 1.5mm;
-            font-size: 6.5pt;
-            color: #666;
+            margin-top: 5mm;
+            padding: 2.5mm 3mm;
+            border: 0.5pt solid #aaa;
+            font-size: 8.5pt;
+            color: #444;
           }
           
           .terms-title {
-            font-size: 7pt;
-            font-weight: 600;
-            color: #333;
+            font-size: 9pt;
+            font-weight: 700;
+            color: #000;
             margin-bottom: 1.5mm;
+            text-transform: uppercase;
           }
           
           .terms-list {
             margin: 0;
-            padding-left: 3mm;
+            padding-left: 4mm;
           }
           
           .terms-list li {
@@ -294,7 +280,7 @@ export const PrintablePawnTicket = forwardRef<HTMLDivElement, PrintablePawnTicke
           }
           
           .signature-section {
-            margin-top: 5mm;
+            margin-top: 8mm;
             display: flex;
             justify-content: space-between;
           }
@@ -305,31 +291,30 @@ export const PrintablePawnTicket = forwardRef<HTMLDivElement, PrintablePawnTicke
           }
           
           .signature-line {
-            border-top: 1px solid #333;
-            margin-top: 12mm;
-            padding-top: 1mm;
-            font-size: 7pt;
-            color: #666;
+            border-top: 0.75pt solid #000;
+            margin-top: 18mm;
+            padding-top: 1.5mm;
+            font-size: 9pt;
+            color: #555;
           }
           
           .footer {
-            margin-top: 4mm;
-            padding-top: 2mm;
-            border-top: 1px solid #ddd;
+            margin-top: 6mm;
+            padding-top: 3mm;
+            border-top: 0.75pt solid #aaa;
             text-align: center;
-            font-size: 7pt;
+            font-size: 8.5pt;
             color: #888;
           }
           
           .customer-copy {
-            font-size: 8pt;
-            font-weight: 600;
-            color: #b8860b;
+            font-size: 10pt;
+            font-weight: 700;
+            color: #000;
             text-align: center;
-            margin-top: 2mm;
-            padding: 1.5mm;
-            border: 1px solid #b8860b;
-            border-radius: 1mm;
+            margin-top: 3mm;
+            padding: 2mm;
+            border: 1pt solid #000;
           }
         `}</style>
 
@@ -346,17 +331,17 @@ export const PrintablePawnTicket = forwardRef<HTMLDivElement, PrintablePawnTicke
         </div>
 
         {/* Document Title */}
-        <div className="document-title">PAWN TICKET / GOLD LOAN RECEIPT</div>
+        <div className="document-title">PAWN TICKET</div>
 
         {/* Ticket Info */}
         <div className="ticket-info">
           <div>
-            <span style={{ fontSize: '7.5pt', color: '#666' }}>Ticket No: </span>
+            <span style={{ fontSize: '8.5pt', color: '#555' }}>Ticket No: </span>
             <span className="ticket-number">{ticket.ticketNumber}</span>
           </div>
           <div>
-            <span style={{ fontSize: '7.5pt', color: '#666' }}>Date: </span>
-            <span style={{ fontWeight: 600 }}>{formatDate(ticket.pawnDate)}</span>
+            <span style={{ fontSize: '8.5pt', color: '#555' }}>Date: </span>
+            <span style={{ fontWeight: 700 }}>{formatDate(ticket.pawnDate)}</span>
           </div>
         </div>
 
@@ -405,7 +390,7 @@ export const PrintablePawnTicket = forwardRef<HTMLDivElement, PrintablePawnTicke
                     <strong>{item.itemType}</strong>
                     <div className="item-desc">{item.description}</div>
                     {item.hasGemstones && (
-                      <div className="item-desc" style={{ color: '#b8860b' }}>
+                      <div className="item-desc">
                         * {item.gemstoneDescription}
                       </div>
                     )}
@@ -463,12 +448,12 @@ export const PrintablePawnTicket = forwardRef<HTMLDivElement, PrintablePawnTicke
           <div className="interest-detail">
             <strong>Grace Period:</strong> {ticket.gracePeriodDays} days after maturity
           </div>
-          <div className="interest-detail" style={{ marginTop: '2mm', paddingTop: '2mm', borderTop: '1px dashed #ccc' }}>
+          <div className="interest-detail" style={{ marginTop: '2mm', paddingTop: '2mm', borderTop: '1px dashed #888' }}>
             <strong>Estimated Amount at Maturity:</strong>
             <br />
             Principal: {formatCurrency(ticket.principalAmount)} + 
             Interest ({interestEstimate.effectiveRate}%): {formatCurrency(interestEstimate.totalInterest)} = 
-            <strong style={{ color: '#b8860b' }}> {formatCurrency(interestEstimate.totalPayable)}</strong>
+            <strong> {formatCurrency(interestEstimate.totalPayable)}</strong>
           </div>
         </div>
 

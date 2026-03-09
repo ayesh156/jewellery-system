@@ -1,12 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  Settings as SettingsIcon,
   Building2,
   User,
-  Bell,
   Palette,
-  Shield,
-  Database,
   Save,
   Upload,
   DollarSign,
@@ -15,29 +11,94 @@ import {
   Moon,
   Monitor,
   Check,
+  X,
+  Loader2,
+  Store,
+  Hash,
+  RefreshCw,
+  Shield,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Combobox } from '../components/ui/Combobox';
-import { Badge } from '../components/ui/Badge';
-import { companyInfo } from '../data/mockData';
+import { companyApi, countersApi } from '../services/api';
 import { useTheme, type Theme } from '../contexts/ThemeContext';
 import { cn } from '../utils/cn';
 
-type SettingsTab = 'company' | 'user' | 'notifications' | 'appearance' | 'security' | 'data';
+type SettingsTab = 'company' | 'numbering' | 'user' | 'appearance';
 
 export function Settings() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('company');
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const [saving, setSaving] = useState(false);
+  const [loadingCompany, setLoadingCompany] = useState(true);
+
+  // Business settings
+  const [shopCode, setShopCode] = useState(() => localStorage.getItem('shopCode') || 'A');
+  const [shopCounters, setShopCounters] = useState<any[]>([]);
+  const [loadingCounters, setLoadingCounters] = useState(false);
+  const [initializingShop, setInitializingShop] = useState(false);
 
   // Company settings
-  const [companyName, setCompanyName] = useState(companyInfo.name);
-  const [companyAddress, setCompanyAddress] = useState(companyInfo.address);
-  const [companyPhone, setCompanyPhone] = useState(companyInfo.phone);
-  const [companyEmail, setCompanyEmail] = useState(companyInfo.email);
-  const [taxId, setTaxId] = useState(companyInfo.taxNumber || '');
+  const [companyName, setCompanyName] = useState('');
+  const [companyTagline, setCompanyTagline] = useState('');
+  const [companyAddress, setCompanyAddress] = useState('');
+  const [companyCity, setCompanyCity] = useState('');
+  const [companyCountry, setCompanyCountry] = useState('');
+  const [companyPhone, setCompanyPhone] = useState('');
+  const [companyPhone2, setCompanyPhone2] = useState('');
+  const [companyEmail, setCompanyEmail] = useState('');
+  const [companyWebsite, setCompanyWebsite] = useState('');
+  const [registrationNumber, setRegistrationNumber] = useState('');
+  const [taxId, setTaxId] = useState('');
+  const [defaultTaxRate, setDefaultTaxRate] = useState('0');
+  const [currency, setCurrency] = useState('LKR');
+
+  // Load company data from API
+  const loadCompanyData = useCallback(async () => {
+    try {
+      setLoadingCompany(true);
+      const res = await companyApi.get();
+      const c = res.data;
+      setCompanyName(c.name || '');
+      setCompanyTagline(c.tagline || '');
+      setCompanyAddress(c.address || '');
+      setCompanyCity(c.city || '');
+      setCompanyCountry(c.country || '');
+      setCompanyPhone(c.phone || '');
+      setCompanyPhone2(c.phone2 || '');
+      setCompanyEmail(c.email || '');
+      setCompanyWebsite(c.website || '');
+      setRegistrationNumber(c.registrationNumber || '');
+      setTaxId(c.taxNumber || '');
+      setDefaultTaxRate(c.defaultTaxRate || '0');
+      setCurrency(c.currency || 'LKR');
+    } catch {
+      toast.error('Failed to load company data');
+    } finally {
+      setLoadingCompany(false);
+    }
+  }, []);
+
+  useEffect(() => { loadCompanyData(); }, [loadCompanyData]);
+
+  // Load counters for current shop code
+  const loadCounters = useCallback(async (code?: string) => {
+    try {
+      setLoadingCounters(true);
+      const res = await countersApi.getAll(code || shopCode);
+      setShopCounters(res.data);
+    } catch {
+      // Counters may not exist yet for this shop
+      setShopCounters([]);
+    } finally {
+      setLoadingCounters(false);
+    }
+  }, [shopCode]);
+
+  useEffect(() => { loadCounters(); }, [loadCounters]);
 
   // User settings
   const [userName, setUserName] = useState('Admin User');
@@ -50,19 +111,96 @@ export function Settings() {
 
   const tabs = [
     { key: 'company', label: 'Company', icon: Building2 },
+    { key: 'numbering', label: 'Numbering', icon: Hash },
     { key: 'user', label: 'User Profile', icon: User },
-    { key: 'notifications', label: 'Notifications', icon: Bell },
     { key: 'appearance', label: 'Appearance', icon: Palette },
-    { key: 'security', label: 'Security', icon: Shield },
-    { key: 'data', label: 'Data & Backup', icon: Database },
   ];
 
-  const handleSave = () => {
-    // In a real app, save settings to backend
-    toast.success('Settings saved successfully!');
+  const handleSave = async () => {
+    if (activeTab === 'company') {
+      setSaving(true);
+      try {
+        await companyApi.update({
+          name: companyName,
+          tagline: companyTagline,
+          address: companyAddress,
+          city: companyCity,
+          country: companyCountry,
+          phone: companyPhone,
+          phone2: companyPhone2,
+          email: companyEmail,
+          website: companyWebsite,
+          registrationNumber,
+          taxNumber: taxId,
+          defaultTaxRate,
+          currency,
+        });
+        toast.success('Company settings saved successfully!');
+      } catch {
+        toast.error('Failed to save company settings');
+      } finally {
+        setSaving(false);
+      }
+    } else if (activeTab === 'numbering') {
+      const trimmed = shopCode.trim().toUpperCase();
+      if (!trimmed || !/^[A-Z]{1,3}$/.test(trimmed)) {
+        toast.error('Shop code must be 1-3 English letters (e.g., A, B, HQ)');
+        return;
+      }
+      setSaving(true);
+      try {
+        localStorage.setItem('shopCode', trimmed);
+        setShopCode(trimmed);
+        await countersApi.initShop(trimmed);
+        await loadCounters(trimmed);
+        toast.success(`Shop code "${trimmed}" saved! Counters initialized.`);
+      } catch {
+        toast.error('Failed to initialize shop counters');
+      } finally {
+        setSaving(false);
+      }
+    } else {
+      toast.success('Settings saved successfully!');
+    }
   };
 
-  const renderCompanySettings = () => (
+  const renderCompanySettings = () => {
+    if (loadingCompany) {
+      return (
+        <div className="space-y-6">
+          <div>
+            <div className="h-6 w-48 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mb-4" />
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-24 h-24 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
+              <div className="space-y-2">
+                <div className="h-8 w-28 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                <div className="h-3 w-36 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="space-y-1.5">
+                  <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                  <div className="h-10 w-full bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="h-6 w-32 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mb-4" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="space-y-1.5">
+                  <div className="h-4 w-28 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                  <div className="h-10 w-full bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return (
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Company Information</h3>
@@ -87,9 +225,10 @@ export function Settings() {
               onChange={(e) => setCompanyName(e.target.value)}
             />
             <Input
-              label="Tax ID / Business Registration"
-              value={taxId}
-              onChange={(e) => setTaxId(e.target.value)}
+              label="Tagline"
+              value={companyTagline}
+              onChange={(e) => setCompanyTagline(e.target.value)}
+              placeholder="e.g. Exquisite Craftsmanship Since 1985"
             />
           </div>
 
@@ -101,47 +240,299 @@ export function Settings() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
+              label="City"
+              value={companyCity}
+              onChange={(e) => setCompanyCity(e.target.value)}
+            />
+            <Input
+              label="Country"
+              value={companyCountry}
+              onChange={(e) => setCompanyCountry(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
               label="Phone"
               value={companyPhone}
               onChange={(e) => setCompanyPhone(e.target.value)}
             />
+            <Input
+              label="Phone 2"
+              value={companyPhone2}
+              onChange={(e) => setCompanyPhone2(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Email"
               type="email"
               value={companyEmail}
               onChange={(e) => setCompanyEmail(e.target.value)}
             />
+            <Input
+              label="Website"
+              value={companyWebsite}
+              onChange={(e) => setCompanyWebsite(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Registration Number"
+              value={registrationNumber}
+              onChange={(e) => setRegistrationNumber(e.target.value)}
+            />
+            <Input
+              label="Tax Number"
+              value={taxId}
+              onChange={(e) => setTaxId(e.target.value)}
+            />
           </div>
         </div>
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Invoice Settings</h3>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="Invoice Prefix" defaultValue="INV-" />
-            <Input label="GRN Prefix" defaultValue="GRN-" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="Default Tax Rate (%)" type="number" defaultValue="0" />
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                Currency
-              </label>
-              <Combobox
-                value="LKR"
-                onChange={() => {}}
-                options={[
-                  { value: 'LKR', label: 'Sri Lankan Rupee (Rs.)', icon: <DollarSign className="w-4 h-4" /> },
-                  { value: 'USD', label: 'US Dollar ($)', icon: <DollarSign className="w-4 h-4" /> },
-                  { value: 'EUR', label: 'Euro (€)', icon: <DollarSign className="w-4 h-4" /> },
-                  { value: 'INR', label: 'Indian Rupee (₹)', icon: <DollarSign className="w-4 h-4" /> }
-                ]}
-                placeholder="Select currency..."
-              />
-            </div>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Billing Defaults</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            label="Default Tax Rate (%)"
+            type="number"
+            value={defaultTaxRate}
+            onChange={(e) => setDefaultTaxRate(e.target.value)}
+          />
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+              Currency
+            </label>
+            <Combobox
+              value={currency}
+              onChange={(val) => setCurrency(val)}
+              options={[
+                { value: 'LKR', label: 'Sri Lankan Rupee (Rs.)', icon: <DollarSign className="w-4 h-4" /> },
+                { value: 'USD', label: 'US Dollar ($)', icon: <DollarSign className="w-4 h-4" /> },
+                { value: 'EUR', label: 'Euro (€)', icon: <DollarSign className="w-4 h-4" /> },
+                { value: 'INR', label: 'Indian Rupee (₹)', icon: <DollarSign className="w-4 h-4" /> }
+              ]}
+              placeholder="Select currency..."
+            />
           </div>
         </div>
+      </div>
+    </div>
+  );
+  };
+
+  const ENTITY_LABELS: Record<string, { label: string; icon: string; desc: string }> = {
+    invoice: { label: 'Invoices', icon: '🧾', desc: 'Sales invoices & bills' },
+    clearance: { label: 'Clearances', icon: '🏷️', desc: 'Clearance sale numbers' },
+    product: { label: 'Products', icon: '💍', desc: 'Jewellery items & SKUs' },
+    category: { label: 'Categories', icon: '📂', desc: 'Product categories' },
+    customer: { label: 'Customers', icon: '👥', desc: 'Customer records' },
+  };
+
+  const [editingCounter, setEditingCounter] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const [savingCounter, setSavingCounter] = useState<string | null>(null);
+
+  const handleInitShop = async () => {
+    const trimmed = shopCode.trim().toUpperCase();
+    if (!trimmed || !/^[A-Z]{1,3}$/.test(trimmed)) {
+      toast.error('Enter a valid shop code (1-3 letters)');
+      return;
+    }
+    setInitializingShop(true);
+    try {
+      localStorage.setItem('shopCode', trimmed);
+      setShopCode(trimmed);
+      await countersApi.initShop(trimmed);
+      await loadCounters(trimmed);
+      toast.success(`Counters initialized for shop "${trimmed}"`);
+    } catch {
+      toast.error('Failed to initialize counters');
+    } finally {
+      setInitializingShop(false);
+    }
+  };
+
+  const handleSetNextNumber = async (entityType: string) => {
+    const num = parseInt(editValue);
+    if (isNaN(num) || num < 0) {
+      toast.error('Enter a valid number (0 or above)');
+      return;
+    }
+    // We set lastNumber = num - 1 so the NEXT number generated is `num`
+    const newLastNumber = Math.max(0, num - 1);
+    setSavingCounter(entityType);
+    try {
+      await countersApi.updatePrefix(entityType, {
+        shopCode: localStorage.getItem('shopCode') || 'A',
+        lastNumber: newLastNumber,
+      });
+      await loadCounters();
+      setEditingCounter(null);
+      setEditValue('');
+      toast.success(`Next ${ENTITY_LABELS[entityType]?.label || entityType} number set to ${num}`);
+    } catch {
+      toast.error('Failed to update number');
+    } finally {
+      setSavingCounter(null);
+    }
+  };
+
+  const renderNumberingSettings = () => (
+    <div className="space-y-6">
+      {/* Shop Code */}
+      <div>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">Shop Identifier</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+          Unique letter code for this shop. All numbers start with this code to avoid conflicts.
+        </p>
+        <div className="flex items-end gap-3">
+          <div className="w-28">
+            <Input
+              label="Shop Code"
+              value={shopCode}
+              onChange={(e) => setShopCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3))}
+              placeholder="A"
+              className="text-center text-xl font-bold tracking-widest"
+            />
+          </div>
+          <div className="flex-1 pb-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              e.g. <span className="font-mono text-amber-500">A</span> = Shop 1, <span className="font-mono text-amber-500">B</span> = Shop 2, <span className="font-mono text-amber-500">HQ</span> = Head Office
+            </p>
+          </div>
+        </div>
+        <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+          <Store className="w-3.5 h-3.5 text-amber-500" />
+          <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+            Active: <span className="font-bold">{localStorage.getItem('shopCode') || 'A'}</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Counters */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Sequence Numbers</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Set the next starting number for each section
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => loadCounters()}
+            disabled={loadingCounters}
+          >
+            {loadingCounters ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          </Button>
+        </div>
+
+        {loadingCounters ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
+            <span className="ml-2 text-sm text-slate-500">Loading...</span>
+          </div>
+        ) : shopCounters.length === 0 ? (
+          <div className="text-center py-10 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+            <Hash className="w-10 h-10 text-slate-400 mx-auto mb-3" />
+            <p className="text-slate-600 dark:text-slate-400 font-medium mb-1">
+              No counters for shop &ldquo;{shopCode}&rdquo;
+            </p>
+            <p className="text-sm text-slate-500 mb-4">Click save to initialize counters for this shop</p>
+            <Button variant="gold" onClick={handleInitShop} disabled={initializingShop}>
+              {initializingShop ? <Loader2 className="w-4 h-4 animate-spin" /> : <Hash className="w-4 h-4" />}
+              Initialize
+            </Button>
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {shopCounters.map((counter) => {
+              const meta = ENTITY_LABELS[counter.entityType] || { label: counter.entityType, icon: '📄', desc: '' };
+              const isEditing = editingCounter === counter.entityType;
+              const isSaving = savingCounter === counter.entityType;
+
+              return (
+                <div
+                  key={counter.id}
+                  className="group flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-amber-500/30 dark:hover:border-amber-500/20 transition-all bg-white dark:bg-slate-900/50"
+                >
+                  {/* Icon */}
+                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xl">
+                    {meta.icon}
+                  </div>
+
+                  {/* Label */}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-slate-800 dark:text-slate-200">{meta.label}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{meta.desc}</p>
+                  </div>
+
+                  {/* Next Number */}
+                  <div className="flex items-center gap-2">
+                    {isEditing ? (
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="number"
+                          min="0"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSetNextNumber(counter.entityType);
+                            if (e.key === 'Escape') { setEditingCounter(null); setEditValue(''); }
+                          }}
+                          autoFocus
+                          className="w-20 px-2 py-1 text-center font-mono text-sm rounded-lg border border-amber-500 bg-amber-500/5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                        />
+                        <button
+                          onClick={() => handleSetNextNumber(counter.entityType)}
+                          disabled={isSaving}
+                          className="p-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white transition-colors disabled:opacity-50"
+                        >
+                          {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                        </button>
+                        <button
+                          onClick={() => { setEditingCounter(null); setEditValue(''); }}
+                          className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setEditingCounter(counter.entityType);
+                          setEditValue(String(counter.nextNumber));
+                        }}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-amber-500/50 hover:bg-amber-500/5 transition-all group/btn cursor-pointer"
+                        title="Click to change next number"
+                      >
+                        <span className="text-xs text-slate-500 dark:text-slate-400">Next</span>
+                        <span className="font-mono font-bold text-amber-600 dark:text-amber-400 text-sm">
+                          {counter.nextFormatted}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Info box */}
+      <div className="p-3.5 rounded-xl bg-slate-100/80 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
+        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+          <span className="font-medium text-slate-700 dark:text-slate-300">💡 Tip:</span>{' '}
+          Click any &ldquo;Next&rdquo; badge to change the starting number.
+          Each shop has independent sequences — e.g. Shop A generates A0001, A0002… and Shop B generates B0001, B0002… with no conflicts.
+          Numbers are assigned atomically by the server.
+        </p>
       </div>
     </div>
   );
@@ -210,34 +601,7 @@ export function Settings() {
     </div>
   );
 
-  const renderNotificationSettings = () => (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Email Notifications</h3>
-      <div className="space-y-3">
-        {[
-          { label: 'New Invoice Created', description: 'Get notified when a new invoice is created' },
-          { label: 'Payment Received', description: 'Get notified when a payment is recorded' },
-          { label: 'Low Stock Alert', description: 'Get notified when products are running low' },
-          { label: 'New GRN Received', description: 'Get notified when goods are received' },
-          { label: 'Daily Summary', description: 'Receive a daily summary of business activity' },
-        ].map((notification) => (
-          <div
-            key={notification.label}
-            className="flex items-center justify-between p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50"
-          >
-            <div>
-              <p className="font-medium text-slate-800 dark:text-slate-200">{notification.label}</p>
-              <p className="text-sm text-slate-600 dark:text-slate-400">{notification.description}</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" defaultChecked className="sr-only peer" />
-              <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
-            </label>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+
 
   const renderAppearanceSettings = () => (
     <div className="space-y-6">
@@ -345,153 +709,54 @@ export function Settings() {
     </div>
   );
 
-  const renderSecuritySettings = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Two-Factor Authentication</h3>
-        <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-slate-800 dark:text-slate-200">2FA is disabled</p>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                Add an extra layer of security to your account
-              </p>
-            </div>
-            <Button variant="outline">Enable 2FA</Button>
-          </div>
-        </div>
-      </div>
 
-      <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Active Sessions</h3>
-        <div className="space-y-3">
-          <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-slate-800 dark:text-slate-200">Current Session</p>
-                <p className="text-sm text-slate-600 dark:text-slate-400">Windows • Chrome • Colombo, Sri Lanka</p>
-                <p className="text-xs text-slate-500 mt-1">Started: Today at 9:30 AM</p>
-              </div>
-              <Badge variant="success">Active</Badge>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Login History</h3>
-        <Button variant="outline">View Login History</Button>
-      </div>
-    </div>
-  );
 
-  const renderDataSettings = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Backup</h3>
-        <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="font-medium text-slate-800 dark:text-slate-200">Automatic Backups</p>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Last backup: Today at 2:00 AM</p>
-            </div>
-            <Badge variant="success">Enabled</Badge>
-          </div>
-          <div className="flex gap-3">
-            <Button variant="outline">Download Backup</Button>
-            <Button variant="gold">Backup Now</Button>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Import Data</h3>
-        <div className="p-4 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700 text-center">
-          <Upload className="w-8 h-8 text-slate-500 mx-auto mb-2" />
-          <p className="text-slate-600 dark:text-slate-400">Drag and drop a file or click to browse</p>
-          <p className="text-xs text-slate-500 mt-1">Supports CSV, Excel files</p>
-          <Button variant="outline" className="mt-4">
-            Browse Files
-          </Button>
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Export Data</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {['Products', 'Customers', 'Invoices', 'GRNs'].map((type) => (
-            <Button key={type} variant="outline" className="w-full">
-              Export {type}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-lg font-semibold text-red-400 mb-4">Danger Zone</h3>
-        <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-          <p className="font-medium text-slate-800 dark:text-slate-200">Delete All Data</p>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-            This will permanently delete all your data. This action cannot be undone.
-          </p>
-          <Button variant="destructive">Delete All Data</Button>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Settings</h1>
-        <p className="mt-1 text-slate-600 dark:text-slate-400">Manage your application preferences</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Settings</h1>
+          <p className="mt-1 text-slate-600 dark:text-slate-400">Manage your application preferences</p>
+        </div>
+        <Button variant="gold" onClick={handleSave} disabled={saving}>
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          Save Changes
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sidebar */}
-        <Card className="lg:col-span-1 h-fit">
-          <CardContent className="p-2">
-            <nav className="space-y-1">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key as SettingsTab)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === tab.key
-                      ? 'bg-amber-500/10 text-amber-400'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-800 dark:hover:text-slate-200'
-                  }`}
-                >
-                  <tab.icon className="w-5 h-5" />
-                  {tab.label}
-                </button>
-              ))}
-            </nav>
-          </CardContent>
-        </Card>
-
-        {/* Content */}
-        <Card className="lg:col-span-3">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>
-              {tabs.find((t) => t.key === activeTab)?.label}
-            </CardTitle>
-            <Button variant="gold" onClick={handleSave}>
-              <Save className="w-4 h-4" />
-              Save Changes
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {activeTab === 'company' && renderCompanySettings()}
-            {activeTab === 'user' && renderUserSettings()}
-            {activeTab === 'notifications' && renderNotificationSettings()}
-            {activeTab === 'appearance' && renderAppearanceSettings()}
-            {activeTab === 'security' && renderSecuritySettings()}
-            {activeTab === 'data' && renderDataSettings()}
-          </CardContent>
-        </Card>
+      {/* Tab Bar */}
+      <div className="border-b border-slate-200 dark:border-slate-700">
+        <nav className="flex gap-1 overflow-x-auto scrollbar-hide -mb-px">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key as SettingsTab)}
+              className={cn(
+                'flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors',
+                activeTab === tab.key
+                  ? 'border-amber-500 text-amber-500'
+                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+              )}
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          ))}
+        </nav>
       </div>
+
+      {/* Content */}
+      <Card>
+        <CardContent className="p-6">
+          {activeTab === 'company' && renderCompanySettings()}
+          {activeTab === 'numbering' && renderNumberingSettings()}
+          {activeTab === 'user' && renderUserSettings()}
+          {activeTab === 'appearance' && renderAppearanceSettings()}
+        </CardContent>
+      </Card>
     </div>
   );
 }

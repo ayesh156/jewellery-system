@@ -55,6 +55,38 @@ const createProductSchema = z.object({
 const updateProductSchema = createProductSchema.partial().omit({ id: true });
 
 // ==========================================
+// GET /api/products/counts — Product counts by category and karat
+// ==========================================
+
+router.get('/counts', async (_req, res, next) => {
+  try {
+    const byCategory = await db
+      .select({ categoryId: products.categoryId, count: sql<number>`count(*)::int` })
+      .from(products)
+      .groupBy(products.categoryId);
+
+    const byKarat = await db
+      .select({ karat: products.karat, count: sql<number>`count(*)::int` })
+      .from(products)
+      .groupBy(products.karat);
+
+    const categoryMap: Record<string, number> = {};
+    for (const row of byCategory) {
+      categoryMap[row.categoryId] = row.count;
+    }
+
+    const karatMap: Record<string, number> = {};
+    for (const row of byKarat) {
+      if (row.karat) karatMap[row.karat] = row.count;
+    }
+
+    res.json({ status: 'success', data: { byCategory: categoryMap, byKarat: karatMap } });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ==========================================
 // GET /api/products — List with search, filter, pagination
 // ==========================================
 

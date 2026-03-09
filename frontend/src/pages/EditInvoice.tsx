@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   Plus,
@@ -23,15 +23,22 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Combobox } from '../components/ui/Combobox';
 import { Badge } from '../components/ui/Badge';
-import { Modal } from '../components/ui/Modal';
-import { productsApi, customersApi, invoicesApi, countersApi, companyApi } from '../services/api';
+import { productsApi, customersApi, invoicesApi, companyApi } from '../services/api';
 import { formatCurrency, formatWeight } from '../utils/formatters';
 import type { JewelleryItem, Customer, Invoice, InvoiceItem, PaymentMethod } from '../types';
 
 const paymentMethods: PaymentMethod[] = ['cash', 'card', 'bank-transfer', 'cheque', 'credit'];
 
-export function CreateInvoice() {
+export function EditInvoice() {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+
+  // Loading states
+  const [pageLoading, setPageLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Original invoice data
+  const [originalInvoice, setOriginalInvoice] = useState<Invoice | null>(null);
 
   // API-loaded data
   const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
@@ -56,40 +63,122 @@ export function CreateInvoice() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [paidAmount, setPaidAmount] = useState(0);
   const [notes, setNotes] = useState('');
-  const [saving, setSaving] = useState(false);
 
-  // Load customers & products from API
+  // Load invoice, customers & products from API
   useEffect(() => {
-    customersApi.getAll({ isActive: 'true', limit: 100 }).then(res => {
-      setAllCustomers(res.data.map((c: any) => ({
-        ...c,
-        totalPurchased: Number(c.totalPurchased),
-        creditLimit: c.creditLimit ? Number(c.creditLimit) : undefined,
-        creditBalance: c.creditBalance ? Number(c.creditBalance) : undefined,
-      })));
-    }).catch(() => toast.error('Failed to load customers'));
+    if (!id) return;
 
-    productsApi.getAll({ isActive: 'true', limit: 100 }).then(res => {
-      setAllProducts(res.data.map((p: any) => ({
-        ...p,
-        metalWeight: Number(p.metalWeight),
-        metalPurity: p.metalPurity ? Number(p.metalPurity) : undefined,
-        metalRate: Number(p.metalRate),
-        makingCharges: Number(p.makingCharges),
-        gemstoneValue: p.gemstoneValue ? Number(p.gemstoneValue) : undefined,
-        otherCharges: p.otherCharges ? Number(p.otherCharges) : undefined,
-        sellingPrice: Number(p.sellingPrice),
-        costPrice: Number(p.costPrice),
-        totalGemstoneWeight: p.totalGemstoneWeight ? Number(p.totalGemstoneWeight) : undefined,
-      })));
-    }).catch(() => toast.error('Failed to load products'));
+    const loadData = async () => {
+      try {
+        setPageLoading(true);
+        const [invoiceRes, customersRes, productsRes] = await Promise.all([
+          invoicesApi.getById(id),
+          customersApi.getAll({ isActive: 'true', limit: 100 }),
+          productsApi.getAll({ isActive: 'true', limit: 100 }),
+        ]);
 
-    // Load default tax rate from company settings
-    companyApi.get().then(res => {
-      const rate = parseFloat(res.data.defaultTaxRate || '0');
-      if (rate > 0) setTaxRate(rate);
-    }).catch(() => {});
-  }, []);
+        // Map invoice data
+        const inv = invoiceRes.data;
+        const invoice: Invoice = {
+          ...inv,
+          subtotal: Number(inv.subtotal),
+          discount: Number(inv.discount),
+          tax: Number(inv.tax),
+          taxRate: inv.taxRate ? Number(inv.taxRate) : undefined,
+          total: Number(inv.total),
+          amountPaid: Number(inv.amountPaid),
+          balanceDue: Number(inv.balanceDue),
+          items: (inv.items || []).map((item: any) => ({
+            ...item,
+            metalWeight: item.metalWeight ? Number(item.metalWeight) : 0,
+            quantity: Number(item.quantity),
+            unitPrice: Number(item.unitPrice),
+            originalPrice: item.originalPrice ? Number(item.originalPrice) : undefined,
+            discount: item.discount ? Number(item.discount) : undefined,
+            total: Number(item.total),
+          })),
+        };
+
+        setOriginalInvoice(invoice);
+        setInvoiceItems(invoice.items);
+        setNotes(invoice.notes || '');
+        setPaidAmount(invoice.amountPaid);
+        setPaymentMethod((invoice.paymentMethod as PaymentMethod) || 'cash');
+
+        // Determine discount type and value from original
+        if (invoice.discount > 0 && invoice.subtotal > 0) {
+          const pctDiscount = (invoice.discount / invoice.subtotal) * 100;
+          if (Number.isInteger(pctDiscount) || pctDiscount === Math.round(pctDiscount * 100) / 100) {
+            setDiscountType('percentage');
+            setDiscount(pctDiscount);
+          } else {
+            setDiscountType('fixed');
+            setDiscount(invoice.discount);
+          }
+        }
+
+        if (invoice.taxRate) {
+          setTaxRate(invoice.taxRate);
+        } else if (invoice.tax > 0 && invoice.subtotal - invoice.discount > 0) {
+          setTaxRate((invoice.tax / (invoice.subtotal - invoice.discount)) * 100);
+        } else {
+          // No tax on this invoice — load default from company settings
+          try {
+            const companyRes = await companyApi.get();
+            const rate = parseFloat(companyRes.data.defaultTaxRate || '0');
+            if (rate > 0) setTaxRate(rate);
+          } catch { /* ignore */ }
+        }
+
+        // Map customers
+        const customers = customersRes.data.map((c: any) => ({
+          ...c,
+          totalPurchased: Number(c.totalPurchased),
+          creditLimit: c.creditLimit ? Number(c.creditLimit) : undefined,
+          creditBalance: c.creditBalance ? Number(c.creditBalance) : undefined,
+        }));
+        setAllCustomers(customers);
+
+        // Find and set the invoice's customer
+        const invoiceCustomer = customers.find((c: Customer) => c.id === invoice.customerId);
+        if (invoiceCustomer) {
+          setSelectedCustomer(invoiceCustomer);
+        } else {
+          // Create a minimal customer object from invoice data
+          setSelectedCustomer({
+            id: invoice.customerId,
+            name: invoice.customerName,
+            phone: invoice.customerPhone || '',
+            address: invoice.customerAddress,
+            customerType: 'retail',
+            totalPurchased: 0,
+            isActive: true,
+          } as Customer);
+        }
+
+        // Map products
+        setAllProducts(productsRes.data.map((p: any) => ({
+          ...p,
+          metalWeight: Number(p.metalWeight),
+          metalPurity: p.metalPurity ? Number(p.metalPurity) : undefined,
+          metalRate: Number(p.metalRate),
+          makingCharges: Number(p.makingCharges),
+          gemstoneValue: p.gemstoneValue ? Number(p.gemstoneValue) : undefined,
+          otherCharges: p.otherCharges ? Number(p.otherCharges) : undefined,
+          sellingPrice: Number(p.sellingPrice),
+          costPrice: Number(p.costPrice),
+          totalGemstoneWeight: p.totalGemstoneWeight ? Number(p.totalGemstoneWeight) : undefined,
+        })));
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to load invoice');
+        navigate('/invoices');
+      } finally {
+        setPageLoading(false);
+      }
+    };
+
+    loadData();
+  }, [id, navigate]);
 
   // Filtered lists
   const filteredCustomers = useMemo(() => {
@@ -103,18 +192,22 @@ export function CreateInvoice() {
 
   const getAvailableStock = useCallback((product: JewelleryItem) => {
     const invoiceItem = invoiceItems.find(item => item.productId === product.id);
-    return product.stockQuantity - (invoiceItem?.quantity || 0);
-  }, [invoiceItems]);
+    // In edit mode, original invoice quantities are already deducted from DB stock,
+    // so add them back to get the true available stock
+    const originalItem = originalInvoice?.items.find(i => i.productId === product.id);
+    const originalQty = originalItem?.quantity || 0;
+    return product.stockQuantity + originalQty - (invoiceItem?.quantity || 0);
+  }, [invoiceItems, originalInvoice]);
 
   const filteredProducts = useMemo(() => {
     return allProducts.filter(
       (product) =>
-        product.stockQuantity > 0 &&
+        (product.stockQuantity > 0 || invoiceItems.some(item => item.productId === product.id)) &&
         (product.name.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
           product.sku.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
           product.barcode?.toLowerCase().includes(productSearchQuery.toLowerCase()))
     );
-  }, [productSearchQuery, allProducts]);
+  }, [productSearchQuery, allProducts, invoiceItems]);
 
   // Calculate totals
   const subtotal = invoiceItems.reduce((sum, item) => sum + item.total, 0);
@@ -125,12 +218,13 @@ export function CreateInvoice() {
   const total = taxableAmount + taxAmount;
   const balanceDue = total - paidAmount;
 
-  // Auto-update paid amount when total changes (for non-credit methods)
+  // Auto-update paid amount when total changes (for non-credit methods), skip during initial load
   useEffect(() => {
+    if (pageLoading) return;
     if (paymentMethod !== 'credit') {
       setPaidAmount(total);
     }
-  }, [total, paymentMethod]);
+  }, [total, paymentMethod, pageLoading]);
 
   const handleSelectCustomer = (customer: Customer) => {
     setSelectedCustomer(customer);
@@ -139,7 +233,10 @@ export function CreateInvoice() {
   };
 
   const handleAddProduct = (product: JewelleryItem) => {
-    const availableStock = getAvailableStock(product);
+    // Account for original invoice quantity when checking available stock
+    const originalItem = originalInvoice?.items.find(i => i.productId === product.id);
+    const originalQty = originalItem?.quantity || 0;
+    const availableStock = getAvailableStock(product) + originalQty;
     if (availableStock <= 0) {
       toast.error(`"${product.name}" is out of stock! Cannot add more.`);
       return;
@@ -185,9 +282,15 @@ export function CreateInvoice() {
       setInvoiceItems((prev) => prev.filter((item) => item.productId !== productId));
     } else {
       const product = allProducts.find(p => p.id === productId);
-      if (product && quantity > product.stockQuantity) {
-        toast.error(`Only ${product.stockQuantity} available for "${product.name}"`);
-        return;
+      if (product) {
+        // Account for original invoice quantity (already deducted from stock)
+        const originalItem = originalInvoice?.items.find(i => i.productId === productId);
+        const originalQty = originalItem?.quantity || 0;
+        const maxAvailable = product.stockQuantity + originalQty;
+        if (quantity > maxAvailable) {
+          toast.error(`Only ${maxAvailable} available for "${product.name}"`);
+          return;
+        }
       }
       setInvoiceItems((prev) =>
         prev.map((item) =>
@@ -203,25 +306,19 @@ export function CreateInvoice() {
     setInvoiceItems((prev) => prev.filter((item) => item.productId !== productId));
   };
 
-  const handleSaveInvoice = async (status: 'draft' | 'pending') => {
-    if (!selectedCustomer || invoiceItems.length === 0) {
+  const handleUpdateInvoice = async () => {
+    if (!selectedCustomer || invoiceItems.length === 0 || !originalInvoice) {
       toast.error('Please select a customer and add at least one item');
       return;
     }
 
-    const finalStatus = status === 'draft' ? 'draft' : (paidAmount >= total ? 'paid' : 'pending');
+    const finalStatus = paidAmount >= total ? 'paid'
+      : paidAmount > 0 ? 'partial'
+      : originalInvoice.status;
 
     setSaving(true);
     try {
-      // Get next invoice number from server (atomic, multi-user safe)
-      const shopCode = localStorage.getItem('shopCode') || 'A';
-      const counterRes = await countersApi.getNext('invoice', shopCode);
-      const invoiceNumber = counterRes.data.formatted;
-      const invoiceId = counterRes.data.formatted.toLowerCase();
-
       const invoicePayload = {
-        id: invoiceId,
-        invoiceNumber,
         customerId: selectedCustomer.id,
         customerName: selectedCustomer.name,
         customerPhone: selectedCustomer.phone,
@@ -243,86 +340,67 @@ export function CreateInvoice() {
         amountPaid: paidAmount.toFixed(2),
         balanceDue: balanceDue.toFixed(2),
         status: finalStatus,
-        paymentMethod: paidAmount > 0 ? paymentMethod : null,
+        paymentMethod: paidAmount > 0 ? paymentMethod : originalInvoice.paymentMethod || null,
         notes: notes || null,
-        issueDate: new Date().toISOString().split('T')[0],
       };
 
-      await invoicesApi.create(invoicePayload);
+      await invoicesApi.update(originalInvoice.id, invoicePayload);
 
-      // Update product stock for each invoice item
+      // Adjust product stock based on differences between original and updated items
       try {
-        await Promise.all(
-          invoiceItems.map(item => {
-            const product = allProducts.find(p => p.id === item.productId);
+        const originalItems = originalInvoice.items || [];
+        const stockUpdates: Promise<any>[] = [];
+
+        // For each current invoice item, calculate the quantity difference
+        for (const item of invoiceItems) {
+          const product = allProducts.find(p => p.id === item.productId);
+          if (!product) continue;
+          const originalItem = originalItems.find(oi => oi.productId === item.productId);
+          const originalQty = originalItem?.quantity || 0;
+          const diff = item.quantity - originalQty; // positive = more used, negative = returned
+          if (diff !== 0) {
+            const newStock = Math.max(0, product.stockQuantity - diff);
+            stockUpdates.push(productsApi.updateStock(item.productId, newStock));
+          }
+        }
+
+        // For items that were in original but removed entirely
+        for (const originalItem of originalItems) {
+          if (!invoiceItems.some(i => i.productId === originalItem.productId)) {
+            const product = allProducts.find(p => p.id === originalItem.productId);
             if (product) {
-              const newStock = product.stockQuantity - item.quantity;
-              return productsApi.updateStock(item.productId, Math.max(0, newStock));
+              const newStock = product.stockQuantity + originalItem.quantity;
+              stockUpdates.push(productsApi.updateStock(originalItem.productId, newStock));
             }
-          })
-        );
-        // Refresh product list so stock is up-to-date
-        const productsRes = await productsApi.getAll();
-        setAllProducts(productsRes.data.map((p: any) => ({
-          ...p,
-          metalWeight: Number(p.metalWeight),
-          metalPurity: p.metalPurity ? Number(p.metalPurity) : undefined,
-          metalRate: Number(p.metalRate),
-          makingCharges: Number(p.makingCharges),
-          gemstoneValue: p.gemstoneValue ? Number(p.gemstoneValue) : undefined,
-          otherCharges: p.otherCharges ? Number(p.otherCharges) : undefined,
-          sellingPrice: Number(p.sellingPrice),
-          costPrice: Number(p.costPrice),
-          totalGemstoneWeight: p.totalGemstoneWeight ? Number(p.totalGemstoneWeight) : undefined,
-        })));
+          }
+        }
+
+        if (stockUpdates.length > 0) {
+          await Promise.all(stockUpdates);
+        }
       } catch {
-        toast.error('Invoice created but stock update failed. Please update stock manually.');
+        toast.error('Invoice updated but stock adjustment failed. Please update stock manually.');
       }
 
-      if (status === 'draft') {
-        toast.success('Invoice saved as draft');
-        navigate('/invoices');
-        return;
-      }
-
-      toast.success('Invoice created successfully');
-
-      // Build invoice object for print
-      const invoice: Invoice = {
-        id: invoiceId,
-        invoiceNumber,
-        customerId: selectedCustomer.id,
-        customerName: selectedCustomer.name,
-        customerPhone: selectedCustomer.phone,
-        customerAddress: selectedCustomer.address,
-        items: invoiceItems,
-        subtotal,
-        discount: discountAmount,
-        tax: taxAmount,
-        total,
-        amountPaid: paidAmount,
-        balanceDue,
-        status: finalStatus,
-        paymentMethod: paidAmount > 0 ? paymentMethod : undefined,
-        notes,
-        issueDate: new Date().toISOString().split('T')[0],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      // Store invoice in localStorage for print page to access
-      localStorage.setItem('printInvoice', JSON.stringify(invoice));
-
-      // Open print preview in new tab (print is triggered by the print page itself after loading)
-      window.open(`/invoices/${invoiceId}/print`, '_blank');
-
+      toast.success('Invoice updated successfully');
       navigate('/invoices');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to create invoice');
+      toast.error(err.message || 'Failed to update invoice');
     } finally {
       setSaving(false);
     }
   };
+
+  if (pageLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-10 h-10 text-amber-500 animate-spin mx-auto" />
+          <p className="text-slate-600 dark:text-slate-400">Loading invoice...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -333,20 +411,26 @@ export function CreateInvoice() {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Create Invoice</h1>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Create a new sales invoice</p>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Edit Invoice</h1>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              {originalInvoice?.invoiceNumber}
+              {originalInvoice?.paymentMethod && (
+                <Badge variant={originalInvoice.paymentMethod === 'credit' ? 'warning' : 'success'} className="ml-2">
+                  {originalInvoice.paymentMethod === 'credit' ? 'Credit' : 'Cash'}
+                </Badge>
+              )}
+            </p>
           </div>
         </div>
         <div className="flex gap-2 sm:gap-3">
-          <Button variant="outline" size="sm" className="flex-1 sm:flex-none sm:size-default" onClick={() => handleSaveInvoice('draft')} disabled={saving}>
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            <span className="hidden sm:inline">Save Draft</span>
-            <span className="sm:hidden">Draft</span>
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none sm:size-default" onClick={() => navigate('/invoices')} disabled={saving}>
+            <X className="w-4 h-4" />
+            <span className="hidden sm:inline">Cancel</span>
           </Button>
-          <Button variant="gold" size="sm" className="flex-1 sm:flex-none sm:size-default" onClick={() => handleSaveInvoice('pending')} disabled={saving}>
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-            <span className="hidden sm:inline">Create Invoice</span>
-            <span className="sm:hidden">Create</span>
+          <Button variant="gold" size="sm" className="flex-1 sm:flex-none sm:size-default" onClick={handleUpdateInvoice} disabled={saving}>
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            <span className="hidden sm:inline">Update Invoice</span>
+            <span className="sm:hidden">Update</span>
           </Button>
         </div>
       </div>
@@ -556,7 +640,7 @@ export function CreateInvoice() {
                 <div className="space-y-3">
                   {invoiceItems.map((item, index) => (
                     <div
-                      key={item.productId}
+                      key={item.productId || item.id}
                       className="group relative rounded-xl bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800/60 dark:to-slate-800/30 border border-slate-200/60 dark:border-slate-700/40 hover:border-amber-400/30 transition-all duration-200 overflow-hidden"
                     >
                       {/* Item number accent */}

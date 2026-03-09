@@ -10,6 +10,14 @@ import {
   seedGoldRates,
   seedProducts,
   seedGemstones,
+  seedCustomers,
+  seedInvoices,
+  seedInvoiceItems,
+  seedPayments,
+  seedClearances,
+  seedClearanceItems,
+  seedClearancePayments,
+  seedCounters,
 } from './data.js';
 
 async function seed() {
@@ -26,12 +34,20 @@ async function seed() {
 
   // Clear tables in reverse dependency order
   console.log('🗑️  Clearing existing data...');
+  await db.delete(schema.clearancePayments);
+  await db.delete(schema.clearanceItems);
+  await db.delete(schema.clearances);
+  await db.delete(schema.payments);
+  await db.delete(schema.invoiceItems);
+  await db.delete(schema.invoices);
+  await db.delete(schema.customers);
   await db.delete(schema.productGemstones);
   await db.delete(schema.products);
   await db.delete(schema.categories);
   await db.delete(schema.goldRates);
   await db.delete(schema.goldTypeConfigs);
   await db.delete(schema.companyInfo);
+  await db.delete(schema.counters);
   console.log('   ✓ Tables cleared\n');
 
   // Seed in dependency order
@@ -59,16 +75,62 @@ async function seed() {
   await db.insert(schema.productGemstones).values(seedGemstones);
   console.log(`   ✓ ${seedGemstones.length} gemstones\n`);
 
+  console.log('👥 Seeding customers...');
+  await db.insert(schema.customers).values(seedCustomers);
+  console.log(`   ✓ ${seedCustomers.length} customers\n`);
+
+  console.log('🧾 Seeding invoices...');
+  await db.insert(schema.invoices).values(seedInvoices);
+  console.log(`   ✓ ${seedInvoices.length} invoices\n`);
+
+  console.log('📋 Seeding invoice items...');
+  await db.insert(schema.invoiceItems).values(seedInvoiceItems);
+  console.log(`   ✓ ${seedInvoiceItems.length} invoice items\n`);
+
+  console.log('💳 Seeding payments...');
+  await db.insert(schema.payments).values(seedPayments);
+  console.log(`   ✓ ${seedPayments.length} payments\n`);
+
+  console.log('🏷️ Seeding clearances...');
+  await db.insert(schema.clearances).values(seedClearances);
+  console.log(`   ✓ ${seedClearances.length} clearances\n`);
+
+  console.log('📋 Seeding clearance items...');
+  await db.insert(schema.clearanceItems).values(seedClearanceItems);
+  console.log(`   ✓ ${seedClearanceItems.length} clearance items\n`);
+
+  console.log('💳 Seeding clearance payments...');
+  await db.insert(schema.clearancePayments).values(seedClearancePayments);
+  console.log(`   ✓ ${seedClearancePayments.length} clearance payments\n`);
+
+  console.log('🔢 Seeding counters...');
+  await db.insert(schema.counters).values(seedCounters);
+  console.log(`   ✓ ${seedCounters.length} counters\n`);
+
   // Verify counts
   const [{ count: catCount }] = await db.select({ count: sql<number>`count(*)` }).from(schema.categories);
   const [{ count: prodCount }] = await db.select({ count: sql<number>`count(*)` }).from(schema.products);
   const [{ count: gemCount }] = await db.select({ count: sql<number>`count(*)` }).from(schema.productGemstones);
+  const [{ count: custCount }] = await db.select({ count: sql<number>`count(*)` }).from(schema.customers);
+  const [{ count: invCount }] = await db.select({ count: sql<number>`count(*)` }).from(schema.invoices);
+  const [{ count: itemCount }] = await db.select({ count: sql<number>`count(*)` }).from(schema.invoiceItems);
+  const [{ count: payCount }] = await db.select({ count: sql<number>`count(*)` }).from(schema.payments);
+  const [{ count: clrCount }] = await db.select({ count: sql<number>`count(*)` }).from(schema.clearances);
+  const [{ count: clrItemCount }] = await db.select({ count: sql<number>`count(*)` }).from(schema.clearanceItems);
+  const [{ count: clrPayCount }] = await db.select({ count: sql<number>`count(*)` }).from(schema.clearancePayments);
 
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('✅ Seed complete!');
-  console.log(`   Categories:  ${catCount}`);
-  console.log(`   Products:    ${prodCount}`);
-  console.log(`   Gemstones:   ${gemCount}`);
+  console.log(`   Categories:       ${catCount}`);
+  console.log(`   Products:         ${prodCount}`);
+  console.log(`   Gemstones:        ${gemCount}`);
+  console.log(`   Customers:        ${custCount}`);
+  console.log(`   Invoices:         ${invCount}`);
+  console.log(`   Invoice Items:    ${itemCount}`);
+  console.log(`   Payments:         ${payCount}`);
+  console.log(`   Clearances:       ${clrCount}`);
+  console.log(`   Clearance Items:  ${clrItemCount}`);
+  console.log(`   Clearance Pays:   ${clrPayCount}`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 }
 

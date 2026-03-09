@@ -6,6 +6,10 @@ import categoryRoutes from './routes/categories.js';
 import productRoutes from './routes/products.js';
 import goldRoutes from './routes/gold.js';
 import companyRoutes from './routes/company.js';
+import customerRoutes from './routes/customers.js';
+import invoiceRoutes from './routes/invoices.js';
+import clearanceRoutes from './routes/clearance.js';
+import counterRoutes from './routes/counters.js';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -46,6 +50,10 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/gold', goldRoutes);
 app.use('/api/company', companyRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/clearance', clearanceRoutes);
+app.use('/api/counters', counterRoutes);
 
 // ==========================================
 // Error Handling

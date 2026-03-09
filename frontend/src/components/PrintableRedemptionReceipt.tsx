@@ -1,4 +1,4 @@
-import { forwardRef, useEffect } from 'react';
+import { forwardRef } from 'react';
 import type { PawnRedemption, PawnTicket, CompanyInfo } from '../types/index';
 import { formatCurrency, formatDate, formatWeight } from '../utils/formatters';
 
@@ -35,29 +35,18 @@ const paymentMethodLabels: Record<string, string> = {
 
 export const PrintableRedemptionReceipt = forwardRef<HTMLDivElement, PrintableRedemptionReceiptProps>(
   ({ redemption, ticket, company = defaultCompany }, ref) => {
-    // Auto trigger print dialog
-    useEffect(() => {
-      const t = setTimeout(() => {
-        try {
-          window.print();
-        } catch (e) {
-          // ignore
-        }
-      }, 120);
-      return () => clearTimeout(t);
-    }, []);
 
     const calc = redemption.interestCalculation;
 
     return (
       <div ref={ref} className="print-redemption-receipt">
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+          /* System fonts - no external loading */
           
           @media print {
             @page {
-              size: A5 portrait;
-              margin: 6mm 8mm;
+              size: A4 portrait;
+              margin: 25.4mm;
             }
             
             * {
@@ -73,7 +62,7 @@ export const PrintableRedemptionReceipt = forwardRef<HTMLDivElement, PrintableRe
             
             .print-redemption-receipt {
               width: 100%;
-              max-width: 132mm;
+              max-width: 159mm;
               padding: 0;
               margin: 0 auto;
               background: white !important;
@@ -86,92 +75,90 @@ export const PrintableRedemptionReceipt = forwardRef<HTMLDivElement, PrintableRe
           }
           
           .print-redemption-receipt {
-            width: 148mm;
-            min-height: 210mm;
-            padding: 6mm 8mm;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 25.4mm;
             margin: 0 auto;
             background: white;
-            font-family: 'Inter', sans-serif;
-            font-size: 9pt;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            font-size: 10pt;
             color: #1a1a1a;
-            line-height: 1.4;
+            line-height: 1.5;
           }
           
           .header {
             text-align: center;
-            padding-bottom: 4mm;
-            border-bottom: 2px solid #228b22;
-            margin-bottom: 4mm;
+            padding-bottom: 5mm;
+            border-bottom: 1.5pt solid #000;
+            margin-bottom: 5mm;
           }
           
           .company-name {
-            font-size: 16pt;
+            font-size: 22pt;
             font-weight: 700;
-            color: #228b22;
+            color: #000;
             margin: 0;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
           }
           
           .company-tagline {
-            font-size: 8pt;
-            color: #666;
+            font-size: 10pt;
+            color: #444;
             margin: 2px 0;
+            font-style: italic;
           }
           
           .company-contact {
-            font-size: 7.5pt;
-            color: #555;
+            font-size: 9.5pt;
+            color: #333;
             margin-top: 2mm;
           }
           
           .document-title {
-            background: linear-gradient(135deg, #228b22 0%, #32cd32 100%);
-            color: white;
             text-align: center;
-            padding: 2.5mm 0;
-            font-size: 11pt;
+            padding: 3mm 0;
+            font-size: 15pt;
             font-weight: 700;
-            letter-spacing: 1px;
-            margin: 3mm 0;
-            border-radius: 2mm;
+            letter-spacing: 2px;
+            margin: 4mm 0;
+            border: 1.5pt solid #000;
           }
           
           .receipt-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 3mm;
-            padding: 2mm;
-            background: #f0fff0;
-            border-radius: 1.5mm;
-            border: 1px solid #90ee90;
+            margin-bottom: 4mm;
+            padding: 3mm;
+            border: 0.5pt solid #888;
           }
           
           .ticket-number {
-            font-family: monospace;
-            font-size: 11pt;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13pt;
             font-weight: 700;
-            color: #228b22;
+            color: #000;
           }
           
           .section {
-            margin-bottom: 3mm;
+            margin-bottom: 4mm;
           }
           
           .section-title {
-            font-size: 8.5pt;
-            font-weight: 600;
-            color: #333;
+            font-size: 11pt;
+            font-weight: 700;
+            color: #000;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding-bottom: 1mm;
-            border-bottom: 1px solid #ddd;
-            margin-bottom: 2mm;
+            letter-spacing: 0.8px;
+            padding-bottom: 1.5mm;
+            border-bottom: 0.75pt solid #000;
+            margin-bottom: 2.5mm;
           }
           
           .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1.5mm 4mm;
+            gap: 2mm 6mm;
           }
           
           .info-row {
@@ -180,38 +167,38 @@ export const PrintableRedemptionReceipt = forwardRef<HTMLDivElement, PrintableRe
           }
           
           .info-label {
-            font-size: 7.5pt;
-            color: #666;
-            min-width: 24mm;
+            font-size: 10pt;
+            color: #555;
+            min-width: 28mm;
           }
           
           .info-value {
-            font-size: 8.5pt;
-            color: #1a1a1a;
+            font-size: 11pt;
+            color: #000;
             font-weight: 500;
           }
           
           .items-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 2mm 0;
-            font-size: 7.5pt;
+            margin: 3mm 0;
+            font-size: 10pt;
           }
           
           .items-table th {
-            background: #f5f5f5;
-            padding: 1.5mm 2mm;
+            padding: 2mm 3mm;
             text-align: left;
-            font-weight: 600;
-            font-size: 7pt;
-            color: #555;
+            font-weight: 700;
+            font-size: 9pt;
+            color: #000;
             text-transform: uppercase;
-            border-bottom: 1px solid #ddd;
+            border-top: 1pt solid #000;
+            border-bottom: 1pt solid #000;
           }
           
           .items-table td {
-            padding: 2mm;
-            border-bottom: 1px solid #eee;
+            padding: 2.5mm 3mm;
+            border-bottom: 0.5pt solid #ccc;
             vertical-align: top;
           }
           
@@ -220,108 +207,102 @@ export const PrintableRedemptionReceipt = forwardRef<HTMLDivElement, PrintableRe
           }
           
           .item-desc {
-            font-size: 7pt;
-            color: #666;
+            font-size: 9pt;
+            color: #555;
           }
           
           .interest-breakdown {
-            margin-top: 3mm;
-            padding: 2.5mm;
-            background: #f8f8f8;
-            border-radius: 1.5mm;
-            border: 1px solid #e0e0e0;
+            margin-top: 4mm;
+            padding: 3mm;
+            border: 0.5pt solid #888;
           }
           
           .breakdown-title {
-            font-size: 8pt;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 2mm;
-            padding-bottom: 1mm;
-            border-bottom: 1px dashed #ccc;
+            font-size: 11pt;
+            font-weight: 700;
+            color: #000;
+            margin-bottom: 2.5mm;
+            padding-bottom: 1.5mm;
+            border-bottom: 1px dashed #888;
           }
           
           .breakdown-row {
             display: flex;
             justify-content: space-between;
-            padding: 1mm 0;
-            font-size: 7.5pt;
+            padding: 1.5mm 0;
+            font-size: 10pt;
           }
           
           .breakdown-row.sub {
-            padding-left: 3mm;
-            color: #666;
-            font-size: 7pt;
+            padding-left: 4mm;
+            color: #555;
+            font-size: 9.5pt;
           }
           
           .breakdown-row.total {
-            font-weight: 600;
-            font-size: 8pt;
-            border-top: 1px solid #ddd;
-            padding-top: 2mm;
-            margin-top: 1mm;
+            font-weight: 700;
+            font-size: 11pt;
+            border-top: 1pt solid #000;
+            padding-top: 2.5mm;
+            margin-top: 1.5mm;
           }
           
           .payment-section {
-            margin-top: 3mm;
-            padding: 3mm;
-            background: linear-gradient(135deg, #f0fff0 0%, #e8f5e9 100%);
-            border-radius: 2mm;
-            border: 1.5px solid #228b22;
+            margin-top: 4mm;
+            padding: 4mm;
+            border: 1.5pt solid #000;
           }
           
           .payment-title {
-            font-size: 9pt;
+            font-size: 12pt;
             font-weight: 700;
-            color: #228b22;
-            margin-bottom: 2mm;
+            color: #000;
+            margin-bottom: 2.5mm;
+            text-transform: uppercase;
           }
           
           .payment-row {
             display: flex;
             justify-content: space-between;
-            padding: 1mm 0;
-            font-size: 8pt;
+            padding: 1.5mm 0;
+            font-size: 11pt;
           }
           
           .payment-row.highlight {
-            font-size: 11pt;
+            font-size: 14pt;
             font-weight: 700;
-            color: #228b22;
-            padding-top: 2mm;
-            border-top: 1px dashed #228b22;
-            margin-top: 2mm;
+            color: #000;
+            padding-top: 3mm;
+            border-top: 1pt dashed #000;
+            margin-top: 2.5mm;
           }
           
           .status-badge {
             display: inline-block;
-            padding: 1.5mm 4mm;
-            background: #228b22;
-            color: white;
-            border-radius: 3mm;
-            font-size: 8pt;
-            font-weight: 600;
+            padding: 2mm 5mm;
+            border: 1.5pt solid #000;
+            font-size: 10pt;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
           }
           
           .acknowledgment {
-            margin-top: 4mm;
-            padding: 2.5mm;
-            border: 1px solid #ddd;
-            border-radius: 1.5mm;
-            font-size: 7.5pt;
-            color: #555;
+            margin-top: 5mm;
+            padding: 3mm;
+            border: 0.5pt solid #888;
+            font-size: 10pt;
+            color: #333;
           }
           
           .acknowledgment-title {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 1.5mm;
+            font-weight: 700;
+            color: #000;
+            margin-bottom: 2mm;
           }
           
           .signature-section {
-            margin-top: 5mm;
+            margin-top: 8mm;
             display: flex;
             justify-content: space-between;
           }
@@ -332,31 +313,29 @@ export const PrintableRedemptionReceipt = forwardRef<HTMLDivElement, PrintableRe
           }
           
           .signature-line {
-            border-top: 1px solid #333;
-            margin-top: 12mm;
-            padding-top: 1mm;
-            font-size: 7pt;
-            color: #666;
+            border-top: 0.75pt solid #000;
+            margin-top: 18mm;
+            padding-top: 2mm;
+            font-size: 9pt;
+            color: #555;
           }
           
           .footer {
-            margin-top: 4mm;
-            padding-top: 2mm;
-            border-top: 1px solid #ddd;
+            margin-top: 6mm;
+            padding-top: 3mm;
+            border-top: 0.75pt solid #aaa;
             text-align: center;
-            font-size: 7pt;
+            font-size: 9pt;
             color: #888;
           }
           
           .completion-badge {
             text-align: center;
-            margin-top: 3mm;
-            padding: 2mm;
-            background: #228b22;
-            color: white;
-            border-radius: 1mm;
-            font-size: 9pt;
-            font-weight: 600;
+            margin-top: 4mm;
+            padding: 3mm;
+            border: 1.5pt solid #000;
+            font-size: 11pt;
+            font-weight: 700;
           }
         `}</style>
 

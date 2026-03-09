@@ -34,6 +34,8 @@ router.put('/', async (req, res, next) => {
       website: z.string().max(200).optional(),
       registrationNumber: z.string().max(50).optional(),
       taxNumber: z.string().max(50).optional(),
+      defaultTaxRate: z.string().max(10).optional(),
+      currency: z.string().max(10).optional(),
     }).parse(req.body);
 
     const [updated] = await db

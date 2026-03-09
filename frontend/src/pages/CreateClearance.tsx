@@ -9,7 +9,6 @@ import {
   Gem,
   User,
   FileText,
-  Printer,
   Save,
   X,
   DollarSign,
@@ -23,14 +22,13 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Combobox } from '../components/ui/Combobox';
 import { Badge } from '../components/ui/Badge';
-import { Modal } from '../components/ui/Modal';
-import { productsApi, customersApi, invoicesApi, countersApi, companyApi } from '../services/api';
+import { productsApi, customersApi, clearanceApi, countersApi, companyApi } from '../services/api';
 import { formatCurrency, formatWeight } from '../utils/formatters';
-import type { JewelleryItem, Customer, Invoice, InvoiceItem, PaymentMethod } from '../types';
+import type { JewelleryItem, Customer, Clearance, InvoiceItem, PaymentMethod } from '../types';
 
 const paymentMethods: PaymentMethod[] = ['cash', 'card', 'bank-transfer', 'cheque', 'credit'];
 
-export function CreateInvoice() {
+export function CreateClearance() {
   const navigate = useNavigate();
 
   // API-loaded data
@@ -46,10 +44,11 @@ export function CreateInvoice() {
   const [productSearchQuery, setProductSearchQuery] = useState('');
   const [showProductSearch, setShowProductSearch] = useState(false);
 
-  // Invoice items
-  const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
+  // Clearance items
+  const [clearanceItems, setClearanceItems] = useState<InvoiceItem[]>([]);
 
-  // Invoice details
+  // Clearance details
+  const [clearanceReason, setClearanceReason] = useState('');
   const [discount, setDiscount] = useState(0);
   const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
   const [taxRate, setTaxRate] = useState(0);
@@ -102,9 +101,9 @@ export function CreateInvoice() {
   }, [customerSearchQuery, allCustomers]);
 
   const getAvailableStock = useCallback((product: JewelleryItem) => {
-    const invoiceItem = invoiceItems.find(item => item.productId === product.id);
-    return product.stockQuantity - (invoiceItem?.quantity || 0);
-  }, [invoiceItems]);
+    const item = clearanceItems.find(i => i.productId === product.id);
+    return product.stockQuantity - (item?.quantity || 0);
+  }, [clearanceItems]);
 
   const filteredProducts = useMemo(() => {
     return allProducts.filter(
@@ -117,7 +116,7 @@ export function CreateInvoice() {
   }, [productSearchQuery, allProducts]);
 
   // Calculate totals
-  const subtotal = invoiceItems.reduce((sum, item) => sum + item.total, 0);
+  const subtotal = clearanceItems.reduce((sum, item) => sum + item.total, 0);
   const discountAmount =
     discountType === 'percentage' ? (subtotal * discount) / 100 : discount;
   const taxableAmount = subtotal - discountAmount;
@@ -145,10 +144,10 @@ export function CreateInvoice() {
       return;
     }
 
-    const existingItem = invoiceItems.find((item) => item.productId === product.id);
+    const existingItem = clearanceItems.find((item) => item.productId === product.id);
 
     if (existingItem) {
-      setInvoiceItems((prev) =>
+      setClearanceItems((prev) =>
         prev.map((item) =>
           item.productId === product.id
             ? {
@@ -174,7 +173,7 @@ export function CreateInvoice() {
         metalType: product.metalType,
         karat: product.karat,
       };
-      setInvoiceItems((prev) => [...prev, newItem]);
+      setClearanceItems((prev) => [...prev, newItem]);
     }
     setShowProductSearch(false);
     setProductSearchQuery('');
@@ -182,14 +181,14 @@ export function CreateInvoice() {
 
   const handleUpdateQuantity = (productId: string, quantity: number) => {
     if (quantity <= 0) {
-      setInvoiceItems((prev) => prev.filter((item) => item.productId !== productId));
+      setClearanceItems((prev) => prev.filter((item) => item.productId !== productId));
     } else {
       const product = allProducts.find(p => p.id === productId);
       if (product && quantity > product.stockQuantity) {
         toast.error(`Only ${product.stockQuantity} available for "${product.name}"`);
         return;
       }
-      setInvoiceItems((prev) =>
+      setClearanceItems((prev) =>
         prev.map((item) =>
           item.productId === productId
             ? { ...item, quantity, total: quantity * item.unitPrice }
@@ -200,11 +199,11 @@ export function CreateInvoice() {
   };
 
   const handleRemoveItem = (productId: string) => {
-    setInvoiceItems((prev) => prev.filter((item) => item.productId !== productId));
+    setClearanceItems((prev) => prev.filter((item) => item.productId !== productId));
   };
 
-  const handleSaveInvoice = async (status: 'draft' | 'pending') => {
-    if (!selectedCustomer || invoiceItems.length === 0) {
+  const handleSaveClearance = async (status: 'draft' | 'pending') => {
+    if (!selectedCustomer || clearanceItems.length === 0) {
       toast.error('Please select a customer and add at least one item');
       return;
     }
@@ -213,20 +212,21 @@ export function CreateInvoice() {
 
     setSaving(true);
     try {
-      // Get next invoice number from server (atomic, multi-user safe)
+      // Get next clearance number from server (atomic, multi-user safe)
       const shopCode = localStorage.getItem('shopCode') || 'A';
-      const counterRes = await countersApi.getNext('invoice', shopCode);
-      const invoiceNumber = counterRes.data.formatted;
-      const invoiceId = counterRes.data.formatted.toLowerCase();
+      const counterRes = await countersApi.getNext('clearance', shopCode);
+      const clearanceNumber = counterRes.data.formatted;
+      const clearanceId = counterRes.data.formatted.toLowerCase();
 
-      const invoicePayload = {
-        id: invoiceId,
-        invoiceNumber,
+      const clearancePayload = {
+        id: clearanceId,
+        clearanceNumber,
         customerId: selectedCustomer.id,
         customerName: selectedCustomer.name,
         customerPhone: selectedCustomer.phone,
         customerAddress: selectedCustomer.address,
-        items: invoiceItems.map(item => ({
+        clearanceReason: clearanceReason || null,
+        items: clearanceItems.map(item => ({
           ...item,
           unitPrice: item.unitPrice.toFixed(2),
           total: item.total.toFixed(2),
@@ -248,12 +248,12 @@ export function CreateInvoice() {
         issueDate: new Date().toISOString().split('T')[0],
       };
 
-      await invoicesApi.create(invoicePayload);
+      await clearanceApi.create(clearancePayload);
 
-      // Update product stock for each invoice item
+      // Update product stock for each clearance item
       try {
         await Promise.all(
-          invoiceItems.map(item => {
+          clearanceItems.map(item => {
             const product = allProducts.find(p => p.id === item.productId);
             if (product) {
               const newStock = product.stockQuantity - item.quantity;
@@ -276,26 +276,27 @@ export function CreateInvoice() {
           totalGemstoneWeight: p.totalGemstoneWeight ? Number(p.totalGemstoneWeight) : undefined,
         })));
       } catch {
-        toast.error('Invoice created but stock update failed. Please update stock manually.');
+        toast.error('Clearance created but stock update failed. Please update stock manually.');
       }
 
       if (status === 'draft') {
-        toast.success('Invoice saved as draft');
-        navigate('/invoices');
+        toast.success('Clearance saved as draft');
+        navigate('/clearance');
         return;
       }
 
-      toast.success('Invoice created successfully');
+      toast.success('Clearance created successfully');
 
-      // Build invoice object for print
-      const invoice: Invoice = {
-        id: invoiceId,
-        invoiceNumber,
+      // Build clearance object for print
+      const clearance: Clearance = {
+        id: clearanceId,
+        clearanceNumber,
         customerId: selectedCustomer.id,
         customerName: selectedCustomer.name,
         customerPhone: selectedCustomer.phone,
         customerAddress: selectedCustomer.address,
-        items: invoiceItems,
+        clearanceReason: clearanceReason || undefined,
+        items: clearanceItems,
         subtotal,
         discount: discountAmount,
         tax: taxAmount,
@@ -310,15 +311,15 @@ export function CreateInvoice() {
         updatedAt: new Date().toISOString(),
       };
 
-      // Store invoice in localStorage for print page to access
-      localStorage.setItem('printInvoice', JSON.stringify(invoice));
+      // Store clearance in localStorage for print page to access
+      localStorage.setItem('printClearance', JSON.stringify(clearance));
 
-      // Open print preview in new tab (print is triggered by the print page itself after loading)
-      window.open(`/invoices/${invoiceId}/print`, '_blank');
+      // Open print preview in new tab
+      window.open(`/clearance/${clearanceId}/print`, '_blank');
 
-      navigate('/invoices');
+      navigate('/clearance');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to create invoice');
+      toast.error(err.message || 'Failed to create clearance');
     } finally {
       setSaving(false);
     }
@@ -329,23 +330,23 @@ export function CreateInvoice() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate('/invoices')}>
+          <Button variant="ghost" onClick={() => navigate('/clearance')}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Create Invoice</h1>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Create a new sales invoice</p>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-100">Create Clearance</h1>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Create a new clearance sale</p>
           </div>
         </div>
         <div className="flex gap-2 sm:gap-3">
-          <Button variant="outline" size="sm" className="flex-1 sm:flex-none sm:size-default" onClick={() => handleSaveInvoice('draft')} disabled={saving}>
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none sm:size-default" onClick={() => handleSaveClearance('draft')} disabled={saving}>
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             <span className="hidden sm:inline">Save Draft</span>
             <span className="sm:hidden">Draft</span>
           </Button>
-          <Button variant="gold" size="sm" className="flex-1 sm:flex-none sm:size-default" onClick={() => handleSaveInvoice('pending')} disabled={saving}>
+          <Button variant="gold" size="sm" className="flex-1 sm:flex-none sm:size-default" onClick={() => handleSaveClearance('pending')} disabled={saving}>
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-            <span className="hidden sm:inline">Create Invoice</span>
+            <span className="hidden sm:inline">Create Clearance</span>
             <span className="sm:hidden">Create</span>
           </Button>
         </div>
@@ -440,15 +441,34 @@ export function CreateInvoice() {
             </CardContent>
           </Card>
 
+          {/* Clearance Reason */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-amber-400" />
+                Clearance Reason
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <textarea
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700/50 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 resize-none"
+                rows={2}
+                value={clearanceReason}
+                onChange={(e) => setClearanceReason(e.target.value)}
+                placeholder="e.g. End of season clearance, Discontinued items, Stock clearance..."
+              />
+            </CardContent>
+          </Card>
+
           {/* Product Selection */}
           <Card className="relative z-20 overflow-visible">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Gem className="w-5 h-5 text-amber-400" />
                 Items
-                {invoiceItems.length > 0 && (
+                {clearanceItems.length > 0 && (
                   <span className="ml-1 px-2 py-0.5 text-xs font-semibold bg-amber-500/15 text-amber-500 rounded-full">
-                    {invoiceItems.length}
+                    {clearanceItems.length}
                   </span>
                 )}
               </CardTitle>
@@ -458,11 +478,9 @@ export function CreateInvoice() {
             <div className="relative px-5 pb-4 -mt-2">
               <div className="relative group">
                 <div className="relative flex items-center rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/60 shadow-sm group-focus-within:border-amber-500/50 transition-colors duration-200 overflow-hidden">
-                  {/* Left icon */}
                   <div className="pl-5 pr-3 flex items-center shrink-0">
                     <Search className="w-5 h-5 text-slate-400 group-focus-within:text-amber-500 transition-colors duration-300" />
                   </div>
-                  {/* Input */}
                   <input
                     type="text"
                     placeholder="Search and add products by name, SKU, or barcode..."
@@ -475,7 +493,6 @@ export function CreateInvoice() {
                     onBlur={() => setTimeout(() => setShowProductSearch(false), 200)}
                     className="flex-1 py-4 pr-4 text-sm bg-transparent text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none"
                   />
-                  {/* Right: clear button or gem icon */}
                   <div className="pr-4 flex items-center gap-2 shrink-0">
                     {productSearchQuery ? (
                       <button
@@ -552,18 +569,16 @@ export function CreateInvoice() {
               )}
             </div>
             <CardContent>
-              {invoiceItems.length > 0 ? (
+              {clearanceItems.length > 0 ? (
                 <div className="space-y-3">
-                  {invoiceItems.map((item, index) => (
+                  {clearanceItems.map((item, index) => (
                     <div
                       key={item.productId}
                       className="group relative rounded-xl bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800/60 dark:to-slate-800/30 border border-slate-200/60 dark:border-slate-700/40 hover:border-amber-400/30 transition-all duration-200 overflow-hidden"
                     >
-                      {/* Item number accent */}
                       <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-amber-600 rounded-l-xl" />
 
                       <div className="p-3 sm:p-4 pl-4 sm:pl-5">
-                        {/* Top row: Product info + delete */}
                         <div className="flex items-start gap-3">
                           <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-amber-400/20 to-yellow-500/10 flex items-center justify-center shrink-0 border border-amber-400/20">
                             <span className="text-xs sm:text-sm font-bold text-amber-500">{index + 1}</span>
@@ -580,7 +595,6 @@ export function CreateInvoice() {
                           </button>
                         </div>
 
-                        {/* Bottom row: Quantity + Price */}
                         <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-200/50 dark:border-slate-700/30">
                           <div className="flex items-center gap-1.5 sm:gap-2">
                             <Button
@@ -615,10 +629,9 @@ export function CreateInvoice() {
                     </div>
                   ))}
 
-                  {/* Items total bar */}
                   <div className="flex items-center justify-between px-4 py-2.5 rounded-lg bg-amber-500/5 border border-amber-500/10">
                     <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                      {invoiceItems.length} item{invoiceItems.length !== 1 ? 's' : ''} · {invoiceItems.reduce((sum, i) => sum + i.quantity, 0)} unit{invoiceItems.reduce((sum, i) => sum + i.quantity, 0) !== 1 ? 's' : ''}
+                      {clearanceItems.length} item{clearanceItems.length !== 1 ? 's' : ''} · {clearanceItems.reduce((sum, i) => sum + i.quantity, 0)} unit{clearanceItems.reduce((sum, i) => sum + i.quantity, 0) !== 1 ? 's' : ''}
                     </span>
                     <span className="text-sm font-bold text-amber-500">{formatCurrency(subtotal)}</span>
                   </div>
@@ -771,7 +784,7 @@ export function CreateInvoice() {
                 rows={3}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add notes to this invoice..."
+                placeholder="Add notes to this clearance sale..."
               />
             </CardContent>
           </Card>

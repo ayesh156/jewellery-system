@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Users,
   Plus,
@@ -9,17 +9,27 @@ import {
   Phone,
   Mail,
   MapPin,
-  Crown,
-  Star,
   AlertTriangle,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  MoreVertical,
+  Banknote,
   CreditCard,
+  Loader2,
+  X,
+  DollarSign,
+  FileText,
+  Tag,
+  CheckCircle,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Combobox, type ComboboxOption } from '../components/ui/Combobox';
-import { Badge } from '../components/ui/Badge';
+import { Combobox } from '../components/ui/Combobox';
 import { Modal } from '../components/ui/Modal';
+import { Pagination } from '../components/ui/Pagination';
 import {
   Table,
   TableBody,
@@ -30,86 +40,17 @@ import {
   MobileCard,
   MobileCardHeader,
   MobileCardContent,
-  MobileCardRow,
   MobileCardActions,
   MobileCardsContainer,
 } from '../components/ui/Table';
-import type { Customer, CustomerType } from '../types';
+import { customersApi, countersApi, invoicesApi, clearanceApi } from '../services/api';
+import { formatCurrency, formatDate, formatPhone } from '../utils/formatters';
+import type { Customer, PaymentMethod } from '../types';
 
-// Mock data - would come from API in real app
-const initialCustomers: Customer[] = [
-  {
-    id: 'C001',
-    name: 'Kamal Perera',
-    businessName: undefined,
-    email: 'kamal.perera@email.com',
-    phone: '0771234567',
-    address: '123 Galle Road',
-    city: 'Colombo',
-    registrationDate: '2023-01-15',
-    totalPurchased: 450000,
-    customerType: 'vip',
-    isActive: true,
-    creditLimit: 500000,
-    creditBalance: 75000,
-  },
-  {
-    id: 'C002',
-    name: 'Nimal Silva',
-    businessName: 'Silva Jewellers',
-    email: 'nimal@silvajewellers.lk',
-    phone: '0112345678',
-    address: '45 Main Street',
-    city: 'Kandy',
-    registrationDate: '2023-03-20',
-    totalPurchased: 1250000,
-    customerType: 'wholesale',
-    isActive: true,
-    creditLimit: 1000000,
-    creditBalance: 250000,
-  },
-  {
-    id: 'C003',
-    name: 'Amaya Fernando',
-    email: 'amaya.fernando@gmail.com',
-    phone: '0769876543',
-    address: '78 Beach Road',
-    city: 'Galle',
-    registrationDate: '2023-06-10',
-    totalPurchased: 125000,
-    customerType: 'retail',
-    isActive: true,
-    creditLimit: 100000,
-    creditBalance: 0,
-  },
-  {
-    id: 'C004',
-    name: 'Sunil Jayawardena',
-    email: 'sunil.jay@yahoo.com',
-    phone: '0756543210',
-    address: '22 Temple Road',
-    city: 'Negombo',
-    registrationDate: '2024-01-05',
-    totalPurchased: 85000,
-    customerType: 'credit',
-    isActive: true,
-    creditLimit: 200000,
-    creditBalance: 45000,
-  },
-];
+const paymentMethods: PaymentMethod[] = ['cash', 'card', 'bank-transfer', 'cheque', 'credit'];
 
-// Mock invoices for stats
-const mockInvoices = [
-  { id: 'INV001', customerId: 'C001', total: 150000 },
-  { id: 'INV002', customerId: 'C001', total: 200000 },
-  { id: 'INV003', customerId: 'C001', total: 100000 },
-  { id: 'INV004', customerId: 'C002', total: 500000 },
-  { id: 'INV005', customerId: 'C002', total: 750000 },
-  { id: 'INV006', customerId: 'C003', total: 125000 },
-  { id: 'INV007', customerId: 'C004', total: 85000 },
-];
-
-const customerTypes: CustomerType[] = ['retail', 'wholesale', 'vip', 'credit'];
+type SortField = 'name' | 'createdAt' | 'totalPurchased';
+type SortOrder = 'asc' | 'desc';
 
 interface FormData {
   name: string;
@@ -118,7 +59,6 @@ interface FormData {
   email: string;
   address: string;
   city: string;
-  customerType: CustomerType;
   creditLimit: number;
   isActive: boolean;
 }
@@ -130,81 +70,162 @@ const initialFormData: FormData = {
   email: '',
   address: '',
   city: '',
-  customerType: 'retail',
   creditLimit: 0,
   isActive: true,
 };
 
+// Outstanding item from invoices or clearances
+interface OutstandingItem {
+  id: string;
+  number: string;
+  type: 'invoice' | 'clearance';
+  total: number;
+  amountPaid: number;
+  balanceDue: number;
+  issueDate: string;
+  status: string;
+}
+
+// Map DB row → Customer
+const mapCustomer = (c: any): Customer => ({
+  ...c,
+  totalPurchased: Number(c.totalPurchased || 0),
+  creditLimit: c.creditLimit ? Number(c.creditLimit) : 0,
+  creditBalance: c.creditBalance ? Number(c.creditBalance) : 0,
+});
+
 export function Customers() {
-  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('');
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showPayModal, setShowPayModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [moreMenuId, setMoreMenuId] = useState<string | null>(null);
+
+  // Pay credit state
+  const [outstandingItems, setOutstandingItems] = useState<OutstandingItem[]>([]);
+  const [loadingOutstanding, setLoadingOutstanding] = useState(false);
+  const [payingCredit, setPayingCredit] = useState(false);
+  const [payAmount, setPayAmount] = useState(0);
+  const [payMethod, setPayMethod] = useState<PaymentMethod>('cash');
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+
+  // Customer credit map (calculated from invoices + clearances)
+  const [customerCredits, setCustomerCredits] = useState<Record<string, number>>({});
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(6);
+
+  // Fetch customers + calculate real credits
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [custRes, invRes, clrRes] = await Promise.all([
+        customersApi.getAll({ limit: 200 }),
+        invoicesApi.getAll({ limit: 500 }),
+        clearanceApi.getAll({ limit: 500 }),
+      ]);
+      const mappedCustomers = custRes.data.map(mapCustomer);
+      setCustomers(mappedCustomers);
+
+      // Calculate credits per customer
+      const credits: Record<string, number> = {};
+      invRes.data.forEach((inv: any) => {
+        const bal = Number(inv.balanceDue || 0);
+        if (bal > 0 && inv.customerId) {
+          credits[inv.customerId] = (credits[inv.customerId] || 0) + bal;
+        }
+      });
+      clrRes.data.forEach((clr: any) => {
+        const bal = Number(clr.balanceDue || 0);
+        if (bal > 0 && clr.customerId) {
+          credits[clr.customerId] = (credits[clr.customerId] || 0) + bal;
+        }
+      });
+      setCustomerCredits(credits);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Filter & sort
+  const filteredCustomers = useMemo(() => {
+    let result = customers.filter((customer) => {
+      const matchesSearch =
+        customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.phone.includes(searchQuery) ||
+        (customer.businessName?.toLowerCase().includes(searchQuery.toLowerCase()));
+      return matchesSearch;
+    });
+
+    result.sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case 'name':
+          cmp = a.name.localeCompare(b.name);
+          break;
+        case 'createdAt':
+          cmp = new Date(a.registrationDate).getTime() - new Date(b.registrationDate).getTime();
+          break;
+        case 'totalPurchased':
+          cmp = a.totalPurchased - b.totalPurchased;
+          break;
+      }
+      return sortOrder === 'desc' ? -cmp : cmp;
+    });
+
+    return result;
+  }, [customers, searchQuery, sortField, sortOrder]);
+
+  // Paginated
+  const paginatedCustomers = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredCustomers.slice(start, start + pageSize);
+  }, [filteredCustomers, currentPage, pageSize]);
+
+  // Reset page on filter change
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, sortField, sortOrder]);
 
   // Stats
   const totalCustomers = customers.length;
-  const vipCustomers = customers.filter((c) => c.customerType === 'vip').length;
-  const wholesaleCustomers = customers.filter((c) => c.customerType === 'wholesale').length;
+  const activeCustomers = customers.filter((c) => c.isActive).length;
+  const totalOutstanding = Object.values(customerCredits).reduce((sum, v) => sum + v, 0);
 
-  // Filter customers
-  const filteredCustomers = useMemo(() => {
-    return customers.filter((customer) => {
-      const matchesSearch =
-        customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.phone.includes(searchQuery) ||
-        (customer.businessName?.toLowerCase().includes(searchQuery.toLowerCase()));
-
-      const matchesType = !typeFilter || customer.customerType === typeFilter;
-
-      return matchesSearch && matchesType;
-    });
-  }, [customers, searchQuery, typeFilter]);
-
-  // Get customer stats from invoices
-  const getCustomerStats = (customerId: string) => {
-    const customerInvoices = mockInvoices.filter((inv) => inv.customerId === customerId);
-    const totalSpent = customerInvoices.reduce((sum, inv) => sum + inv.total, 0);
-    return {
-      invoiceCount: customerInvoices.length,
-      totalSpent,
-    };
-  };
-
-  // Helper functions
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-LK', {
-      style: 'currency',
-      currency: 'LKR',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatPhone = (phone: string) => {
-    if (phone.length === 10) {
-      return `${phone.slice(0, 3)} ${phone.slice(3, 6)} ${phone.slice(6)}`;
+  // Sort toggle
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
     }
-    return phone;
   };
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-GB', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />;
+    return sortOrder === 'asc'
+      ? <ArrowUp className="w-3.5 h-3.5 text-amber-500" />
+      : <ArrowDown className="w-3.5 h-3.5 text-amber-500" />;
   };
 
   const getInitials = (name: string) => {
     const parts = name.split(' ');
-    if (parts.length >= 2) {
-      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    }
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
     return name.slice(0, 2).toUpperCase();
   };
 
@@ -218,22 +239,86 @@ export function Customers() {
       email: customer.email,
       address: customer.address,
       city: customer.city,
-      customerType: customer.customerType,
       creditLimit: customer.creditLimit || 0,
       isActive: customer.isActive,
     });
     setEditMode(true);
     setShowAddModal(true);
+    setMoreMenuId(null);
   };
 
   const openViewModal = (customer: Customer) => {
     setSelectedCustomer(customer);
     setShowViewModal(true);
+    setMoreMenuId(null);
   };
 
   const openDeleteModal = (customer: Customer) => {
     setSelectedCustomer(customer);
     setShowDeleteModal(true);
+    setMoreMenuId(null);
+  };
+
+  // Pay credit modal - fetch outstanding invoices/clearances for this customer
+  const openPayModal = async (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setMoreMenuId(null);
+    setLoadingOutstanding(true);
+    setShowPayModal(true);
+    setPayAmount(0);
+    setPayMethod('cash');
+    setSelectedItemId(null);
+
+    try {
+      const [invRes, clrRes] = await Promise.all([
+        invoicesApi.getAll({ search: customer.name, limit: 200 }),
+        clearanceApi.getAll({ search: customer.name, limit: 200 }),
+      ]);
+
+      const items: OutstandingItem[] = [];
+
+      invRes.data.forEach((inv: any) => {
+        const bal = Number(inv.balanceDue || 0);
+        if (bal > 0 && inv.customerId === customer.id) {
+          items.push({
+            id: inv.id,
+            number: inv.invoiceNumber,
+            type: 'invoice',
+            total: Number(inv.total),
+            amountPaid: Number(inv.amountPaid),
+            balanceDue: bal,
+            issueDate: inv.issueDate,
+            status: inv.status,
+          });
+        }
+      });
+
+      clrRes.data.forEach((clr: any) => {
+        const bal = Number(clr.balanceDue || 0);
+        if (bal > 0 && clr.customerId === customer.id) {
+          items.push({
+            id: clr.id,
+            number: clr.clearanceNumber || clr.invoiceNumber,
+            type: 'clearance',
+            total: Number(clr.total),
+            amountPaid: Number(clr.amountPaid),
+            balanceDue: bal,
+            issueDate: clr.issueDate,
+            status: clr.status,
+          });
+        }
+      });
+
+      // Sort by date (oldest first)
+      items.sort((a, b) => new Date(a.issueDate).getTime() - new Date(b.issueDate).getTime());
+      setOutstandingItems(items);
+
+      setPayAmount(0);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to load outstanding items');
+    } finally {
+      setLoadingOutstanding(false);
+    }
   };
 
   const resetForm = () => {
@@ -247,86 +332,205 @@ export function Customers() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
-    if (editMode && selectedCustomer) {
-      // Update existing customer
-      setCustomers((prev) =>
-        prev.map((c) =>
-          c.id === selectedCustomer.id
-            ? {
-                ...c,
-                name: formData.name,
-                businessName: formData.businessName || undefined,
-                phone: formData.phone,
-                email: formData.email,
-                address: formData.address,
-                city: formData.city,
-                customerType: formData.customerType,
-                creditLimit: formData.creditLimit,
-                isActive: formData.isActive,
-              }
-            : c
-        )
-      );
-    } else {
-      // Add new customer
-      const newCustomer: Customer = {
-        id: `C${String(customers.length + 1).padStart(3, '0')}`,
-        name: formData.name,
-        businessName: formData.businessName || undefined,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        city: formData.city,
-        registrationDate: new Date().toISOString().split('T')[0],
-        totalPurchased: 0,
-        customerType: formData.customerType,
-        isActive: formData.isActive,
-        creditLimit: formData.creditLimit,
-        creditBalance: 0,
-      };
-      setCustomers((prev) => [...prev, newCustomer]);
+  const handleSubmit = async () => {
+    if (!formData.name.trim()) { toast.error('Customer name is required'); return; }
+    if (!formData.phone.trim()) { toast.error('Phone number is required'); return; }
+
+    setSaving(true);
+    try {
+      if (editMode && selectedCustomer) {
+        const res = await customersApi.update(selectedCustomer.id, {
+          name: formData.name,
+          businessName: formData.businessName || null,
+          phone: formData.phone,
+          email: formData.email || null,
+          address: formData.address || null,
+          city: formData.city || null,
+          creditLimit: formData.creditLimit ? String(formData.creditLimit) : '0',
+          isActive: formData.isActive,
+        });
+        setCustomers((prev) =>
+          prev.map((c) => (c.id === selectedCustomer.id ? mapCustomer(res.data) : c))
+        );
+        toast.success('Customer updated');
+      } else {
+        const shopCode = localStorage.getItem('shopCode') || 'A';
+        const counterRes = await countersApi.getNext('customer', shopCode);
+        const res = await customersApi.create({
+          id: counterRes.data.formatted.toLowerCase(),
+          name: formData.name,
+          businessName: formData.businessName || null,
+          phone: formData.phone,
+          email: formData.email || null,
+          address: formData.address || null,
+          city: formData.city || null,
+          registrationDate: new Date().toISOString().split('T')[0],
+          totalPurchased: '0',
+          customerType: 'retail',
+          creditLimit: formData.creditLimit ? String(formData.creditLimit) : '0',
+          creditBalance: '0',
+          isActive: formData.isActive,
+        });
+        setCustomers((prev) => [...prev, mapCustomer(res.data)]);
+        toast.success('Customer added');
+      }
+      resetForm();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save customer');
+    } finally {
+      setSaving(false);
     }
-    resetForm();
   };
 
-  const handleDelete = () => {
-    if (selectedCustomer) {
+  const handleDelete = async () => {
+    if (!selectedCustomer) return;
+    setDeleting(true);
+    try {
+      await customersApi.delete(selectedCustomer.id);
       setCustomers((prev) => prev.filter((c) => c.id !== selectedCustomer.id));
+      toast.success('Customer deleted');
       setShowDeleteModal(false);
       setSelectedCustomer(null);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete customer');
+    } finally {
+      setDeleting(false);
     }
   };
 
-  const getCustomerTypeIcon = (type: CustomerType) => {
-    switch (type) {
-      case 'vip':
-        return <Crown className="w-4 h-4 text-amber-400" />;
-      case 'wholesale':
-        return <Star className="w-4 h-4 text-purple-400" />;
-      case 'credit':
-        return <CreditCard className="w-4 h-4 text-blue-400" />;
-      default:
-        return null;
+  // Pay credit - pays selected item or distributes across all (oldest first)
+  const handlePayCredit = async () => {
+    if (!selectedCustomer || payAmount <= 0) return;
+
+    // Determine which items to pay
+    const itemsToPay = selectedItemId
+      ? outstandingItems.filter((i) => i.id === selectedItemId)
+      : outstandingItems;
+
+    const maxPayable = itemsToPay.reduce((s, i) => s + i.balanceDue, 0);
+    if (payAmount > maxPayable) {
+      toast.error('Payment amount exceeds balance due');
+      return;
+    }
+
+    setPayingCredit(true);
+    try {
+      let remaining = payAmount;
+
+      for (const item of itemsToPay) {
+        if (remaining <= 0) break;
+        const payForThis = Math.min(remaining, item.balanceDue);
+        remaining -= payForThis;
+
+        const paymentData = {
+          id: `pay-${Date.now()}-${item.id.slice(-4)}`,
+          amount: payForThis.toFixed(2),
+          method: payMethod,
+          date: new Date().toISOString().split('T')[0],
+        };
+
+        if (item.type === 'invoice') {
+          await invoicesApi.recordPayment(item.id, paymentData);
+        } else {
+          await clearanceApi.recordPayment(item.id, paymentData);
+        }
+      }
+
+      toast.success(
+        payAmount >= maxPayable
+          ? (selectedItemId ? 'Item credit cleared!' : 'All credit cleared successfully!')
+          : 'Partial payment recorded successfully!'
+      );
+      setShowPayModal(false);
+      setSelectedCustomer(null);
+      setOutstandingItems([]);
+      setSelectedItemId(null);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to process payment');
+    } finally {
+      setPayingCredit(false);
     }
   };
 
-  const getCustomerTypeBadge = (type: CustomerType) => {
-    switch (type) {
-      case 'vip':
-        return <Badge variant="gold">VIP</Badge>;
-      case 'wholesale':
-        return <Badge variant="info">Wholesale</Badge>;
-      case 'credit':
-        return <Badge variant="warning">Credit</Badge>;
-      default:
-        return <Badge variant="default">Retail</Badge>;
-    }
-  };
-
-  const getCustomerTypeLabel = (type: CustomerType) => {
-    return type.charAt(0).toUpperCase() + type.slice(1);
-  };
+  // Skeleton loading
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <div className="h-8 w-40 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+            <div className="h-4 w-56 bg-slate-200 dark:bg-slate-700 rounded mt-2 animate-pulse" />
+          </div>
+          <div className="h-10 w-36 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse">
+                  <div className="w-6 h-6" />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                  <div className="h-7 w-16 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <Card>
+          <CardContent className="p-4">
+            <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-0 md:p-0">
+            <div className="hidden md:block">
+              <div className="grid grid-cols-7 gap-4 px-6 py-3 border-b border-slate-200 dark:border-slate-700">
+                {[...Array(7)].map((_, i) => (
+                  <div key={i} className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                ))}
+              </div>
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="grid grid-cols-7 gap-4 px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    <div className="space-y-1.5">
+                      <div className="h-4 w-28 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                      <div className="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5 self-center">
+                    <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                    <div className="h-3 w-32 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                  </div>
+                  {[...Array(5)].map((_, j) => (
+                    <div key={j} className="h-4 w-20 bg-slate-200 dark:bg-slate-700 rounded animate-pulse self-center" />
+                  ))}
+                </div>
+              ))}
+            </div>
+            <div className="md:hidden p-4 space-y-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    <div className="space-y-1.5 flex-1">
+                      <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                      <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="h-4 w-full bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                  <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -357,62 +561,50 @@ export function Customers() {
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-amber-500/10">
-              <Crown className="w-6 h-6 text-amber-400" />
+            <div className="p-3 rounded-xl bg-green-500/10">
+              <Users className="w-6 h-6 text-green-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">VIP Customers</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{vipCustomers}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Active Customers</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{activeCustomers}</p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-purple-500/10">
-              <Star className="w-6 h-6 text-purple-400" />
+            <div className="p-3 rounded-xl bg-amber-500/10">
+              <Banknote className="w-6 h-6 text-amber-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Wholesale</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{wholesaleCustomers}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Total Outstanding</p>
+              <p className={`text-2xl font-bold ${totalOutstanding > 0 ? 'text-amber-400' : 'text-slate-900 dark:text-slate-100'}`}>
+                {formatCurrency(totalOutstanding)}
+              </p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Search */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input
-                  placeholder="Search by name, email, or phone..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div className="lg:w-56">
-              <Combobox
-                options={[
-                  { value: 'retail', label: 'Retail', icon: <Users className="w-4 h-4" /> },
-                  { value: 'wholesale', label: 'Wholesale', icon: <Star className="w-4 h-4" /> },
-                  { value: 'vip', label: 'VIP', icon: <Crown className="w-4 h-4" /> },
-                  { value: 'credit', label: 'Credit', icon: <CreditCard className="w-4 h-4" /> },
-                ]}
-                value={typeFilter}
-                onChange={(val) => setTypeFilter(val)}
-                placeholder="All Types"
-                searchPlaceholder="Search types..."
-                defaultIcon={<Users className="w-4 h-4" />}
-                showAllOption
-                allOptionLabel="All Types"
-                clearable
-                showFooter={false}
-              />
-            </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              placeholder="Search by name, email, or phone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-9"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -424,18 +616,30 @@ export function Customers() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Customer</TableHead>
+                <TableHead>
+                  <button onClick={() => toggleSort('name')} className="flex items-center gap-1.5 hover:text-amber-500 transition-colors">
+                    Customer {getSortIcon('name')}
+                  </button>
+                </TableHead>
                 <TableHead>Contact</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-right">Total Purchased</TableHead>
-                <TableHead className="text-center">Invoices</TableHead>
-                <TableHead className="text-right">Credit Balance</TableHead>
-                <TableHead className="text-center">Actions</TableHead>
+                <TableHead>City</TableHead>
+                <TableHead>
+                  <button onClick={() => toggleSort('totalPurchased')} className="flex items-center gap-1.5 hover:text-amber-500 transition-colors ml-auto">
+                    Total Purchased {getSortIcon('totalPurchased')}
+                  </button>
+                </TableHead>
+                <TableHead className="text-right">Outstanding</TableHead>
+                <TableHead>
+                  <button onClick={() => toggleSort('createdAt')} className="flex items-center gap-1.5 hover:text-amber-500 transition-colors">
+                    Registered {getSortIcon('createdAt')}
+                  </button>
+                </TableHead>
+                <TableHead className="text-center w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCustomers.map((customer) => {
-                const stats = getCustomerStats(customer.id);
+              {paginatedCustomers.map((customer) => {
+                const credit = customerCredits[customer.id] || 0;
                 return (
                   <TableRow key={customer.id}>
                     <TableCell>
@@ -446,14 +650,9 @@ export function Customers() {
                           </span>
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium text-slate-800 dark:text-slate-200">{customer.name}</p>
-                            {getCustomerTypeIcon(customer.customerType)}
-                          </div>
-                          {customer.businessName ? (
+                          <p className="font-medium text-slate-800 dark:text-slate-200">{customer.name}</p>
+                          {customer.businessName && (
                             <p className="text-xs text-slate-600 dark:text-slate-400">{customer.businessName}</p>
-                          ) : (
-                            <p className="text-xs text-slate-600 dark:text-slate-400">{customer.city}</p>
                           )}
                         </div>
                       </div>
@@ -472,42 +671,70 @@ export function Customers() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>{getCustomerTypeBadge(customer.customerType)}</TableCell>
-                    <TableCell className="text-right font-semibold text-slate-800 dark:text-slate-200">
-                      {formatCurrency(stats.totalSpent)}
+                    <TableCell className="text-slate-700 dark:text-slate-300">
+                      {customer.city || '—'}
                     </TableCell>
-                    <TableCell className="text-center text-slate-700 dark:text-slate-300">
-                      {stats.invoiceCount}
+                    <TableCell className="text-right font-semibold text-slate-800 dark:text-slate-200">
+                      {formatCurrency(customer.totalPurchased)}
                     </TableCell>
                     <TableCell className="text-right">
-                      <span className={customer.creditBalance && customer.creditBalance > 0 ? 'text-amber-400' : 'text-slate-600 dark:text-slate-400'}>
-                        {formatCurrency(customer.creditBalance || 0)}
-                      </span>
+                      {credit > 0 ? (
+                        <button
+                          onClick={() => openPayModal(customer)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                        >
+                          <span className="text-amber-400 font-semibold text-sm">{formatCurrency(credit)}</span>
+                          <DollarSign className="w-3.5 h-3.5 text-amber-500" />
+                        </button>
+                      ) : (
+                        <span className="text-slate-500 dark:text-slate-500 text-sm">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm text-slate-600 dark:text-slate-400">
+                      {formatDate(customer.registrationDate)}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center justify-center gap-1">
+                      <div className="relative">
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => openViewModal(customer)}
+                          onClick={() => setMoreMenuId(moreMenuId === customer.id ? null : customer.id)}
                         >
-                          <Eye className="w-4 h-4" />
+                          <MoreVertical className="w-4 h-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEditModal(customer)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openDeleteModal(customer)}
-                          className="text-red-400 hover:text-red-300"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        {moreMenuId === customer.id && (
+                          <>
+                            <div className="fixed inset-0 z-[60]" onClick={() => setMoreMenuId(null)} />
+                            <div className="absolute right-0 bottom-full mb-1 z-[70] w-44 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl py-1.5">
+                              <button
+                                onClick={() => openViewModal(customer)}
+                                className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                              >
+                                <Eye className="w-4 h-4" /> View
+                              </button>
+                              <button
+                                onClick={() => openEditModal(customer)}
+                                className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                              >
+                                <Edit className="w-4 h-4" /> Edit
+                              </button>
+                              {credit > 0 && (
+                                <button
+                                  onClick={() => openPayModal(customer)}
+                                  className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-amber-400 hover:bg-amber-500/10 transition-colors"
+                                >
+                                  <DollarSign className="w-4 h-4" /> Pay Credit
+                                </button>
+                              )}
+                              <button
+                                onClick={() => openDeleteModal(customer)}
+                                className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" /> Delete
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -518,8 +745,8 @@ export function Customers() {
 
           {/* Mobile Cards */}
           <MobileCardsContainer className="p-4">
-            {filteredCustomers.map((customer) => {
-              const stats = getCustomerStats(customer.id);
+            {paginatedCustomers.map((customer) => {
+              const credit = customerCredits[customer.id] || 0;
               return (
                 <MobileCard key={customer.id}>
                   <MobileCardHeader>
@@ -530,16 +757,12 @@ export function Customers() {
                         </span>
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold text-slate-800 dark:text-slate-200">{customer.name}</p>
-                          {getCustomerTypeIcon(customer.customerType)}
-                        </div>
+                        <p className="font-semibold text-slate-800 dark:text-slate-200">{customer.name}</p>
                         {customer.businessName && (
                           <p className="text-xs text-slate-500 dark:text-slate-400">{customer.businessName}</p>
                         )}
                       </div>
                     </div>
-                    {getCustomerTypeBadge(customer.customerType)}
                   </MobileCardHeader>
                   <MobileCardContent>
                     <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
@@ -552,32 +775,38 @@ export function Customers() {
                         <span className="truncate">{customer.email}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                      <MapPin className="w-4 h-4" />
-                      {customer.city}
-                    </div>
+                    {customer.city && (
+                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                        <MapPin className="w-4 h-4" />
+                        {customer.city}
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700/50">
                       <div>
                         <p className="text-xs text-slate-500 dark:text-slate-400">Total Purchased</p>
-                        <p className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(stats.totalSpent)}</p>
+                        <p className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(customer.totalPurchased)}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Credit Balance</p>
-                        <p className={`font-semibold ${customer.creditBalance && customer.creditBalance > 0 ? 'text-amber-500' : 'text-slate-600 dark:text-slate-400'}`}>
-                          {formatCurrency(customer.creditBalance || 0)}
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Outstanding</p>
+                        <p className={`font-semibold ${credit > 0 ? 'text-amber-500' : 'text-slate-600 dark:text-slate-400'}`}>
+                          {credit > 0 ? formatCurrency(credit) : '—'}
                         </p>
                       </div>
                     </div>
                   </MobileCardContent>
                   <MobileCardActions>
                     <Button variant="outline" size="sm" className="flex-1" onClick={() => openViewModal(customer)}>
-                      <Eye className="w-4 h-4" />
-                      View
+                      <Eye className="w-4 h-4" /> View
                     </Button>
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditModal(customer)}>
-                      <Edit className="w-4 h-4" />
-                      Edit
-                    </Button>
+                    {credit > 0 ? (
+                      <Button variant="gold" size="sm" className="flex-1" onClick={() => openPayModal(customer)}>
+                        <DollarSign className="w-4 h-4" /> Pay
+                      </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditModal(customer)}>
+                        <Edit className="w-4 h-4" /> Edit
+                      </Button>
+                    )}
                     <Button variant="ghost" size="icon" onClick={() => openDeleteModal(customer)} className="text-red-400 hover:text-red-300">
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -591,6 +820,19 @@ export function Customers() {
             <div className="p-8 text-center">
               <Users className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
               <p className="text-slate-600 dark:text-slate-400">No customers found</p>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {filteredCustomers.length > 0 && (
+            <div className="border-t border-slate-200 dark:border-slate-700">
+              <Pagination
+                currentPage={currentPage}
+                totalItems={filteredCustomers.length}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={setPageSize}
+              />
             </div>
           )}
         </CardContent>
@@ -619,7 +861,6 @@ export function Customers() {
               placeholder="e.g., Silva Jewellers (optional)"
             />
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Phone Number"
@@ -636,7 +877,6 @@ export function Customers() {
               placeholder="e.g., kamal@example.com"
             />
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Address"
@@ -651,23 +891,7 @@ export function Customers() {
               placeholder="e.g., Colombo"
             />
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Customer Type
-              </label>
-              <Combobox
-                value={formData.customerType}
-                onChange={(val) => handleInputChange('customerType', val)}
-                options={customerTypes.map((type) => ({
-                  value: type,
-                  label: getCustomerTypeLabel(type),
-                  icon: type === 'vip' ? <Crown className="w-4 h-4" /> : type === 'wholesale' ? <Star className="w-4 h-4" /> : <Users className="w-4 h-4" />
-                }))}
-                placeholder="Select customer type..."
-              />
-            </div>
             <Input
               label="Credit Limit"
               type="number"
@@ -676,16 +900,16 @@ export function Customers() {
               placeholder="0"
             />
           </div>
-
         </div>
         <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
-            <Button variant="ghost" onClick={resetForm}>
-              Cancel
-            </Button>
-            <Button variant="gold" onClick={handleSubmit}>
-              {editMode ? 'Update Customer' : 'Add Customer'}
-            </Button>
-          </div>
+          <Button variant="ghost" onClick={resetForm} disabled={saving}>
+            Cancel
+          </Button>
+          <Button variant="gold" onClick={handleSubmit} disabled={saving}>
+            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+            {editMode ? 'Update Customer' : 'Add Customer'}
+          </Button>
+        </div>
       </Modal>
 
       {/* View Modal */}
@@ -695,83 +919,91 @@ export function Customers() {
         title="Customer Details"
         size="md"
       >
-        {selectedCustomer && (
-          <div className="px-5 sm:px-6 py-5 space-y-5">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/10 flex items-center justify-center">
-                <span className="text-xl font-bold text-blue-400">
-                  {getInitials(selectedCustomer.name)}
-                </span>
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
+        {selectedCustomer && (() => {
+          const credit = customerCredits[selectedCustomer.id] || 0;
+          return (
+            <div className="px-5 sm:px-6 py-5 space-y-5">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/10 flex items-center justify-center">
+                  <span className="text-xl font-bold text-blue-400">
+                    {getInitials(selectedCustomer.name)}
+                  </span>
+                </div>
+                <div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
                     {selectedCustomer.name}
                   </h3>
-                  {getCustomerTypeBadge(selectedCustomer.customerType)}
+                  {selectedCustomer.businessName && (
+                    <p className="text-slate-600 dark:text-slate-400">{selectedCustomer.businessName}</p>
+                  )}
+                  <p className="text-sm text-slate-500 dark:text-slate-500">
+                    Customer since {formatDate(selectedCustomer.registrationDate)}
+                  </p>
                 </div>
-                {selectedCustomer.businessName && (
-                  <p className="text-slate-600 dark:text-slate-400">{selectedCustomer.businessName}</p>
-                )}
-                <p className="text-sm text-slate-500 dark:text-slate-500">
-                  Customer since {formatDate(selectedCustomer.registrationDate)}
-                </p>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
-                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm mb-1">
-                  <Phone className="w-4 h-4" />
-                  Phone
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm mb-1">
+                    <Phone className="w-4 h-4" /> Phone
+                  </div>
+                  <p className="font-medium text-slate-800 dark:text-slate-200">{formatPhone(selectedCustomer.phone)}</p>
                 </div>
-                <p className="font-medium text-slate-800 dark:text-slate-200">{formatPhone(selectedCustomer.phone)}</p>
-              </div>
-              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
-                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm mb-1">
-                  <Mail className="w-4 h-4" />
-                  Email
+                <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm mb-1">
+                    <Mail className="w-4 h-4" /> Email
+                  </div>
+                  <p className="font-medium text-slate-800 dark:text-slate-200">{selectedCustomer.email || 'N/A'}</p>
                 </div>
-                <p className="font-medium text-slate-800 dark:text-slate-200">{selectedCustomer.email || 'N/A'}</p>
-              </div>
-              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 col-span-2">
-                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm mb-1">
-                  <MapPin className="w-4 h-4" />
-                  Address
+                <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 col-span-2">
+                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm mb-1">
+                    <MapPin className="w-4 h-4" /> Address
+                  </div>
+                  <p className="font-medium text-slate-800 dark:text-slate-200">
+                    {selectedCustomer.address ? `${selectedCustomer.address}, ${selectedCustomer.city}` : 'N/A'}
+                  </p>
                 </div>
-                <p className="font-medium text-slate-800 dark:text-slate-200">
-                  {selectedCustomer.address ? `${selectedCustomer.address}, ${selectedCustomer.city}` : 'N/A'}
-                </p>
               </div>
-            </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 text-center min-w-0">
-                <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Total Purchased</p>
-                <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
-                  {formatCurrency(selectedCustomer.totalPurchased)}
-                </p>
-              </div>
-              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 text-center min-w-0">
-                <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Credit Limit</p>
-                <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
-                  {formatCurrency(selectedCustomer.creditLimit || 0)}
-                </p>
-              </div>
-              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 text-center min-w-0">
-                <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Credit Balance</p>
-                <p className={`text-sm font-bold truncate ${selectedCustomer.creditBalance && selectedCustomer.creditBalance > 0 ? 'text-amber-400' : 'text-slate-800 dark:text-slate-200'}`}>
-                  {formatCurrency(selectedCustomer.creditBalance || 0)}
-                </p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 text-center min-w-0">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Total Purchased</p>
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
+                    {formatCurrency(selectedCustomer.totalPurchased)}
+                  </p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 text-center min-w-0">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Credit Limit</p>
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
+                    {formatCurrency(selectedCustomer.creditLimit || 0)}
+                  </p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 text-center min-w-0">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Outstanding</p>
+                  <p className={`text-sm font-bold truncate ${credit > 0 ? 'text-amber-400' : 'text-slate-800 dark:text-slate-200'}`}>
+                    {formatCurrency(credit)}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
         {selectedCustomer && (
           <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700/50">
             <Button variant="ghost" onClick={() => setShowViewModal(false)}>
               Close
             </Button>
+            {(customerCredits[selectedCustomer.id] || 0) > 0 && (
+              <Button
+                variant="gold"
+                onClick={() => {
+                  setShowViewModal(false);
+                  openPayModal(selectedCustomer);
+                }}
+              >
+                <DollarSign className="w-4 h-4" /> Pay Credit
+              </Button>
+            )}
             <Button
               variant="primary"
               onClick={() => {
@@ -779,8 +1011,194 @@ export function Customers() {
                 openEditModal(selectedCustomer);
               }}
             >
-              <Edit className="w-4 h-4" />
-              Edit
+              <Edit className="w-4 h-4" /> Edit
+            </Button>
+          </div>
+        )}
+      </Modal>
+
+      {/* Pay Credit Modal */}
+      <Modal
+        isOpen={showPayModal}
+        onClose={() => { setShowPayModal(false); setOutstandingItems([]); }}
+        title="Pay Outstanding Credit"
+        size="lg"
+      >
+        {selectedCustomer && (
+          <div className="px-5 sm:px-6 py-5 space-y-5">
+            {/* Customer info */}
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/10 flex items-center justify-center">
+                <span className="text-sm font-semibold text-blue-400">{getInitials(selectedCustomer.name)}</span>
+              </div>
+              <div>
+                <p className="font-medium text-slate-800 dark:text-slate-200">{selectedCustomer.name}</p>
+                <p className="text-xs text-slate-500">{formatPhone(selectedCustomer.phone)}</p>
+              </div>
+            </div>
+
+            {loadingOutstanding ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
+                <span className="ml-2 text-sm text-slate-500">Loading outstanding items...</span>
+              </div>
+            ) : outstandingItems.length === 0 ? (
+              <div className="text-center py-6">
+                <CheckCircle className="w-10 h-10 text-emerald-400 mx-auto mb-2" />
+                <p className="text-slate-600 dark:text-slate-400">No outstanding balance</p>
+              </div>
+            ) : (
+              <>
+                {/* Outstanding items list - click to select */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Outstanding Items ({outstandingItems.length})
+                    </p>
+                    {selectedItemId && (
+                      <button
+                        onClick={() => { setSelectedItemId(null); setPayAmount(0); }}
+                        className="text-xs text-slate-400 hover:text-slate-200 transition-colors"
+                      >
+                        Clear selection
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-2 max-h-52 overflow-y-auto">
+                    {outstandingItems.map((item) => {
+                      const isSelected = selectedItemId === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedItemId(null);
+                              setPayAmount(0);
+                            } else {
+                              setSelectedItemId(item.id);
+                              setPayAmount(item.balanceDue);
+                            }
+                          }}
+                          className={`flex items-center justify-between p-3 rounded-lg border w-full text-left transition-all ${
+                            isSelected
+                              ? 'border-amber-500/50 bg-amber-500/10 ring-1 ring-amber-500/30'
+                              : selectedItemId
+                                ? 'border-slate-200 dark:border-slate-700/50 bg-white/50 dark:bg-slate-900/30 opacity-50'
+                                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/30 hover:bg-amber-500/5'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`p-1.5 rounded-lg ${item.type === 'invoice' ? 'bg-blue-500/10' : 'bg-purple-500/10'}`}>
+                              {item.type === 'invoice' ? (
+                                <FileText className="w-4 h-4 text-blue-400" />
+                              ) : (
+                                <Tag className="w-4 h-4 text-purple-400" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{item.number}</p>
+                              <p className="text-xs text-slate-500">
+                                {item.type === 'invoice' ? 'Invoice' : 'Clearance'} &middot; {formatDate(item.issueDate)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-amber-400">{formatCurrency(item.balanceDue)}</p>
+                            <p className="text-xs text-slate-500">of {formatCurrency(item.total)}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-2">
+                    {selectedItemId ? 'Selected item — pay this item only' : 'Click an item to pay it individually, or pay all below'}
+                  </p>
+                </div>
+
+                {/* Summary */}
+                <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50 space-y-2">
+                  {selectedItemId ? (() => {
+                    const sel = outstandingItems.find((i) => i.id === selectedItemId);
+                    return sel ? (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">Selected Balance ({sel.number})</span>
+                        <span className="font-bold text-amber-400">{formatCurrency(sel.balanceDue)}</span>
+                      </div>
+                    ) : null;
+                  })() : (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-600 dark:text-slate-400">Total Outstanding</span>
+                      <span className="font-bold text-amber-400">
+                        {formatCurrency(outstandingItems.reduce((s, i) => s + i.balanceDue, 0))}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Payment form */}
+                <div className="space-y-4">
+                  <Input
+                    label="Payment Amount"
+                    type="number"
+                    value={payAmount}
+                    onChange={(e) => setPayAmount(parseFloat(e.target.value) || 0)}
+                    max={selectedItemId
+                      ? outstandingItems.find((i) => i.id === selectedItemId)?.balanceDue || 0
+                      : outstandingItems.reduce((s, i) => s + i.balanceDue, 0)
+                    }
+                  />
+                  <div>
+                    <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-2">
+                      Payment Method
+                    </label>
+                    <Combobox
+                      value={payMethod}
+                      onChange={(val) => setPayMethod(val as PaymentMethod)}
+                      options={paymentMethods.map((m) => ({
+                        value: m,
+                        label: m.replace('-', ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+                        icon: m === 'cash' ? <Banknote className="w-4 h-4" /> : <CreditCard className="w-4 h-4" />,
+                      }))}
+                      placeholder="Select payment method..."
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+        {selectedCustomer && outstandingItems.length > 0 && !loadingOutstanding && (
+          <div className="flex flex-wrap gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
+            <Button variant="ghost" onClick={() => { setShowPayModal(false); setOutstandingItems([]); setSelectedItemId(null); }} disabled={payingCredit}>
+              Cancel
+            </Button>
+            <div className="flex-1" />
+            {selectedItemId ? (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const sel = outstandingItems.find((i) => i.id === selectedItemId);
+                  if (sel) setPayAmount(sel.balanceDue);
+                }}
+                disabled={payingCredit}
+              >
+                Pay Full Item
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPayAmount(outstandingItems.reduce((s, i) => s + i.balanceDue, 0));
+                }}
+                disabled={payingCredit}
+              >
+                Pay All
+              </Button>
+            )}
+            <Button variant="gold" onClick={handlePayCredit} disabled={payingCredit || payAmount <= 0}>
+              {payingCredit ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+              Confirm Payment
             </Button>
           </div>
         )}
@@ -798,20 +1216,20 @@ export function Customers() {
             <div>
               <p className="font-medium text-slate-800 dark:text-slate-200">Are you sure?</p>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                This will permanently delete "{selectedCustomer?.name}". This action cannot be undone.
+                This will permanently delete &ldquo;{selectedCustomer?.name}&rdquo;. This action cannot be undone.
               </p>
             </div>
           </div>
         </div>
         <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
-            <Button variant="ghost" onClick={() => setShowDeleteModal(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              <Trash2 className="w-4 h-4" />
-              Delete
-            </Button>
-          </div>
+          <Button variant="ghost" onClick={() => setShowDeleteModal(false)} disabled={deleting}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+            {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+            <Trash2 className="w-4 h-4" /> Delete
+          </Button>
+        </div>
       </Modal>
     </div>
   );

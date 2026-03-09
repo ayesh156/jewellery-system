@@ -61,6 +61,30 @@ router.get('/types', async (_req, res, next) => {
   }
 });
 
+// POST /api/gold/types — Create a gold type config
+router.post('/types', async (req, res, next) => {
+  try {
+    const parsed = z.object({
+      id: z.string().min(1).max(50),
+      karat: z.enum(['24K', '22K', '21K', '18K', '14K', '10K', '9K']),
+      purityPercentage: z.string(),
+      description: z.string().optional(),
+      isActive: z.boolean().default(true),
+      defaultWastagePercentage: z.string(),
+      color: z.string().max(20).optional(),
+    }).parse(req.body);
+
+    const [created] = await db.insert(goldTypeConfigs).values(parsed).returning();
+    res.status(201).json({ status: 'success', data: created });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      res.status(400).json({ status: 'error', message: 'Validation failed', errors: err.errors });
+      return;
+    }
+    next(err);
+  }
+});
+
 // PUT /api/gold/types/:id — Update a gold type config
 router.put('/types/:id', async (req, res, next) => {
   try {
@@ -84,6 +108,20 @@ router.put('/types/:id', async (req, res, next) => {
       res.status(400).json({ status: 'error', message: 'Validation failed', errors: err.errors });
       return;
     }
+    next(err);
+  }
+});
+
+// DELETE /api/gold/types/:id — Delete a gold type config
+router.delete('/types/:id', async (req, res, next) => {
+  try {
+    const [deleted] = await db
+      .delete(goldTypeConfigs)
+      .where(eq(goldTypeConfigs.id, req.params.id))
+      .returning();
+    if (!deleted) throw new AppError(404, 'Gold type config not found');
+    res.json({ status: 'success', data: deleted });
+  } catch (err) {
     next(err);
   }
 });

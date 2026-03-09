@@ -139,11 +139,16 @@ export function DateCombobox({
     const updatePosition = () => {
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return;
+      const calendarWidth = 288; // w-72 = 18rem = 288px
+      let left = rect.left + window.scrollX;
+      // Prevent going off-screen to the right
+      if (left + calendarWidth > window.innerWidth) {
+        left = Math.max(0, window.innerWidth - calendarWidth - 8);
+      }
       setDropdownStyle({
         position: 'absolute',
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width,
+        top: rect.bottom + window.scrollY + 4,
+        left,
         zIndex: 9999,
       });
     };

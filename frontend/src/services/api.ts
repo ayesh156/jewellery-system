@@ -131,6 +131,9 @@ export const productsApi = {
       method: 'PATCH',
       body: JSON.stringify({ quantity }),
     }),
+
+  getCounts: () =>
+    request<{ byCategory: Record<string, number>; byKarat: Record<string, number> }>('/products/counts'),
 };
 
 // ==========================================
@@ -150,10 +153,21 @@ export const goldApi = {
   getTypes: () =>
     request<any[]>('/gold/types'),
 
+  createType: (data: any) =>
+    request<any>('/gold/types', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
   updateType: (id: string, data: any) =>
     request<any>(`/gold/types/${encodeURIComponent(id)}`, {
       method: 'PUT',
       body: JSON.stringify(data),
+    }),
+
+  deleteType: (id: string) =>
+    request<any>(`/gold/types/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
     }),
 };
 
@@ -169,6 +183,186 @@ export const companyApi = {
     request<any>('/company', {
       method: 'PUT',
       body: JSON.stringify(data),
+    }),
+};
+
+// ==========================================
+// Customers API
+// ==========================================
+
+export interface CustomersQuery {
+  search?: string;
+  customerType?: string;
+  isActive?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+export const customersApi = {
+  getAll: (query?: CustomersQuery) => {
+    const params = new URLSearchParams();
+    if (query) {
+      Object.entries(query).forEach(([key, val]) => {
+        if (val !== undefined && val !== '') params.set(key, String(val));
+      });
+    }
+    const qs = params.toString();
+    return request<any[]>(`/customers${qs ? `?${qs}` : ''}`);
+  },
+
+  getById: (id: string) =>
+    request<any>(`/customers/${encodeURIComponent(id)}`),
+
+  create: (data: any) =>
+    request<any>('/customers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: string, data: any) =>
+    request<any>(`/customers/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    request<any>(`/customers/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
+};
+
+// ==========================================
+// Counters API (Auto-increment sequences per shop)
+// ==========================================
+
+export const countersApi = {
+  getAll: (shopCode?: string) => {
+    const qs = shopCode ? `?shopCode=${encodeURIComponent(shopCode)}` : '';
+    return request<any[]>(`/counters${qs}`);
+  },
+
+  getNext: (entityType: string, shopCode: string) =>
+    request<{ entityType: string; shopCode: string; prefix: string; number: number; formatted: string }>(
+      '/counters/next',
+      { method: 'POST', body: JSON.stringify({ entityType, shopCode }) },
+    ),
+
+  initShop: (shopCode: string) =>
+    request<any[]>('/counters/init-shop', {
+      method: 'POST',
+      body: JSON.stringify({ shopCode }),
+    }),
+
+  updatePrefix: (entityType: string, data: { shopCode: string; prefix?: string; paddingLength?: number; lastNumber?: number }) =>
+    request<any>(`/counters/${encodeURIComponent(entityType)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+};
+
+// ==========================================
+// Invoices API
+// ==========================================
+
+export interface InvoicesQuery {
+  search?: string;
+  status?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+export const invoicesApi = {
+  getAll: (query?: InvoicesQuery) => {
+    const params = new URLSearchParams();
+    if (query) {
+      Object.entries(query).forEach(([key, val]) => {
+        if (val !== undefined && val !== '') params.set(key, String(val));
+      });
+    }
+    const qs = params.toString();
+    return request<any[]>(`/invoices${qs ? `?${qs}` : ''}`);
+  },
+
+  getById: (id: string) =>
+    request<any>(`/invoices/${encodeURIComponent(id)}`),
+
+  create: (data: any) =>
+    request<any>('/invoices', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: string, data: any) =>
+    request<any>(`/invoices/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  recordPayment: (id: string, data: any) =>
+    request<any>(`/invoices/${encodeURIComponent(id)}/payments`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    request<any>(`/invoices/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
+};
+
+// ==========================================
+// Clearance API
+// ==========================================
+
+export interface ClearanceQuery {
+  search?: string;
+  status?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+export const clearanceApi = {
+  getAll: (query?: ClearanceQuery) => {
+    const params = new URLSearchParams();
+    if (query) {
+      Object.entries(query).forEach(([key, val]) => {
+        if (val !== undefined && val !== '') params.set(key, String(val));
+      });
+    }
+    const qs = params.toString();
+    return request<any[]>(`/clearance${qs ? `?${qs}` : ''}`);
+  },
+
+  getById: (id: string) =>
+    request<any>(`/clearance/${encodeURIComponent(id)}`),
+
+  create: (data: any) =>
+    request<any>('/clearance', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: string, data: any) =>
+    request<any>(`/clearance/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  recordPayment: (id: string, data: any) =>
+    request<any>(`/clearance/${encodeURIComponent(id)}/payments`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    request<any>(`/clearance/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
     }),
 };
 

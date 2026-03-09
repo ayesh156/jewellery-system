@@ -5,8 +5,6 @@ import {
   Package,
   FileText,
   Users,
-  Truck,
-  ClipboardList,
   BarChart3,
   Settings,
   Menu,
@@ -14,13 +12,13 @@ import {
   Gem,
   ChevronDown,
   LogOut,
-  Wrench,
   Grid3X3,
   Receipt,
-  Coins,
+  Scale,
   Sun,
   Moon,
   Monitor,
+  Tag,
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useTheme } from '../contexts/ThemeContext';
@@ -42,31 +40,21 @@ const navigation: NavItem[] = [
     children: [
       { name: 'All Invoices', href: '/invoices' },
       { name: 'New Invoice', href: '/invoices/create' },
-      { name: 'New Sales Invoice', href: '/invoices/create-sales' },
+
     ]
   },
   { 
-    name: 'Pawning', 
-    href: '/pawning', 
-    icon: Coins,
+    name: 'Clearance', 
+    href: '/clearance', 
+    icon: Tag,
     children: [
-      { name: 'All Tickets', href: '/pawning' },
-      { name: 'New Pawn Ticket', href: '/pawning/create' },
+      { name: 'All Clearances', href: '/clearance' },
+      { name: 'New Clearance', href: '/clearance/create' },
     ]
   },
-  { 
-    name: 'Repairs', 
-    href: '/repairs', 
-    icon: Wrench,
-    children: [
-      { name: 'All Jobs', href: '/repairs' },
-      { name: 'New Repair Job', href: '/repairs/create' },
-    ]
-  },
-  { name: 'GRN', href: '/grn', icon: ClipboardList },
   { name: 'Customers', href: '/customers', icon: Users },
-  { name: 'Suppliers', href: '/suppliers', icon: Truck },
   { name: 'Categories', href: '/categories', icon: Grid3X3 },
+  { name: 'Gold Types', href: '/gold-types', icon: Scale },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];

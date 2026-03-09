@@ -38,12 +38,12 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
              A5 Size: 148mm x 210mm
              ========================================= */
           
-          @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+          /* System fonts - no external loading */
           
           @media print {
             @page {
-              size: A5 portrait;
-              margin: 6mm 8mm;
+              size: A4 portrait;
+              margin: 25.4mm;
             }
             
             * {
@@ -59,7 +59,7 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
             
             .print-grn-a5 {
               width: 100%;
-              max-width: 132mm;
+              max-width: 159mm;
               padding: 0;
               margin: 0 auto;
               background: white !important;
@@ -76,15 +76,15 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
           }
           
           .print-grn-a5 {
-            width: 148mm;
-            min-height: 210mm;
-            padding: 8mm 10mm;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 25.4mm;
             margin: 0 auto;
             background: white;
             color: #1a1a1a;
-            font-family: 'Inter', -apple-system, sans-serif;
-            font-size: 8pt;
-            line-height: 1.35;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.5;
             box-sizing: border-box;
           }
 
@@ -95,7 +95,7 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
             align-items: flex-start;
             margin-bottom: 12px;
             padding-bottom: 10px;
-            border-bottom: 2px solid #1e40af;
+            border-bottom: 2px solid #333;
             position: relative;
           }
 
@@ -106,7 +106,7 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
             left: 0;
             right: 0;
             height: 1px;
-            background: linear-gradient(90deg, transparent, #1e40af, transparent);
+            background: linear-gradient(90deg, transparent, #333, transparent);
           }
 
           .company-info-grn {
@@ -114,28 +114,28 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
           }
 
           .company-info-grn h1 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 18pt;
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 24pt;
             font-weight: 700;
-            color: #1e3a5f;
-            margin: 0 0 2px 0;
+            color: #1a1a1a;
+            margin: 0 0 3px 0;
             letter-spacing: 0.5px;
             text-transform: uppercase;
           }
 
           .company-info-grn .tagline {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 7pt;
-            color: #3b82f6;
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 10pt;
+            color: #666;
             font-style: italic;
             letter-spacing: 1px;
             margin-bottom: 6px;
           }
 
           .company-info-grn .details {
-            font-size: 6.5pt;
+            font-size: 9pt;
             color: #666;
-            line-height: 1.4;
+            line-height: 1.5;
           }
 
           .grn-title-a5 {
@@ -143,75 +143,75 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
           }
 
           .grn-title-a5 h2 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 16pt;
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 22pt;
             font-weight: 700;
-            color: #1e3a5f;
+            color: #1a1a1a;
             margin: 0;
             letter-spacing: 1px;
           }
 
           .grn-title-a5 .grn-subtitle {
-            font-size: 7pt;
+            font-size: 10pt;
             color: #64748b;
             margin-top: 2px;
           }
 
           .grn-title-a5 .grn-number {
-            font-size: 9pt;
+            font-size: 12pt;
             font-weight: 600;
             color: #333;
-            margin-top: 4px;
-            background: linear-gradient(135deg, #eff6ff, #dbeafe);
-            padding: 3px 8px;
+            margin-top: 6px;
+            background: white;
+            padding: 4px 12px;
             border-radius: 3px;
-            border: 1px solid #93c5fd;
+            border: 1.5px solid #999;
           }
 
           /* ========== Meta Section ========== */
           .grn-meta-a5 {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 12px;
-            gap: 12px;
+            margin-bottom: 16px;
+            gap: 16px;
           }
 
           .meta-box-grn {
             flex: 1;
-            padding: 8px 10px;
-            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-            border-left: 3px solid #1e40af;
-            border-radius: 0 4px 4px 0;
+            padding: 10px 14px;
+            background: white;
+            border-left: 2.5px solid #333;
+            border-radius: 0;
           }
 
           .meta-box-grn.right {
             border-left: none;
-            border-right: 3px solid #1e40af;
-            border-radius: 4px 0 0 4px;
+            border-right: 2.5px solid #333;
+            border-radius: 0;
             text-align: right;
           }
 
           .meta-box-grn label {
             display: block;
-            font-size: 6pt;
+            font-size: 9pt;
             font-weight: 700;
-            color: #1e40af;
+            color: #333;
             text-transform: uppercase;
             letter-spacing: 0.8px;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
           }
 
           .meta-box-grn .name {
-            font-size: 9pt;
+            font-size: 13pt;
             font-weight: 600;
             color: #1a1a1a;
-            margin-bottom: 2px;
+            margin-bottom: 3px;
           }
 
           .meta-box-grn .info {
-            font-size: 6.5pt;
+            font-size: 10pt;
             color: #555;
-            line-height: 1.4;
+            line-height: 1.5;
           }
 
           /* ========== Reference Box ========== */
@@ -224,22 +224,22 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
 
           .ref-item {
             flex: 1;
-            min-width: 80px;
-            padding: 5px 8px;
-            background: #f1f5f9;
-            border: 1px solid #e2e8f0;
+            min-width: 100px;
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #999;
             border-radius: 4px;
-            font-size: 6.5pt;
+            font-size: 10pt;
           }
 
           .ref-item label {
             display: block;
-            font-size: 5.5pt;
+            font-size: 8.5pt;
             font-weight: 700;
             color: #64748b;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 2px;
+            margin-bottom: 3px;
           }
 
           .ref-item .value {
@@ -251,20 +251,21 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
           .items-table-grn {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 10px;
-            font-size: 7pt;
+            margin-bottom: 14px;
+            font-size: 11pt;
           }
 
           .items-table-grn thead th {
-            background: linear-gradient(135deg, #1e3a5f, #1e40af);
-            color: white;
-            font-size: 6pt;
-            font-weight: 600;
+            background: white;
+            color: #1a1a1a;
+            font-size: 9pt;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.3px;
-            padding: 6px 5px;
+            padding: 8px 8px;
             text-align: left;
-            border: none;
+            border-bottom: 2px solid #333;
+            border-top: 1px solid #333;
           }
 
           .items-table-grn thead th:first-child {
@@ -303,19 +304,19 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
           }
 
           .items-table-grn tbody tr {
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid #ddd;
           }
 
           .items-table-grn tbody tr:nth-child(even) {
-            background: #f8fafc;
+            background: white;
           }
 
           .items-table-grn tbody tr:hover {
-            background: #f1f5f9;
+            background: white;
           }
 
           .items-table-grn tbody td {
-            padding: 5px;
+            padding: 8px;
             color: #333;
             vertical-align: middle;
           }
@@ -329,13 +330,13 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
           .items-table-grn tbody td:nth-child(2) .item-name {
             font-weight: 600;
             color: #1a1a1a;
-            font-size: 7pt;
+            font-size: 11pt;
           }
 
           .items-table-grn tbody td:nth-child(2) .item-details {
-            font-size: 5.5pt;
+            font-size: 9pt;
             color: #777;
-            margin-top: 1px;
+            margin-top: 2px;
           }
 
           .items-table-grn tbody td:nth-child(3),
@@ -348,7 +349,7 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
           .items-table-grn tbody td:nth-child(7) {
             text-align: right;
             font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 6.5pt;
+            font-size: 10pt;
           }
 
           .items-table-grn tbody td:nth-child(7) {
@@ -359,17 +360,17 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
           /* Quality Badge */
           .quality-badge {
             display: inline-block;
-            padding: 1px 5px;
+            padding: 2px 6px;
             border-radius: 8px;
-            font-size: 5pt;
+            font-size: 8pt;
             font-weight: 600;
             text-transform: uppercase;
           }
 
-          .quality-new { background: #dcfce7; color: #166534; }
-          .quality-good { background: #dbeafe; color: #1d4ed8; }
-          .quality-fair { background: #fef3c7; color: #92400e; }
-          .quality-damaged { background: #fee2e2; color: #dc2626; }
+          .quality-new { background: white; color: #333; border: 1px solid #999; }
+          .quality-good { background: white; color: #444; border: 1px solid #999; }
+          .quality-fair { background: white; color: #555; border: 1px solid #999; }
+          .quality-damaged { background: white; color: #555; border: 1px solid #999; }
 
           /* ========== Summary Section ========== */
           .summary-section-a5 {
@@ -381,37 +382,37 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
           .weight-summary-a5 {
             flex: 1;
             padding: 8px 10px;
-            background: linear-gradient(135deg, #fef3c7, #fde68a);
-            border: 1px solid #f59e0b;
+            background: white;
+            border: 1px solid #999;
             border-radius: 4px;
           }
 
           .weight-summary-a5 label {
             display: block;
-            font-size: 5.5pt;
+            font-size: 9pt;
             font-weight: 700;
-            color: #92400e;
+            color: #333;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
           }
 
           .weight-summary-a5 .weight-grid {
             display: flex;
-            gap: 15px;
+            gap: 20px;
           }
 
           .weight-summary-a5 .weight-item {
-            font-size: 7pt;
+            font-size: 11pt;
           }
 
           .weight-summary-a5 .weight-item span {
-            color: #78350f;
+            color: #555;
           }
 
           .weight-summary-a5 .weight-item strong {
-            color: #92400e;
-            font-size: 8pt;
+            color: #333;
+            font-size: 12pt;
           }
 
           /* ========== Totals Section ========== */
@@ -428,8 +429,8 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
           .totals-row-grn {
             display: flex;
             justify-content: space-between;
-            padding: 4px 8px;
-            font-size: 7pt;
+            padding: 5px 10px;
+            font-size: 11pt;
           }
 
           .totals-row-grn .label {
@@ -443,66 +444,67 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
           }
 
           .totals-row-grn.subtotal {
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid #ddd;
           }
 
           .totals-row-grn.discount {
-            color: #16a34a;
+            color: #333;
           }
 
           .totals-row-grn.discount .value {
-            color: #16a34a;
+            color: #333;
           }
 
           .totals-row-grn.total {
-            background: linear-gradient(135deg, #1e3a5f, #1e40af);
-            color: white;
-            font-size: 9pt;
+            background: white;
+            color: #1a1a1a;
+            font-size: 13pt;
             font-weight: 700;
-            margin-top: 4px;
-            padding: 6px 8px;
-            border-radius: 3px;
+            margin-top: 6px;
+            padding: 8px 10px;
+            border-top: 2px solid #333;
+            border-bottom: 2px solid #333;
           }
 
           .totals-row-grn.total .value {
-            color: white;
-            font-size: 10pt;
+            color: #1a1a1a;
+            font-size: 14pt;
           }
 
           .totals-row-grn.total .label {
-            color: white;
+            color: #1a1a1a;
           }
 
           .totals-row-grn.balance {
-            background: #fee2e2;
-            border: 1px solid #fca5a5;
+            background: white;
+            border: 1px solid #333;
             margin-top: 4px;
             border-radius: 3px;
           }
 
           .totals-row-grn.balance .label,
           .totals-row-grn.balance .value {
-            color: #dc2626;
+            color: #333;
             font-weight: 600;
           }
 
           /* ========== Status Badge ========== */
           .status-badge-grn {
             display: inline-block;
-            padding: 2px 8px;
+            padding: 3px 10px;
             border-radius: 10px;
-            font-size: 6pt;
+            font-size: 9pt;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.3px;
           }
 
-          .status-received { background: #dcfce7; color: #166534; }
-          .status-pending { background: #fef3c7; color: #92400e; }
-          .status-partial { background: #dbeafe; color: #1d4ed8; }
-          .status-cancelled { background: #fee2e2; color: #dc2626; }
-          .status-draft { background: #f3f4f6; color: #6b7280; }
-          .status-returned { background: #fae8ff; color: #a855f7; }
+          .status-received { background: white; color: #333; border: 1px solid #999; }
+          .status-pending { background: white; color: #555; border: 1px solid #999; }
+          .status-partial { background: white; color: #444; border: 1px solid #999; }
+          .status-cancelled { background: white; color: #555; border: 1px solid #999; }
+          .status-draft { background: white; color: #6b7280; border: 1px solid #999; }
+          .status-returned { background: white; color: #444; border: 1px solid #999; }
 
           /* ========== Quality Check Section ========== */
           .quality-check-a5 {
@@ -513,65 +515,65 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
 
           .qc-box {
             flex: 1;
-            padding: 6px 8px;
-            background: #f0fdf4;
-            border: 1px solid #86efac;
+            padding: 10px 14px;
+            background: white;
+            border: 1px solid #999;
             border-radius: 4px;
-            font-size: 6.5pt;
+            font-size: 10pt;
           }
 
           .qc-box.pending {
-            background: #fef3c7;
-            border-color: #fcd34d;
+            background: white;
+            border-color: #666;
           }
 
           .qc-box label {
             display: block;
-            font-size: 5.5pt;
+            font-size: 9pt;
             font-weight: 700;
-            color: #166534;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 2px;
-          }
-
-          .qc-box.pending label {
-            color: #92400e;
-          }
-
-          .qc-box .value {
-            font-weight: 600;
-            color: #166534;
-          }
-
-          .qc-box.pending .value {
-            color: #92400e;
-          }
-
-          /* ========== Notes Section ========== */
-          .notes-section-grn {
-            background: #eff6ff;
-            border: 1px solid #93c5fd;
-            border-radius: 4px;
-            padding: 6px 8px;
-            margin-bottom: 8px;
-          }
-
-          .notes-section-grn label {
-            display: block;
-            font-size: 5.5pt;
-            font-weight: 700;
-            color: #1d4ed8;
+            color: #333;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 3px;
           }
 
+          .qc-box.pending label {
+            color: #555;
+          }
+
+          .qc-box .value {
+            font-weight: 600;
+            color: #1a1a1a;
+          }
+
+          .qc-box.pending .value {
+            color: #555;
+          }
+
+          /* ========== Notes Section ========== */
+          .notes-section-grn {
+            background: white;
+            border: 1px solid #999;
+            border-radius: 4px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+          }
+
+          .notes-section-grn label {
+            display: block;
+            font-size: 9pt;
+            font-weight: 700;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+          }
+
           .notes-section-grn p {
-            font-size: 6.5pt;
-            color: #1e40af;
+            font-size: 10pt;
+            color: #444;
             margin: 0;
-            line-height: 1.4;
+            line-height: 1.5;
           }
 
           /* ========== Signature Section ========== */
@@ -581,7 +583,7 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
             gap: 20px;
             margin-top: 15px;
             padding-top: 10px;
-            border-top: 1px dashed #cbd5e1;
+            border-top: 1px dashed #ccc;
           }
 
           .signature-box {
@@ -598,7 +600,7 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
           }
 
           .signature-box .label {
-            font-size: 6pt;
+            font-size: 9pt;
             color: #64748b;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -606,7 +608,7 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
 
           /* ========== Footer ========== */
           .footer-grn {
-            border-top: 2px solid #1e40af;
+            border-top: 2px solid #333;
             padding-top: 8px;
             text-align: center;
             margin-top: 10px;
@@ -620,33 +622,33 @@ export const PrintableGRN = forwardRef<HTMLDivElement, PrintableGRNProps>(
             left: 0;
             right: 0;
             height: 1px;
-            background: linear-gradient(90deg, transparent, #1e40af, transparent);
+            background: linear-gradient(90deg, transparent, #333, transparent);
           }
 
           .footer-grn .doc-info {
-            font-size: 6pt;
+            font-size: 9pt;
             color: #64748b;
             margin-bottom: 4px;
           }
 
           .footer-grn .contact {
-            font-size: 6pt;
+            font-size: 10pt;
             color: #666;
           }
 
           .footer-grn .contact a {
-            color: #1e40af;
+            color: #333;
             text-decoration: none;
             font-weight: 500;
           }
 
           .footer-grn .tagline-footer {
-            margin-top: 6px;
-            padding-top: 6px;
-            border-top: 1px solid #e2e8f0;
-            font-size: 5.5pt;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #ddd;
+            font-size: 9pt;
             color: #999;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.5px;
           }
         `}</style>
 

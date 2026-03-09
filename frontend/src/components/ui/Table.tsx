@@ -7,7 +7,7 @@ interface TableProps {
 
 export function Table({ children, className }: TableProps) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-visible">
       <table className={cn('w-full hidden md:table', className)}>{children}</table>
     </div>
   );
@@ -36,7 +36,7 @@ export function TableRow({ children, className }: TableProps) {
 }
 
 interface TableHeadProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
 }
 

@@ -13,6 +13,7 @@ import {
   Loader2,
   RefreshCw,
   X,
+  MoreVertical,
 } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -22,7 +23,7 @@ import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { Pagination } from '../components/ui/Pagination';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, MobileCard, MobileCardHeader, MobileCardContent, MobileCardRow, MobileCardActions, MobileCardsContainer } from '../components/ui/Table';
-import { categoriesApi, productsApi } from '../services/api';
+import { categoriesApi, productsApi, countersApi } from '../services/api';
 import { formatCurrency, formatWeight } from '../utils/formatters';
 import toast from 'react-hot-toast';
 import type { JewelleryItem, JewelleryCategory, MetalType, GoldKarat } from '../types';
@@ -81,6 +82,7 @@ export function Products() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<JewelleryItem | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const [moreMenuId, setMoreMenuId] = useState<string | null>(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -188,9 +190,13 @@ export function Products() {
         );
         toast.success('Product updated successfully');
       } else {
+        // Get next product number from server (atomic, multi-user safe)
+        const shopCode = localStorage.getItem('shopCode') || 'A';
+        const counterRes = await countersApi.getNext('product', shopCode);
         const createData = {
           ...toApiData(formData),
-          id: `prod-${Date.now()}`,
+          id: counterRes.data.formatted.toLowerCase(),
+          sku: formData.sku || counterRes.data.formatted,
           metalRate: String(formData.metalRate || 18500),
         };
         const res = await productsApi.create(createData);
@@ -275,11 +281,111 @@ export function Products() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-10 h-10 text-amber-500 animate-spin mx-auto" />
-          <p className="text-slate-600 dark:text-slate-400">Loading products...</p>
+      <div className="space-y-6">
+        {/* Header skeleton */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <div className="h-8 w-36 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+            <div className="h-4 w-52 bg-slate-200 dark:bg-slate-700 rounded mt-2 animate-pulse" />
+          </div>
+          <div className="flex gap-2">
+            <div className="h-10 w-10 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+            <div className="h-10 w-32 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+          </div>
         </div>
+
+        {/* Stats skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse">
+                  <div className="w-6 h-6" />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                  <div className="h-7 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Filters skeleton */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="flex-1 h-10 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+              <div className="lg:w-64 h-10 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+              <div className="lg:w-56 h-10 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Table skeleton */}
+        <Card>
+          <CardContent className="p-0 md:p-0">
+            <div className="hidden md:block">
+              <div className="grid grid-cols-8 gap-4 px-6 py-3 border-b border-slate-200 dark:border-slate-700">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                ))}
+              </div>
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="grid grid-cols-8 gap-4 px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-3 col-span-1">
+                    <div className="w-10 h-10 rounded-lg bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    <div className="space-y-1.5 flex-1">
+                      <div className="h-4 w-20 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                      <div className="h-3 w-14 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse self-center" />
+                  <div className="h-6 w-16 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse self-center" />
+                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse self-center" />
+                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse self-center" />
+                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse self-center" />
+                  <div className="h-6 w-12 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse self-center mx-auto" />
+                  <div className="flex items-center justify-center gap-1">
+                    {[...Array(3)].map((_, j) => (
+                      <div key={j} className="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Mobile skeleton */}
+            <div className="md:hidden p-4 space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                      <div className="space-y-1.5">
+                        <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                        <div className="h-3 w-16 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                      </div>
+                    </div>
+                    <div className="h-6 w-16 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
+                  </div>
+                  <div className="space-y-2 pt-3 border-t border-slate-200 dark:border-slate-700/50">
+                    {[...Array(4)].map((_, j) => (
+                      <div key={j} className="flex justify-between">
+                        <div className="h-3 w-16 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                        <div className="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 pt-3 border-t border-slate-200 dark:border-slate-700/50">
+                    <div className="flex-1 h-9 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+                    <div className="flex-1 h-9 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+                    <div className="w-9 h-9 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -410,7 +516,7 @@ export function Products() {
                 <TableHead className="text-right">Weight</TableHead>
                 <TableHead className="text-right">Price</TableHead>
                 <TableHead className="text-center">Stock</TableHead>
-                <TableHead className="text-center">Actions</TableHead>
+                <TableHead className="text-center w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -422,7 +528,12 @@ export function Products() {
                         <Gem className="w-5 h-5 text-amber-400" />
                       </div>
                       <div>
-                        <p className="font-medium text-slate-800 dark:text-slate-200">{product.name}</p>
+                        <button
+                          onClick={() => openEditModal(product)}
+                          className="font-medium text-slate-800 dark:text-slate-200 hover:text-amber-500 dark:hover:text-amber-400 transition-colors text-left"
+                        >
+                          {product.name}
+                        </button>
                         <p className="text-xs text-slate-600 dark:text-slate-400">{product.barcode}</p>
                       </div>
                     </div>
@@ -457,29 +568,39 @@ export function Products() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="relative">
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => openViewModal(product)}
+                        onClick={() => setMoreMenuId(moreMenuId === product.id ? null : product.id)}
                       >
-                        <Eye className="w-4 h-4" />
+                        <MoreVertical className="w-4 h-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openEditModal(product)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openDeleteModal(product)}
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {moreMenuId === product.id && (
+                        <>
+                          <div className="fixed inset-0 z-[60]" onClick={() => setMoreMenuId(null)} />
+                          <div className="absolute right-0 bottom-full mb-1 z-[70] w-44 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl py-1.5">
+                            <button
+                              onClick={() => { openViewModal(product); setMoreMenuId(null); }}
+                              className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                            >
+                              <Eye className="w-4 h-4" /> View
+                            </button>
+                            <button
+                              onClick={() => { openEditModal(product); setMoreMenuId(null); }}
+                              className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                            >
+                              <Edit className="w-4 h-4" /> Edit
+                            </button>
+                            <button
+                              onClick={() => { openDeleteModal(product); setMoreMenuId(null); }}
+                              className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" /> Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -497,7 +618,12 @@ export function Products() {
                       <Gem className="w-6 h-6 text-amber-400" />
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-800 dark:text-slate-200">{product.name}</p>
+                      <button
+                        onClick={() => openEditModal(product)}
+                        className="font-semibold text-slate-800 dark:text-slate-200 hover:text-amber-500 dark:hover:text-amber-400 transition-colors text-left"
+                      >
+                        {product.name}
+                      </button>
                       <p className="text-xs text-slate-500 dark:text-slate-400">{product.sku}</p>
                     </div>
                   </div>
@@ -533,12 +659,10 @@ export function Products() {
                 </MobileCardContent>
                 <MobileCardActions>
                   <Button variant="outline" size="sm" className="flex-1" onClick={() => openViewModal(product)}>
-                    <Eye className="w-4 h-4" />
-                    View
+                    <Eye className="w-4 h-4" /> View
                   </Button>
                   <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditModal(product)}>
-                    <Edit className="w-4 h-4" />
-                    Edit
+                    <Edit className="w-4 h-4" /> Edit
                   </Button>
                   <Button variant="ghost" size="icon" onClick={() => openDeleteModal(product)} className="text-red-400 hover:text-red-300">
                     <Trash2 className="w-4 h-4" />
