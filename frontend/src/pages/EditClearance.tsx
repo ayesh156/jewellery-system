@@ -499,9 +499,7 @@ export function EditClearance() {
                               </p>
                               <p className="text-xs text-slate-600 dark:text-slate-400">{customer.phone}</p>
                             </div>
-                            <Badge variant="default" className="shrink-0">
-                              {customer.customerType}
-                            </Badge>
+
                           </button>
                         ))
                       ) : (

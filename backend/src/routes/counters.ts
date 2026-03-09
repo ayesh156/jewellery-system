@@ -30,7 +30,7 @@ router.get('/', async (req, res, next) => {
     const data = allCounters.map((c) => ({
       ...c,
       nextNumber: c.lastNumber + 1,
-      nextFormatted: `${c.shopCode}${(c.lastNumber + 1).toString().padStart(c.paddingLength, '0')}`,
+      nextFormatted: `${c.shopCode}-${c.prefix}-${(c.lastNumber + 1).toString().padStart(c.paddingLength, '0')}`,
     }));
 
     res.json({ status: 'success', data });
@@ -65,7 +65,7 @@ router.post('/next', async (req, res, next) => {
 
     if (updated) {
       const paddedNumber = updated.lastNumber.toString().padStart(updated.paddingLength, '0');
-      const formatted = `${shopCode}${paddedNumber}`;
+      const formatted = `${shopCode}-${updated.prefix}-${paddedNumber}`;
 
       return res.json({
         status: 'success',
@@ -95,7 +95,7 @@ router.post('/next', async (req, res, next) => {
       .returning();
 
     const paddedNumber = created.lastNumber.toString().padStart(created.paddingLength, '0');
-    const formatted = `${shopCode}${paddedNumber}`;
+    const formatted = `${shopCode}-${prefix}-${paddedNumber}`;
 
     res.json({
       status: 'success',
@@ -157,7 +157,7 @@ router.post('/init-shop', async (req, res, next) => {
     const data = allCounters.map((c) => ({
       ...c,
       nextNumber: c.lastNumber + 1,
-      nextFormatted: `${c.shopCode}${(c.lastNumber + 1).toString().padStart(c.paddingLength, '0')}`,
+      nextFormatted: `${c.shopCode}-${c.prefix}-${(c.lastNumber + 1).toString().padStart(c.paddingLength, '0')}`,
     }));
 
     res.json({ status: 'success', data, created: toCreate.length });
@@ -212,7 +212,7 @@ router.put('/:entityType', async (req, res, next) => {
       data: {
         ...updated,
         nextNumber: updated.lastNumber + 1,
-        nextFormatted: `${updated.shopCode}${(updated.lastNumber + 1).toString().padStart(updated.paddingLength, '0')}`,
+        nextFormatted: `${updated.shopCode}-${updated.prefix}-${(updated.lastNumber + 1).toString().padStart(updated.paddingLength, '0')}`,
       },
     });
   } catch (err) {
