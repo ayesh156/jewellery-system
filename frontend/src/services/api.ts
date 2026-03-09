@@ -244,7 +244,7 @@ export const countersApi = {
   },
 
   getNext: (entityType: string, shopCode: string) =>
-    request<{ entityType: string; shopCode: string; prefix: string; number: number; formatted: string }>(
+    request<{ entityType: string; shopCode: string; prefix: string; number: number; formatted: string; formattedId: string }>(
       '/counters/next',
       { method: 'POST', body: JSON.stringify({ entityType, shopCode }) },
     ),
