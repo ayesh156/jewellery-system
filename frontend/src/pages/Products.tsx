@@ -195,7 +195,7 @@ export function Products() {
         const counterRes = await countersApi.getNext('product', shopCode);
         const createData = {
           ...toApiData(formData),
-          id: counterRes.data.formatted.toLowerCase(),
+          id: counterRes.data.formattedId.toLowerCase(),
           sku: formData.sku || counterRes.data.formatted,
           metalRate: String(formData.metalRate || 18500),
         };

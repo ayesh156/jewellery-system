@@ -279,7 +279,7 @@ export function Categories() {
       } else {
         const shopCode = localStorage.getItem('shopCode') || 'A';
         const counterRes = await countersApi.getNext('category', shopCode);
-        const newId = counterRes.data.formatted.toLowerCase();
+        const newId = counterRes.data.formattedId.toLowerCase();
         const res = await categoriesApi.create({
           id: newId,
           name: form.name,

@@ -217,7 +217,7 @@ export function CreateInvoice() {
       const shopCode = localStorage.getItem('shopCode') || 'A';
       const counterRes = await countersApi.getNext('invoice', shopCode);
       const invoiceNumber = counterRes.data.formatted;
-      const invoiceId = counterRes.data.formatted.toLowerCase();
+      const invoiceId = counterRes.data.formattedId.toLowerCase();
 
       const invoicePayload = {
         id: invoiceId,

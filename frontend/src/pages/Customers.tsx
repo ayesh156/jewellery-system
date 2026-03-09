@@ -357,7 +357,7 @@ export function Customers() {
         const shopCode = localStorage.getItem('shopCode') || 'A';
         const counterRes = await countersApi.getNext('customer', shopCode);
         const res = await customersApi.create({
-          id: counterRes.data.formatted.toLowerCase(),
+          id: counterRes.data.formattedId.toLowerCase(),
           name: formData.name,
           businessName: formData.businessName || null,
           phone: formData.phone,

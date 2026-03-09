@@ -216,7 +216,7 @@ export function CreateClearance() {
       const shopCode = localStorage.getItem('shopCode') || 'A';
       const counterRes = await countersApi.getNext('clearance', shopCode);
       const clearanceNumber = counterRes.data.formatted;
-      const clearanceId = counterRes.data.formatted.toLowerCase();
+      const clearanceId = counterRes.data.formattedId.toLowerCase();
 
       const clearancePayload = {
         id: clearanceId,
