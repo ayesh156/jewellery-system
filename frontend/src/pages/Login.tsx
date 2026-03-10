@@ -192,16 +192,9 @@ export function Login() {
             </button>
           </form>
 
-          {/* Default credentials hint */}
-          <div className="mt-8 p-4 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
-            <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
-              Default: <span className="font-mono text-amber-600 dark:text-amber-400">onelka1</span> / <span className="font-mono text-amber-600 dark:text-amber-400">onelka123</span>
-            </p>
-          </div>
-
           {/* Footer */}
           <p className="mt-8 text-center text-xs text-slate-400 dark:text-slate-600">
-            Secured with JWT Authentication &middot; Onelka Jewellery System
+            Onelka Jewellery System
           </p>
         </div>
       </div>
