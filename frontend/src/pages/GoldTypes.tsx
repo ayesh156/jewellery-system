@@ -29,7 +29,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
-import { Modal } from '../components/ui/Modal';
+import { Modal, ModalContent, ModalFooter } from '../components/ui/Modal';
 import { Pagination } from '../components/ui/Pagination';
 import { DateCombobox } from '../components/ui/DateCombobox';
 import { Combobox } from '../components/ui/Combobox';
@@ -603,7 +603,7 @@ export function GoldTypes() {
         onClose={() => setShowModal(false)}
         title={editingGoldType ? 'Edit Gold Type' : 'Add New Gold Type'}
       >
-        <div className="px-5 sm:px-6 py-5 space-y-4">
+        <ModalContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
               label="Karat *"
@@ -655,14 +655,14 @@ export function GoldTypes() {
             />
             <label className="text-sm text-slate-300">Gold type is active</label>
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
+        </ModalContent>
+        <ModalFooter>
             <Button variant="outline" onClick={() => setShowModal(false)} disabled={saving}>Cancel</Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               {editingGoldType ? 'Update' : 'Create'} Gold Type
             </Button>
-          </div>
-        </div>
+        </ModalFooter>
       </Modal>
 
       {/* Delete Confirmation Modal */}
@@ -672,7 +672,7 @@ export function GoldTypes() {
         title="Delete Gold Type"
         size="sm"
       >
-        <div className="px-5 sm:px-6 py-5">
+        <ModalContent>
           <div className="flex flex-col items-center text-center mb-6">
             <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
               <AlertTriangle className="w-7 h-7 text-red-400" />
@@ -683,7 +683,8 @@ export function GoldTypes() {
               This action cannot be undone.
             </p>
           </div>
-          <div className="flex gap-3">
+        </ModalContent>
+        <ModalFooter>
             <Button
               variant="outline"
               className="flex-1"
@@ -700,8 +701,7 @@ export function GoldTypes() {
               {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
               Delete
             </Button>
-          </div>
-        </div>
+        </ModalFooter>
       </Modal>
     </div>
   );

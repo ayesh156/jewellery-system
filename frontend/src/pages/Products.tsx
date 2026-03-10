@@ -22,7 +22,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Combobox, type ComboboxOption } from '../components/ui/Combobox';
 import { Badge } from '../components/ui/Badge';
-import { Modal } from '../components/ui/Modal';
+import { Modal, ModalContent, ModalFooter } from '../components/ui/Modal';
 import { Pagination } from '../components/ui/Pagination';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, MobileCard, MobileCardHeader, MobileCardContent, MobileCardRow, MobileCardActions, MobileCardsContainer } from '../components/ui/Table';
 import { categoriesApi, productsApi, countersApi } from '../services/api';
@@ -830,7 +830,7 @@ export function Products() {
         title={editMode ? 'Edit Product' : 'Add New Product'}
         size="lg"
       >
-        <div className="px-5 sm:px-6 py-5 space-y-5">
+        <ModalContent className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-800 dark:text-slate-300 mb-1.5">Product Name</label>
@@ -972,8 +972,8 @@ export function Products() {
             />
           </div>
 
-        </div>
-        <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
+        </ModalContent>
+        <ModalFooter>
           <Button variant="outline" onClick={resetForm} disabled={saving}>
             Cancel
           </Button>
@@ -981,7 +981,7 @@ export function Products() {
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
             {editMode ? 'Update Product' : 'Add Product'}
           </Button>
-        </div>
+        </ModalFooter>
       </Modal>
 
       {/* View Modal */}
@@ -992,7 +992,7 @@ export function Products() {
         size="md"
       >
         {selectedProduct && (
-          <div className="px-5 sm:px-6 py-5 space-y-5">
+          <ModalContent className="space-y-5">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/10 flex items-center justify-center">
                 <Gem className="w-8 h-8 text-amber-400" />
@@ -1032,10 +1032,10 @@ export function Products() {
               </div>
             )}
 
-          </div>
+          </ModalContent>
         )}
         {selectedProduct && (
-          <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
+          <ModalFooter>
             <Button variant="outline" onClick={() => setShowViewModal(false)}>
               Close
             </Button>
@@ -1049,7 +1049,7 @@ export function Products() {
               <Edit className="w-4 h-4" />
               Edit Product
             </Button>
-          </div>
+          </ModalFooter>
         )}
       </Modal>
 
@@ -1060,7 +1060,7 @@ export function Products() {
         title="Delete Product"
         size="sm"
       >
-        <div className="px-5 sm:px-6 py-5 space-y-4">
+        <ModalContent className="space-y-4">
           <div className="flex items-center gap-4 p-4 rounded-lg bg-red-500/10">
             <AlertTriangle className="w-8 h-8 text-red-400" />
             <div>
@@ -1071,8 +1071,8 @@ export function Products() {
           <p className="text-sm text-slate-600 dark:text-slate-400">
             This action cannot be undone. This will permanently delete the product from your inventory.
           </p>
-        </div>
-        <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
+        </ModalContent>
+        <ModalFooter>
             <Button variant="outline" onClick={() => setShowDeleteModal(false)} disabled={saving}>
               Cancel
             </Button>
@@ -1081,7 +1081,7 @@ export function Products() {
               <Trash2 className="w-4 h-4" />
               Delete Product
             </Button>
-          </div>
+        </ModalFooter>
       </Modal>
     </div>
   );

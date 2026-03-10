@@ -701,9 +701,17 @@ export const PrintableClearance = forwardRef<HTMLDivElement, PrintableClearanceP
         <div className="clr-terms-section-a5">
           <label>Terms & Conditions</label>
           <ul>
-            <li>All clearance sale items are sold as-is.</li>
-            <li>All clearance sales are final. No returns or exchanges.</li>
-            <li>All jewellery items are hallmarked and certified.</li>
+            {company?.clearanceTerms
+              ? company.clearanceTerms.split('\n').filter(t => t.trim()).map((term, i) => (
+                  <li key={i}>{term}</li>
+                ))
+              : (
+                <>
+                  <li>All clearance sale items are sold as-is.</li>
+                  <li>All clearance sales are final. No returns or exchanges.</li>
+                  <li>All jewellery items are hallmarked and certified.</li>
+                </>
+              )}
           </ul>
         </div>
 

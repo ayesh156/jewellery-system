@@ -32,7 +32,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Combobox } from '../components/ui/Combobox';
 import { DateCombobox } from '../components/ui/DateCombobox';
-import { Modal } from '../components/ui/Modal';
+import { Modal, ModalContent, ModalFooter } from '../components/ui/Modal';
 import { Pagination } from '../components/ui/Pagination';
 import {
   Table,
@@ -970,7 +970,7 @@ export function Customers() {
         title={editMode ? 'Edit Customer' : 'Add New Customer'}
         size="lg"
       >
-        <div className="px-5 sm:px-6 py-5 space-y-5">
+        <ModalContent className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Full Name"
@@ -1025,8 +1025,8 @@ export function Customers() {
               placeholder="0"
             />
           </div>
-        </div>
-        <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
+        </ModalContent>
+        <ModalFooter>
           <Button variant="ghost" onClick={resetForm} disabled={saving}>
             Cancel
           </Button>
@@ -1034,7 +1034,7 @@ export function Customers() {
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
             {editMode ? 'Update Customer' : 'Add Customer'}
           </Button>
-        </div>
+        </ModalFooter>
       </Modal>
 
       {/* View Modal */}
@@ -1047,7 +1047,7 @@ export function Customers() {
         {selectedCustomer && (() => {
           const credit = customerCredits[selectedCustomer.id] || 0;
           return (
-            <div className="px-5 sm:px-6 py-5 space-y-5">
+            <ModalContent className="space-y-5">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/10 flex items-center justify-center">
                   <span className="text-xl font-bold text-blue-400">
@@ -1110,11 +1110,11 @@ export function Customers() {
                   </p>
                 </div>
               </div>
-            </div>
+            </ModalContent>
           );
         })()}
         {selectedCustomer && (
-          <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700/50">
+          <ModalFooter>
             <Button variant="ghost" onClick={() => setShowViewModal(false)}>
               Close
             </Button>
@@ -1138,7 +1138,7 @@ export function Customers() {
             >
               <Edit className="w-4 h-4" /> Edit
             </Button>
-          </div>
+          </ModalFooter>
         )}
       </Modal>
 
@@ -1150,7 +1150,7 @@ export function Customers() {
         size="lg"
       >
         {selectedCustomer && (
-          <div className="px-5 sm:px-6 py-5 space-y-5">
+          <ModalContent className="space-y-5">
             {/* Customer info */}
             <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/10 flex items-center justify-center">
@@ -1291,10 +1291,10 @@ export function Customers() {
                 </div>
               </>
             )}
-          </div>
+          </ModalContent>
         )}
         {selectedCustomer && outstandingItems.length > 0 && !loadingOutstanding && (
-          <div className="flex flex-wrap gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
+          <ModalFooter className="flex-wrap">
             <Button variant="ghost" onClick={() => { setShowPayModal(false); setOutstandingItems([]); setSelectedItemId(null); }} disabled={payingCredit}>
               Cancel
             </Button>
@@ -1325,7 +1325,7 @@ export function Customers() {
               {payingCredit ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
               Confirm Payment
             </Button>
-          </div>
+          </ModalFooter>
         )}
       </Modal>
 
@@ -1335,7 +1335,7 @@ export function Customers() {
         onClose={() => setShowDeleteModal(false)}
         title="Delete Customer"
       >
-        <div className="px-5 sm:px-6 py-5 space-y-4">
+        <ModalContent className="space-y-4">
           <div className="flex items-center gap-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
             <AlertTriangle className="w-8 h-8 text-red-400" />
             <div>
@@ -1345,8 +1345,8 @@ export function Customers() {
               </p>
             </div>
           </div>
-        </div>
-        <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
+        </ModalContent>
+        <ModalFooter>
           <Button variant="ghost" onClick={() => setShowDeleteModal(false)} disabled={deleting}>
             Cancel
           </Button>
@@ -1354,7 +1354,7 @@ export function Customers() {
             {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
             <Trash2 className="w-4 h-4" /> Delete
           </Button>
-        </div>
+        </ModalFooter>
       </Modal>
     </div>
   );

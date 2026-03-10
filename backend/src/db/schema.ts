@@ -168,6 +168,8 @@ export const companyInfo = pgTable('company_info', {
   taxNumber: varchar('tax_number', { length: 50 }),
   defaultTaxRate: numeric('default_tax_rate', { precision: 5, scale: 2 }).default('0'),
   currency: varchar('currency', { length: 10 }).default('LKR'),
+  invoiceTerms: text('invoice_terms'),
+  clearanceTerms: text('clearance_terms'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

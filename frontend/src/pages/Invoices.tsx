@@ -28,7 +28,7 @@ import { Input } from '../components/ui/Input';
 import { Combobox } from '../components/ui/Combobox';
 import { DateCombobox } from '../components/ui/DateCombobox';
 import { Badge } from '../components/ui/Badge';
-import { Modal } from '../components/ui/Modal';
+import { Modal, ModalContent, ModalFooter } from '../components/ui/Modal';
 import { Pagination } from '../components/ui/Pagination';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, MobileCard, MobileCardHeader, MobileCardContent, MobileCardRow, MobileCardActions, MobileCardsContainer } from '../components/ui/Table';
 import { invoicesApi } from '../services/api';
@@ -752,7 +752,8 @@ export function Invoices() {
         size="lg"
       >
         {selectedInvoice && (
-          <div className="px-5 sm:px-6 py-5 space-y-5">
+          <>
+          <ModalContent className="space-y-5">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{selectedInvoice.invoiceNumber}</h3>
@@ -837,7 +838,8 @@ export function Invoices() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+          </ModalContent>
+          <ModalFooter>
               <Button variant="ghost" onClick={() => setShowViewModal(false)}>
                 Close
               </Button>
@@ -857,8 +859,8 @@ export function Invoices() {
                   Record Payment
                 </Button>
               )}
-            </div>
-          </div>
+          </ModalFooter>
+          </>
         )}
       </Modal>
 
@@ -869,7 +871,8 @@ export function Invoices() {
         title="Record Payment"
       >
         {selectedInvoice && (
-          <div className="px-5 sm:px-6 py-5 space-y-5">
+          <>
+          <ModalContent className="space-y-5">
             <div className="p-4 rounded-lg bg-slate-100 dark:bg-slate-800/50 space-y-3">
               <div className="flex justify-between">
                 <span className="text-slate-600 dark:text-slate-400">Invoice</span>
@@ -920,7 +923,8 @@ export function Invoices() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+          </ModalContent>
+          <ModalFooter>
               <Button variant="ghost" onClick={() => setShowPaymentModal(false)} disabled={paying}>
                 Cancel
               </Button>
@@ -928,8 +932,8 @@ export function Invoices() {
                 {paying ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                 Confirm Payment
               </Button>
-            </div>
-          </div>
+          </ModalFooter>
+          </>
         )}
       </Modal>
 
@@ -939,7 +943,7 @@ export function Invoices() {
         onClose={() => setShowDeleteModal(false)}
         title="Delete Invoice"
       >
-        <div className="px-5 sm:px-6 py-5 space-y-5">
+        <ModalContent className="space-y-5">
           <div className="flex items-start gap-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
             <AlertTriangle className="w-8 h-8 text-red-400 shrink-0 mt-0.5" />
             <div>
@@ -950,8 +954,8 @@ export function Invoices() {
               </p>
             </div>
           </div>
-        </div>
-        <div className="flex justify-end gap-3 px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-700">
+        </ModalContent>
+        <ModalFooter>
             <Button variant="ghost" onClick={() => setShowDeleteModal(false)} disabled={deleting}>
               Cancel
             </Button>
@@ -959,7 +963,7 @@ export function Invoices() {
               {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
               Delete
             </Button>
-          </div>
+        </ModalFooter>
       </Modal>
     </div>
   );

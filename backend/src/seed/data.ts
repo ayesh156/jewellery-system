@@ -46,6 +46,16 @@ export const seedCompanyInfo: CompanyInfoInsert = {
   phone: '0770400789',
   email: 'onelkajewellery95@gmail.com',
   defaultTaxRate: '0',
+  invoiceTerms: [
+    'All jewellery items are hallmarked and certified for purity.',
+    'Exchange within 7 days with original receipt. No refunds on custom-made items.',
+    'Warranty does not cover damage caused by misuse, negligence or normal wear.',
+  ].join('\n'),
+  clearanceTerms: [
+    'All clearance sale items are sold as-is. No warranty or guarantee.',
+    'All clearance sales are final. No returns, exchanges or refunds.',
+    'All jewellery items are hallmarked and certified for purity.',
+  ].join('\n'),
 };
 
 // ==========================================

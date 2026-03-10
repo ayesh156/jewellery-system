@@ -36,6 +36,8 @@ router.put('/', async (req, res, next) => {
       taxNumber: z.string().max(50).optional(),
       defaultTaxRate: z.string().max(10).optional(),
       currency: z.string().max(10).optional(),
+      invoiceTerms: z.string().max(2000).optional().nullable(),
+      clearanceTerms: z.string().max(2000).optional().nullable(),
     }).parse(req.body);
 
     const [updated] = await db

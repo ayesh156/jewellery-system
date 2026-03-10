@@ -711,8 +711,16 @@ export const PrintableInvoice = forwardRef<HTMLDivElement, PrintableInvoiceProps
         <div className="terms-section-a5">
           <label>Terms & Conditions</label>
           <ul>
-            <li>All jewellery items are hallmarked and certified.</li>
-            <li>Exchange within 7 days with original receipt. No refunds on custom-made items.</li>
+            {company?.invoiceTerms
+              ? company.invoiceTerms.split('\n').filter(t => t.trim()).map((term, i) => (
+                  <li key={i}>{term}</li>
+                ))
+              : (
+                <>
+                  <li>All jewellery items are hallmarked and certified.</li>
+                  <li>Exchange within 7 days with original receipt. No refunds on custom-made items.</li>
+                </>
+              )}
           </ul>
         </div>
 

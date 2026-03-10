@@ -343,6 +343,8 @@ export interface CompanyInfo {
   website?: string;
   registrationNumber?: string;
   taxNumber?: string;
+  invoiceTerms?: string;
+  clearanceTerms?: string;
 }
 
 // ==========================================
