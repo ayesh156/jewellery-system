@@ -366,8 +366,8 @@ export function Categories() {
       {/* Filters */}
       <Card>
         <CardContent className="p-3 sm:p-4 space-y-3">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex-1 min-w-[180px]">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
@@ -387,7 +387,7 @@ export function Categories() {
                 )}
               </div>
             </div>
-            <div className="w-full sm:w-44">
+            <div className="flex items-center gap-2 shrink-0">
               <Combobox
                 options={[
                   { value: 'all', label: 'All Status', icon: <CircleDot className="w-3.5 h-3.5 text-slate-400" /> },
@@ -399,44 +399,45 @@ export function Categories() {
                 placeholder="Status"
                 clearable={false}
                 showFooter={false}
+                className="w-[120px] sm:w-[160px]"
               />
-            </div>
-            <div className="flex gap-1 overflow-x-auto">
+              <div className="flex gap-1">
+                <button
+                  onClick={() => toggleSort('name')}
+                  className={`flex items-center gap-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap ${
+                    sortField === 'name' ? 'border-amber-500/50 bg-amber-500/10 text-amber-400' : 'border-slate-700 text-slate-400 hover:border-slate-600'
+                  }`}
+                >
+                  Name <SortIcon field="name" />
+                </button>
+                <button
+                  onClick={() => toggleSort('code')}
+                  className={`flex items-center gap-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap ${
+                    sortField === 'code' ? 'border-amber-500/50 bg-amber-500/10 text-amber-400' : 'border-slate-700 text-slate-400 hover:border-slate-600'
+                  }`}
+                >
+                  Code <SortIcon field="code" />
+                </button>
+              </div>
               <button
-                onClick={() => toggleSort('name')}
-                className={`flex items-center gap-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap ${
-                  sortField === 'name' ? 'border-amber-500/50 bg-amber-500/10 text-amber-400' : 'border-slate-700 text-slate-400 hover:border-slate-600'
+                onClick={() => setShowMoreFilters(prev => !prev)}
+                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap ${
+                  showMoreFilters || dateFrom || dateTo || sortField === 'createdAt'
+                    ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
+                    : 'border-slate-700 text-slate-400 hover:border-slate-600'
                 }`}
               >
-                Name <SortIcon field="name" />
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                More
+                {showMoreFilters ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </button>
-              <button
-                onClick={() => toggleSort('code')}
-                className={`flex items-center gap-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap ${
-                  sortField === 'code' ? 'border-amber-500/50 bg-amber-500/10 text-amber-400' : 'border-slate-700 text-slate-400 hover:border-slate-600'
-                }`}
-              >
-                Code <SortIcon field="code" />
-              </button>
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                  <X className="w-3.5 h-3.5" />
+                  Clear
+                </Button>
+              )}
             </div>
-            <button
-              onClick={() => setShowMoreFilters(prev => !prev)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap ${
-                showMoreFilters || dateFrom || dateTo || sortField === 'createdAt'
-                  ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
-                  : 'border-slate-700 text-slate-400 hover:border-slate-600'
-              }`}
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              More
-              {showMoreFilters ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            </button>
-            {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
-                <X className="w-3.5 h-3.5" />
-                Clear
-              </Button>
-            )}
           </div>
 
           {/* More filters (collapsible) */}

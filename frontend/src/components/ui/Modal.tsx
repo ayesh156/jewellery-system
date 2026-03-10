@@ -69,9 +69,7 @@ export function Modal({ isOpen, onClose, children, title, size = 'md', closeOnOv
             </button>
           </div>
         )}
-        <div className={cn('flex-1 overflow-y-auto', !title && 'pt-4')}>
-          {children}
-        </div>
+        {children}
       </div>
     </div>,
     document.body
@@ -84,7 +82,7 @@ interface ModalContentProps {
 }
 
 export function ModalContent({ children, className }: ModalContentProps) {
-  return <div className={cn('px-5 sm:px-6 py-5', className)}>{children}</div>;
+  return <div className={cn('px-5 sm:px-6 py-5 overflow-y-auto flex-1', className)}>{children}</div>;
 }
 
 interface ModalFooterProps {

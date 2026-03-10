@@ -12,15 +12,11 @@ interface PrintableInvoiceProps {
 const defaultCompany: CompanyInfo = {
   name: 'Onelka Jewellery',
   tagline: 'Exquisite Craftsmanship Since 1985',
-  address: 'No. 123, Galle Road',
-  city: 'Colombo 03, Sri Lanka',
+  address: 'Makandura, Matara.',
+  city: 'Matara',
   country: 'Sri Lanka',
-  phone: '+94 11 234 5678',
-  phone2: '+94 77 123 4567',
-  email: 'info@onelkajewellery.lk',
-  website: 'www.onelkajewellery.lk',
-  registrationNumber: 'REG-2024-001',
-  taxNumber: 'TIN-123456789',
+  phone: '0770400789',
+  email: 'onelkajewellery95@gmail.com',
 };
 
 export const PrintableInvoice = forwardRef<HTMLDivElement, PrintableInvoiceProps>(
@@ -558,7 +554,10 @@ export const PrintableInvoice = forwardRef<HTMLDivElement, PrintableInvoiceProps
         {/* Header */}
         <div className="invoice-header-a5">
           <div className="company-info-a5">
-            <h1>{company.name}</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+              <img src="/logo.jpg" alt="Logo" style={{ width: '48px', height: '48px', objectFit: 'contain', borderRadius: '4px' }} />
+              <h1>{company.name}</h1>
+            </div>
             {company.tagline && <div className="tagline">{company.tagline}</div>}
             <div className="details">
               {company.address}, {company.city}<br />

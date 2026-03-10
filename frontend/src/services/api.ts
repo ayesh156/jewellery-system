@@ -2,6 +2,20 @@ const API_BASE = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api`
   : 'http://localhost:3000/api';
 
+const AUTH_TOKEN_KEY = 'jewellery-auth-token';
+
+export function getStoredToken(): string | null {
+  return localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+export function setStoredToken(token: string): void {
+  localStorage.setItem(AUTH_TOKEN_KEY, token);
+}
+
+export function removeStoredToken(): void {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+}
+
 interface ApiResponse<T> {
   status: 'success' | 'error';
   data: T;
@@ -32,11 +46,19 @@ async function request<T>(
 ): Promise<ApiResponse<T>> {
   const url = `${API_BASE}${endpoint}`;
 
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...options?.headers as Record<string, string>,
+  };
+
+  // Add auth token if available
+  const token = getStoredToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const res = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
+    headers,
     ...options,
   });
 
@@ -362,6 +384,86 @@ export const clearanceApi = {
 
   delete: (id: string) =>
     request<any>(`/clearance/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
+};
+
+// ==========================================
+// Auth API
+// ==========================================
+
+export interface AuthUser {
+  id: string;
+  username: string;
+  email: string;
+  fullName: string;
+  phone?: string;
+  role: string;
+  shopCode: string;
+  isActive?: boolean;
+  lastLoginAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export const authApi = {
+  login: (username: string, password: string) =>
+    request<{ token: string; user: AuthUser }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    }),
+
+  getMe: () =>
+    request<AuthUser>('/auth/me'),
+
+  changePassword: (currentPassword: string, newPassword: string) =>
+    request<any>('/auth/change-password', {
+      method: 'PUT',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }),
+};
+
+// ==========================================
+// Users API (Admin)
+// ==========================================
+
+export const usersApi = {
+  getAll: () =>
+    request<AuthUser[]>('/users'),
+
+  getById: (id: string) =>
+    request<AuthUser>(`/users/${encodeURIComponent(id)}`),
+
+  create: (data: {
+    username: string;
+    email: string;
+    password: string;
+    fullName: string;
+    phone?: string;
+    role?: string;
+    shopCode?: string;
+  }) =>
+    request<AuthUser>('/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: string, data: {
+    email?: string;
+    fullName?: string;
+    phone?: string;
+    role?: string;
+    shopCode?: string;
+    isActive?: boolean;
+    password?: string;
+  }) =>
+    request<AuthUser>(`/users/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    request<any>(`/users/${encodeURIComponent(id)}`, {
       method: 'DELETE',
     }),
 };

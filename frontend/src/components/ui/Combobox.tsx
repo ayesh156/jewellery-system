@@ -429,7 +429,7 @@ export function Combobox({
         className={cn(
           'relative flex items-center gap-2 h-10 w-full rounded-lg border px-3 py-2',
           'bg-white dark:bg-slate-800/80 transition-all duration-200 cursor-pointer',
-          'focus:outline-none focus:ring-2 focus:ring-amber-500/50 dark:focus:ring-slate-600 focus:border-amber-500 dark:focus:border-slate-600',
+          'focus:outline-none focus:ring-1 focus:ring-amber-500/30 dark:focus:ring-slate-600 focus:border-amber-500/60 dark:focus:border-slate-600',
           disabled && 'cursor-not-allowed opacity-50',
           error
             ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500'

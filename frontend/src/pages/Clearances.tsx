@@ -18,18 +18,21 @@ import {
   Loader2,
   X,
   MoreVertical,
+  SlidersHorizontal,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Combobox } from '../components/ui/Combobox';
+import { DateCombobox } from '../components/ui/DateCombobox';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { Pagination } from '../components/ui/Pagination';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, MobileCard, MobileCardHeader, MobileCardContent, MobileCardRow, MobileCardActions, MobileCardsContainer } from '../components/ui/Table';
 import { clearanceApi } from '../services/api';
 import { formatCurrency, formatDate } from '../utils/formatters';
+import { cn } from '../utils/cn';
 import type { Clearance, InvoiceStatus, PaymentMethod } from '../types';
 
 const clearanceStatuses: InvoiceStatus[] = ['draft', 'pending', 'partial', 'paid', 'cancelled'];
@@ -41,7 +44,12 @@ export function Clearances() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [dateFilter, setDateFilter] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
+  const [amountMin, setAmountMin] = useState('');
+  const [amountMax, setAmountMax] = useState('');
   const [showViewModal, setShowViewModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -98,30 +106,30 @@ export function Clearances() {
 
       const matchesStatus = !statusFilter || clr.status === statusFilter;
 
+      // Date range filter
       let matchesDate = true;
-      if (dateFilter) {
-        const clrDate = new Date(clr.createdAt);
-        const today = new Date();
-        switch (dateFilter) {
-          case 'today':
-            matchesDate = clrDate.toDateString() === today.toDateString();
-            break;
-          case 'week': {
-            const weekAgo = new Date(today.setDate(today.getDate() - 7));
-            matchesDate = clrDate >= weekAgo;
-            break;
-          }
-          case 'month':
-            matchesDate =
-              clrDate.getMonth() === today.getMonth() &&
-              clrDate.getFullYear() === today.getFullYear();
-            break;
-        }
+      if (dateFrom) {
+        matchesDate = new Date(clr.issueDate) >= new Date(dateFrom);
+      }
+      if (matchesDate && dateTo) {
+        const to = new Date(dateTo);
+        to.setHours(23, 59, 59, 999);
+        matchesDate = new Date(clr.issueDate) <= to;
       }
 
-      return matchesSearch && matchesStatus && matchesDate;
+      // Payment method filter
+      const matchesPayment = !paymentMethodFilter || clr.paymentMethod === paymentMethodFilter;
+
+      // Amount range filter
+      let matchesAmount = true;
+      if (amountMin) matchesAmount = clr.total >= Number(amountMin);
+      if (matchesAmount && amountMax) matchesAmount = clr.total <= Number(amountMax);
+
+      return matchesSearch && matchesStatus && matchesDate && matchesPayment && matchesAmount;
     });
-  }, [clearances, searchQuery, statusFilter, dateFilter]);
+  }, [clearances, searchQuery, statusFilter, dateFrom, dateTo, paymentMethodFilter, amountMin, amountMax]);
+
+  const activeFilterCount = [statusFilter, dateFrom, dateTo, paymentMethodFilter, amountMin, amountMax].filter(Boolean).length;
 
   // Stats
   const totalClearances = clearances.length;
@@ -217,7 +225,7 @@ export function Clearances() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, dateFilter]);
+  }, [searchQuery, statusFilter, dateFrom, dateTo, paymentMethodFilter, amountMin, amountMax]);
 
   // Skeleton loading
   if (loading) {
@@ -385,54 +393,160 @@ export function Clearances() {
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input
-                  placeholder="Search by clearance number or customer..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-9"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+          {/* Search + first 2 filters + toggle row */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 min-w-[180px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                placeholder="Search clearance # or customer..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-9"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Combobox
+                value={statusFilter}
+                onChange={setStatusFilter}
+                options={[
+                  { value: '', label: 'All Status', icon: <Filter className="w-4 h-4" /> },
+                  ...clearanceStatuses.map((status) => ({
+                    value: status,
+                    label: status.charAt(0).toUpperCase() + status.slice(1),
+                    icon: status === 'paid' ? <CheckCircle className="w-4 h-4" /> : status === 'pending' ? <Clock className="w-4 h-4" /> : status === 'cancelled' ? <AlertTriangle className="w-4 h-4" /> : <Tag className="w-4 h-4" />
+                  }))
+                ]}
+                placeholder="Status"
+                className="w-[120px] sm:w-[160px]"
+              />
+              <Combobox
+                value={paymentMethodFilter}
+                onChange={setPaymentMethodFilter}
+                options={[
+                  { value: '', label: 'All Methods', icon: <CreditCard className="w-4 h-4" /> },
+                  ...paymentMethods.map((m) => ({
+                    value: m,
+                    label: m.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+                    icon: <CreditCard className="w-4 h-4" />
+                  }))
+                ]}
+                placeholder="Payment method"
+                className="w-[120px] sm:w-[160px]"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className={cn(
+                  'flex items-center gap-2 shrink-0 transition-colors',
+                  activeFilterCount > 0 && 'border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400'
                 )}
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+                <span className="hidden sm:inline">More</span>
+                {activeFilterCount > 0 && (
+                  <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center font-medium">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Expandable filter panel */}
+          <div className={cn(
+            'grid transition-all duration-300 ease-in-out',
+            showFilters ? 'grid-rows-[1fr] opacity-100 mt-4' : 'grid-rows-[0fr] opacity-0'
+          )}>
+            <div className="overflow-hidden">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <DateCombobox
+                  value={dateFrom}
+                  onChange={(val) => setDateFrom(val)}
+                  placeholder="From date"
+                  clearable
+                />
+                <DateCombobox
+                  value={dateTo}
+                  onChange={(val) => setDateTo(val)}
+                  placeholder="To date"
+                  clearable
+                />
+                <Input
+                  placeholder="Min amount"
+                  type="number"
+                  value={amountMin}
+                  onChange={(e) => setAmountMin(e.target.value)}
+                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <Input
+                  placeholder="Max amount"
+                  type="number"
+                  value={amountMax}
+                  onChange={(e) => setAmountMax(e.target.value)}
+                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
               </div>
             </div>
-            <Combobox
-              value={statusFilter}
-              onChange={setStatusFilter}
-              options={[
-                { value: '', label: 'All Status', icon: <Filter className="w-4 h-4" /> },
-                ...clearanceStatuses.map((status) => ({
-                  value: status,
-                  label: status.charAt(0).toUpperCase() + status.slice(1),
-                  icon: status === 'paid' ? <CheckCircle className="w-4 h-4" /> : status === 'pending' ? <Clock className="w-4 h-4" /> : status === 'cancelled' ? <AlertTriangle className="w-4 h-4" /> : <Tag className="w-4 h-4" />
-                }))
-              ]}
-              placeholder="Filter by status..."
-              className="lg:w-56"
-            />
-            <Combobox
-              value={dateFilter}
-              onChange={setDateFilter}
-              options={[
-                { value: '', label: 'All Time', icon: <Calendar className="w-4 h-4" /> },
-                { value: 'today', label: 'Today', icon: <Calendar className="w-4 h-4" /> },
-                { value: 'week', label: 'This Week', icon: <Calendar className="w-4 h-4" /> },
-                { value: 'month', label: 'This Month', icon: <Calendar className="w-4 h-4" /> }
-              ]}
-              placeholder="Filter by date..."
-              className="lg:w-56"
-            />
           </div>
+
+          {/* Active filter pills */}
+          {activeFilterCount > 0 && (
+            <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Active:</span>
+              {statusFilter && (
+                <button onClick={() => setStatusFilter('')} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors">
+                  Status: {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+              {paymentMethodFilter && (
+                <button onClick={() => setPaymentMethodFilter('')} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors">
+                  Method: {paymentMethodFilter.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+              {dateFrom && (
+                <button onClick={() => setDateFrom('')} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors">
+                  From: {dateFrom}
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+              {dateTo && (
+                <button onClick={() => setDateTo('')} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors">
+                  To: {dateTo}
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+              {amountMin && (
+                <button onClick={() => setAmountMin('')} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors">
+                  Min: Rs. {Number(amountMin).toLocaleString()}
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+              {amountMax && (
+                <button onClick={() => setAmountMax('')} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors">
+                  Max: Rs. {Number(amountMax).toLocaleString()}
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+              <button
+                onClick={() => { setStatusFilter(''); setPaymentMethodFilter(''); setDateFrom(''); setDateTo(''); setAmountMin(''); setAmountMax(''); }}
+                className="text-xs text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 underline transition-colors ml-1"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -473,7 +587,7 @@ export function Clearances() {
                     </div>
                   </TableCell>
                   <TableCell className="text-slate-700 dark:text-slate-300">{clr.customerName}</TableCell>
-                  <TableCell className="text-slate-600 dark:text-slate-400">{formatDate(clr.createdAt)}</TableCell>
+                  <TableCell className="text-slate-600 dark:text-slate-400">{formatDate(clr.issueDate)}</TableCell>
                   <TableCell className="text-right font-semibold text-slate-800 dark:text-slate-200">
                     {formatCurrency(clr.total)}
                   </TableCell>
@@ -561,7 +675,7 @@ export function Clearances() {
                   {getStatusBadge(clr.status)}
                 </MobileCardHeader>
                 <MobileCardContent>
-                  <MobileCardRow label="Date" value={formatDate(clr.createdAt)} />
+                  <MobileCardRow label="Date" value={formatDate(clr.issueDate)} />
                   <MobileCardRow label="Items" value={`${clr.items.length} items`} />
                   <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700/50">
                     <div className="text-center">
@@ -621,7 +735,7 @@ export function Clearances() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{selectedClearance.clearanceNumber}</h3>
-                <p className="text-slate-600 dark:text-slate-400">{formatDate(selectedClearance.createdAt)}</p>
+                <p className="text-slate-600 dark:text-slate-400">{formatDate(selectedClearance.issueDate)}</p>
               </div>
               {getStatusBadge(selectedClearance.status)}
             </div>

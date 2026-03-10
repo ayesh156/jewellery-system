@@ -288,12 +288,12 @@ export function DateCombobox({
         disabled={disabled}
         className={cn(
           'flex items-center justify-between w-full h-10 px-3 rounded-lg border bg-white dark:bg-slate-800/50 text-sm transition-all duration-200',
-          'focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500',
+          'focus:outline-none focus:ring-1 focus:ring-amber-500/30 focus:border-amber-500/60',
           error
             ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500'
             : 'border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600',
           disabled && 'opacity-50 cursor-not-allowed',
-          isOpen && 'ring-2 ring-amber-500/50 border-amber-500'
+          isOpen && 'ring-1 ring-amber-500/30 border-amber-500/60'
         )}
       >
         <span className="flex items-center gap-2">

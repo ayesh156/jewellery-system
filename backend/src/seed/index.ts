@@ -18,6 +18,7 @@ import {
   seedClearanceItems,
   seedClearancePayments,
   seedCounters,
+  seedUsers,
 } from './data.js';
 
 async function seed() {
@@ -48,6 +49,7 @@ async function seed() {
   await db.delete(schema.goldTypeConfigs);
   await db.delete(schema.companyInfo);
   await db.delete(schema.counters);
+  await db.delete(schema.users);
   console.log('   ✓ Tables cleared\n');
 
   // Seed in dependency order
@@ -106,6 +108,10 @@ async function seed() {
   console.log('🔢 Seeding counters...');
   await db.insert(schema.counters).values(seedCounters);
   console.log(`   ✓ ${seedCounters.length} counters\n`);
+
+  console.log('👤 Seeding users...');
+  await db.insert(schema.users).values(seedUsers);
+  console.log(`   ✓ ${seedUsers.length} users\n`);
 
   // Verify counts
   const [{ count: catCount }] = await db.select({ count: sql<number>`count(*)` }).from(schema.categories);

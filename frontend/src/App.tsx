@@ -1,7 +1,9 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Layout } from './components/Layout';
+import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Products } from './pages/Products';
 import { Customers } from './pages/Customers';
@@ -21,6 +23,24 @@ import { invoicesApi, clearanceApi, companyApi } from './services/api';
 import { Toaster } from 'react-hot-toast';
 import type { CompanyInfo } from './types';
 import './index.css';
+
+// Private route wrapper — redirects to login if not authenticated
+function PrivateRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="text-center">
+          <style>{`@keyframes appSpin { to { transform: rotate(360deg); } }`}</style>
+          <div className="w-12 h-12 border-3 border-slate-700 border-t-amber-500 rounded-full" style={{ animation: 'appSpin 0.8s linear infinite' }} />
+        </div>
+      </div>
+    );
+  }
+
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+}
 
 // Hook to load company data from API for print pages
 function useCompanyData(): CompanyInfo | undefined {
@@ -282,6 +302,7 @@ function PrintClearancePage() {
 function App() {
   return (
     <ThemeProvider>
+      <AuthProvider>
       <BrowserRouter>
         <Toaster
           position="top-right"
@@ -308,12 +329,15 @@ function App() {
           }}
         />
         <Routes>
+        {/* Login Route */}
+        <Route path="/login" element={<LoginRoute />} />
+
         {/* Print Routes - No Layout */}
         <Route path="/invoices/:id/print" element={<PrintInvoicePage />} />
         <Route path="/clearance/:id/print" element={<PrintClearancePage />} />
 
-        {/* Main App Routes with Layout */}
-        <Route element={<Layout />}>
+        {/* Main App Routes with Layout — Protected */}
+        <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/products" element={<Products />} />
@@ -334,8 +358,27 @@ function App() {
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
       </BrowserRouter>
+      </AuthProvider>
     </ThemeProvider>
   );
+}
+
+// Redirect to dashboard if already logged in
+function LoginRoute() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="text-center">
+          <style>{`@keyframes loginSpin { to { transform: rotate(360deg); } }`}</style>
+          <div className="w-12 h-12 border-3 border-slate-700 border-t-amber-500 rounded-full" style={{ animation: 'loginSpin 0.8s linear infinite' }} />
+        </div>
+      </div>
+    );
+  }
+
+  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />;
 }
 
 export default App;

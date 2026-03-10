@@ -10,6 +10,8 @@ import customerRoutes from './routes/customers.js';
 import invoiceRoutes from './routes/invoices.js';
 import clearanceRoutes from './routes/clearance.js';
 import counterRoutes from './routes/counters.js';
+import authRoutes from './routes/auth.js';
+import userRoutes from './routes/users.js';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -24,7 +26,11 @@ const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (
+      !origin ||
+      allowedOrigins.includes(origin) ||
+      (process.env.NODE_ENV !== 'production' && origin?.startsWith('http://localhost:'))
+    ) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -54,6 +60,8 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/clearance', clearanceRoutes);
 app.use('/api/counters', counterRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 // ==========================================
 // Error Handling

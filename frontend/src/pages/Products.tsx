@@ -14,6 +14,8 @@ import {
   RefreshCw,
   X,
   MoreVertical,
+  SlidersHorizontal,
+  Calendar,
 } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -25,6 +27,7 @@ import { Pagination } from '../components/ui/Pagination';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, MobileCard, MobileCardHeader, MobileCardContent, MobileCardRow, MobileCardActions, MobileCardsContainer } from '../components/ui/Table';
 import { categoriesApi, productsApi, countersApi } from '../services/api';
 import { formatCurrency, formatWeight } from '../utils/formatters';
+import { cn } from '../utils/cn';
 import toast from 'react-hot-toast';
 import type { JewelleryItem, JewelleryCategory, MetalType, GoldKarat } from '../types';
 
@@ -75,6 +78,11 @@ export function Products() {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [metalFilter, setMetalFilter] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [karatFilter, setKaratFilter] = useState('');
+  const [stockFilter, setStockFilter] = useState<'all' | 'in-stock' | 'low' | 'out'>('all');
+  const [priceMin, setPriceMin] = useState('');
+  const [priceMax, setPriceMax] = useState('');
 
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
@@ -151,10 +159,20 @@ export function Products() {
       
       const matchesCategory = !categoryFilter || product.categoryId === categoryFilter;
       const matchesMetal = !metalFilter || product.metalType === metalFilter;
+      const matchesKarat = !karatFilter || product.karat === karatFilter;
 
-      return matchesSearch && matchesCategory && matchesMetal;
+      let matchesStock = true;
+      if (stockFilter === 'in-stock') matchesStock = product.stockQuantity > (product.reorderLevel || 2);
+      else if (stockFilter === 'low') matchesStock = product.stockQuantity > 0 && product.stockQuantity <= (product.reorderLevel || 2);
+      else if (stockFilter === 'out') matchesStock = product.stockQuantity === 0;
+
+      let matchesPrice = true;
+      if (priceMin) matchesPrice = product.sellingPrice >= Number(priceMin);
+      if (matchesPrice && priceMax) matchesPrice = product.sellingPrice <= Number(priceMax);
+
+      return matchesSearch && matchesCategory && matchesMetal && matchesKarat && matchesStock && matchesPrice;
     });
-  }, [products, searchQuery, categoryFilter, metalFilter]);
+  }, [products, searchQuery, categoryFilter, metalFilter, karatFilter, stockFilter, priceMin, priceMax]);
 
   // Paginated products
   const paginatedProducts = useMemo(() => {
@@ -165,7 +183,10 @@ export function Products() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, categoryFilter, metalFilter]);
+  }, [searchQuery, categoryFilter, metalFilter, karatFilter, stockFilter, priceMin, priceMax]);
+
+  // Active filter count
+  const activeFilterCount = [categoryFilter, metalFilter, karatFilter, stockFilter !== 'all' ? 'x' : '', priceMin, priceMax].filter(Boolean).length;
 
   // Stats
   const totalValue = products.reduce((sum, p) => sum + p.sellingPrice * p.stockQuantity, 0);
@@ -449,9 +470,10 @@ export function Products() {
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
+          <div className="flex flex-col gap-3">
+            {/* Search + first 2 filters + toggle row */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative flex-1 min-w-[180px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
                   placeholder="Search by name, SKU, or barcode..."
@@ -469,35 +491,142 @@ export function Products() {
                   </button>
                 )}
               </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Combobox
+                  options={categoryOptions}
+                  value={categoryFilter}
+                  onChange={(val) => setCategoryFilter(val)}
+                  placeholder="All Categories"
+                  searchPlaceholder="Search categories..."
+                  defaultIcon={<Layers className="w-4 h-4" />}
+                  showAllOption
+                  allOptionLabel="All Categories"
+                  clearable
+                  showFooter={false}
+                  className="w-[120px] sm:w-[160px]"
+                />
+                <Combobox
+                  options={metalOptions}
+                  value={metalFilter}
+                  onChange={(val) => setMetalFilter(val)}
+                  placeholder="All Metals"
+                  searchPlaceholder="Search metals..."
+                  defaultIcon={<Gem className="w-4 h-4" />}
+                  showAllOption
+                  allOptionLabel="All Metals"
+                  clearable
+                  showFooter={false}
+                  className="w-[120px] sm:w-[160px]"
+                />
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={cn(
+                    'flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all shrink-0',
+                    showFilters || activeFilterCount > 0
+                      ? 'border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                      : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
+                  )}
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  <span className="hidden sm:inline">More</span>
+                  {activeFilterCount > 0 && (
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] font-bold">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
-            <div className="lg:w-64">
-              <Combobox
-                options={categoryOptions}
-                value={categoryFilter}
-                onChange={(val) => setCategoryFilter(val)}
-                placeholder="All Categories"
-                searchPlaceholder="Search categories..."
-                defaultIcon={<Layers className="w-4 h-4" />}
-                showAllOption
-                allOptionLabel="All Categories"
-                clearable
-                showFooter={false}
-              />
-            </div>
-            <div className="lg:w-56">
-              <Combobox
-                options={metalOptions}
-                value={metalFilter}
-                onChange={(val) => setMetalFilter(val)}
-                placeholder="All Metals"
-                searchPlaceholder="Search metals..."
-                defaultIcon={<Gem className="w-4 h-4" />}
-                showAllOption
-                allOptionLabel="All Metals"
-                clearable
-                showFooter={false}
-              />
-            </div>
+
+            {/* Expandable filter panel */}
+            {showFilters && (
+              <div className="pt-3 border-t border-slate-200 dark:border-slate-700 space-y-3 animate-in slide-in-from-top-2 duration-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {/* Karat */}
+                  <Combobox
+                    options={karats.map((k) => ({ value: k, label: k, icon: <Tag className="w-4 h-4" /> }))}
+                    value={karatFilter}
+                    onChange={(val) => setKaratFilter(val)}
+                    placeholder="All Karats"
+                    defaultIcon={<Tag className="w-4 h-4" />}
+                    showAllOption
+                    allOptionLabel="All Karats"
+                    clearable
+                    showFooter={false}
+                  />
+
+                  {/* Stock */}
+                  <Combobox
+                    options={[
+                      { value: 'all', label: 'All Stock', icon: <Package className="w-4 h-4" /> },
+                      { value: 'in-stock', label: 'In Stock', icon: <Package className="w-4 h-4" /> },
+                      { value: 'low', label: 'Low Stock', icon: <AlertTriangle className="w-4 h-4" /> },
+                      { value: 'out', label: 'Out of Stock', icon: <AlertTriangle className="w-4 h-4" /> },
+                    ]}
+                    value={stockFilter}
+                    onChange={(val) => setStockFilter(val as 'all' | 'in-stock' | 'low' | 'out')}
+                    placeholder="Stock status..."
+                    showFooter={false}
+                  />
+
+                  <Input
+                    placeholder="Min price"
+                    type="number"
+                    value={priceMin}
+                    onChange={(e) => setPriceMin(e.target.value)}
+                  />
+                  <Input
+                    placeholder="Max price"
+                    type="number"
+                    value={priceMax}
+                    onChange={(e) => setPriceMax(e.target.value)}
+                  />
+                </div>
+
+                {/* Active filter pills */}
+                {activeFilterCount > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">Active:</span>
+                    {categoryFilter && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-medium border border-blue-500/20">
+                        <Layers className="w-3 h-3" /> {categories.find((c) => c.id === categoryFilter)?.name || categoryFilter}
+                        <button onClick={() => setCategoryFilter('')} className="ml-0.5 hover:text-blue-800 dark:hover:text-blue-200"><X className="w-3 h-3" /></button>
+                      </span>
+                    )}
+                    {metalFilter && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-medium border border-amber-500/20">
+                        <Gem className="w-3 h-3" /> {metalFilter}
+                        <button onClick={() => setMetalFilter('')} className="ml-0.5 hover:text-amber-800 dark:hover:text-amber-200"><X className="w-3 h-3" /></button>
+                      </span>
+                    )}
+                    {karatFilter && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs font-medium border border-purple-500/20">
+                        <Tag className="w-3 h-3" /> {karatFilter}
+                        <button onClick={() => setKaratFilter('')} className="ml-0.5 hover:text-purple-800 dark:hover:text-purple-200"><X className="w-3 h-3" /></button>
+                      </span>
+                    )}
+                    {stockFilter !== 'all' && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium border border-emerald-500/20">
+                        <Package className="w-3 h-3" /> {stockFilter === 'in-stock' ? 'In Stock' : stockFilter === 'low' ? 'Low Stock' : 'Out of Stock'}
+                        <button onClick={() => setStockFilter('all')} className="ml-0.5 hover:text-emerald-800 dark:hover:text-emerald-200"><X className="w-3 h-3" /></button>
+                      </span>
+                    )}
+                    {(priceMin || priceMax) && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-medium border border-rose-500/20">
+                        Rs. {priceMin || '0'} – {priceMax || '∞'}
+                        <button onClick={() => { setPriceMin(''); setPriceMax(''); }} className="ml-0.5 hover:text-rose-800 dark:hover:text-rose-200"><X className="w-3 h-3" /></button>
+                      </span>
+                    )}
+                    <button
+                      onClick={() => { setCategoryFilter(''); setMetalFilter(''); setKaratFilter(''); setStockFilter('all'); setPriceMin(''); setPriceMax(''); }}
+                      className="text-xs text-red-500 hover:text-red-600 dark:hover:text-red-400 font-medium ml-1"
+                    >
+                      Clear all
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

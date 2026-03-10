@@ -17,29 +17,47 @@ import {
   Hash,
   RefreshCw,
   Shield,
+  Users,
+  Plus,
+  Pencil,
+  Trash2,
+  Eye,
+  EyeOff,
+  UserPlus,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Combobox } from '../components/ui/Combobox';
-import { companyApi, countersApi } from '../services/api';
+import { Modal, ModalContent, ModalFooter } from '../components/ui/Modal';
+import { Badge } from '../components/ui/Badge';
+import { companyApi, countersApi, usersApi, authApi, type AuthUser } from '../services/api';
 import { useTheme, type Theme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../utils/cn';
 
-type SettingsTab = 'company' | 'numbering' | 'user' | 'appearance';
+type SettingsTab = 'company' | 'numbering' | 'users' | 'user' | 'appearance';
 
 export function Settings() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('company');
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const { user: authUser, refreshUser } = useAuth();
   const [saving, setSaving] = useState(false);
   const [loadingCompany, setLoadingCompany] = useState(true);
 
   // Business settings
-  const [shopCode, setShopCode] = useState(() => localStorage.getItem('shopCode') || 'A');
+  const [shopCode, setShopCode] = useState(authUser?.shopCode || localStorage.getItem('shopCode') || 'A');
   const [shopCounters, setShopCounters] = useState<any[]>([]);
   const [loadingCounters, setLoadingCounters] = useState(false);
   const [initializingShop, setInitializingShop] = useState(false);
+
+  // Keep shopCode in sync with authUser
+  useEffect(() => {
+    if (authUser?.shopCode) {
+      setShopCode(authUser.shopCode);
+    }
+  }, [authUser?.shopCode]);
 
   // Company settings
   const [companyName, setCompanyName] = useState('');
@@ -100,10 +118,41 @@ export function Settings() {
 
   useEffect(() => { loadCounters(); }, [loadCounters]);
 
-  // User settings
-  const [userName, setUserName] = useState('Admin User');
-  const [userEmail, setUserEmail] = useState('admin@jewelshop.lk');
-  const [userRole, setUserRole] = useState('Administrator');
+  // User settings (from auth)
+  const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [userRole, setUserRole] = useState('');
+  const [userPhone, setUserPhone] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Users management (admin)
+  const [allUsers, setAllUsers] = useState<AuthUser[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<AuthUser | null>(null);
+  const [savingUser, setSavingUser] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+
+  // New/Edit user form
+  const [formUsername, setFormUsername] = useState('');
+  const [formEmail, setFormEmail] = useState('');
+  const [formFullName, setFormFullName] = useState('');
+  const [formPhone, setFormPhone] = useState('');
+  const [formRole, setFormRole] = useState('sales');
+  const [formShopCode, setFormShopCode] = useState('A');
+  const [formPassword, setFormPassword] = useState('');
+
+  // Load user info from auth
+  useEffect(() => {
+    if (authUser) {
+      setUserName(authUser.fullName);
+      setUserEmail(authUser.email);
+      setUserRole(authUser.role);
+      setUserPhone(authUser.phone || '');
+    }
+  }, [authUser]);
 
   // Appearance settings
   const [accentColor, setAccentColor] = useState('gold');
@@ -112,7 +161,8 @@ export function Settings() {
   const tabs = [
     { key: 'company', label: 'Company', icon: Building2 },
     { key: 'numbering', label: 'Numbering', icon: Hash },
-    { key: 'user', label: 'User Profile', icon: User },
+    ...(authUser?.role === 'admin' ? [{ key: 'users', label: 'Users', icon: Users }] : []),
+    { key: 'user', label: 'My Profile', icon: User },
     { key: 'appearance', label: 'Appearance', icon: Palette },
   ];
 
@@ -142,20 +192,59 @@ export function Settings() {
         setSaving(false);
       }
     } else if (activeTab === 'numbering') {
-      const trimmed = shopCode.trim().toUpperCase();
-      if (!trimmed || !/^[A-Z]{1,3}$/.test(trimmed)) {
-        toast.error('Shop code must be 1-3 English letters (e.g., A, B, HQ)');
-        return;
-      }
+      // Save shop code change + initialize counters
       setSaving(true);
       try {
-        localStorage.setItem('shopCode', trimmed);
-        setShopCode(trimmed);
-        await countersApi.initShop(trimmed);
-        await loadCounters(trimmed);
-        toast.success(`Shop code "${trimmed}" saved! Counters initialized.`);
+        const newCode = shopCode.trim().toUpperCase();
+        if (!newCode) { toast.error('Shop code is required'); setSaving(false); return; }
+
+        // If shop code changed, update the current user's shopCode
+        if (authUser && newCode !== authUser.shopCode) {
+          await usersApi.update(authUser.id, { shopCode: newCode });
+          await refreshUser();
+        }
+
+        await countersApi.initShop(newCode);
+        await loadCounters(newCode);
+        toast.success(`Shop "${newCode}" — counters ready!`);
       } catch {
-        toast.error('Failed to initialize shop counters');
+        toast.error('Failed to save shop settings');
+      } finally {
+        setSaving(false);
+      }
+    } else if (activeTab === 'user') {
+      // Save profile changes via API
+      if (!authUser) return;
+      setSaving(true);
+      try {
+        await usersApi.update(authUser.id, {
+          fullName: userName,
+          email: userEmail,
+          phone: userPhone,
+        });
+
+        // Change password if provided
+        if (newPassword) {
+          if (newPassword !== confirmPassword) {
+            toast.error('Passwords do not match');
+            setSaving(false);
+            return;
+          }
+          if (!currentPassword) {
+            toast.error('Enter your current password');
+            setSaving(false);
+            return;
+          }
+          await authApi.changePassword(currentPassword, newPassword);
+          setCurrentPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+        }
+
+        await refreshUser();
+        toast.success('Profile updated!');
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to update profile');
       } finally {
         setSaving(false);
       }
@@ -206,8 +295,8 @@ export function Settings() {
         <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Company Information</h3>
         <div className="space-y-4">
           <div className="flex items-center gap-4">
-            <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/10 flex items-center justify-center">
-              <Building2 className="w-10 h-10 text-amber-400" />
+            <div className="w-24 h-24 rounded-xl overflow-hidden bg-gradient-to-br from-amber-500/20 to-yellow-500/10 flex items-center justify-center">
+              <img src="/logo.jpg" alt="Shop Logo" className="w-full h-full object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
             </div>
             <div>
               <Button variant="outline" size="sm">
@@ -337,18 +426,11 @@ export function Settings() {
   const [savingCounter, setSavingCounter] = useState<string | null>(null);
 
   const handleInitShop = async () => {
-    const trimmed = shopCode.trim().toUpperCase();
-    if (!trimmed || !/^[A-Z]{1,3}$/.test(trimmed)) {
-      toast.error('Enter a valid shop code (1-3 letters)');
-      return;
-    }
     setInitializingShop(true);
     try {
-      localStorage.setItem('shopCode', trimmed);
-      setShopCode(trimmed);
-      await countersApi.initShop(trimmed);
-      await loadCounters(trimmed);
-      toast.success(`Counters initialized for shop "${trimmed}"`);
+      await countersApi.initShop(shopCode);
+      await loadCounters(shopCode);
+      toast.success(`Counters initialized for shop "${shopCode}"`);
     } catch {
       toast.error('Failed to initialize counters');
     } finally {
@@ -383,20 +465,22 @@ export function Settings() {
 
   const renderNumberingSettings = () => (
     <div className="space-y-6">
-      {/* Shop Code */}
+      {/* Shop Code — editable */}
       <div>
         <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">Shop Identifier</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-          Unique letter code for this shop. All numbers start with this code to avoid conflicts.
+          Set your shop code here or from the <span className="font-medium text-amber-500">Users</span> tab — both stay in sync.
         </p>
         <div className="flex items-end gap-3">
           <div className="w-28">
-            <Input
-              label="Shop Code"
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Shop Code</label>
+            <input
+              type="text"
               value={shopCode}
               onChange={(e) => setShopCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3))}
+              maxLength={3}
+              className="h-10 w-full text-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xl font-bold tracking-widest text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-colors"
               placeholder="A"
-              className="text-center text-xl font-bold tracking-widest"
             />
           </div>
           <div className="flex-1 pb-0.5">
@@ -408,7 +492,10 @@ export function Settings() {
         <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
           <Store className="w-3.5 h-3.5 text-amber-500" />
           <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
-            Active: <span className="font-bold">{localStorage.getItem('shopCode') || 'A'}</span>
+            Active: <span className="font-bold">{authUser?.shopCode || shopCode}</span>
+            {shopCode !== (authUser?.shopCode || '') && (
+              <span className="ml-1 text-yellow-600 dark:text-yellow-400"> → {shopCode} (unsaved)</span>
+            )}
           </span>
         </div>
       </div>
@@ -543,14 +630,16 @@ export function Settings() {
         <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Profile Information</h3>
         <div className="space-y-4">
           <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/10 flex items-center justify-center">
-              <span className="text-2xl font-bold text-blue-400">AU</span>
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-500/20 to-yellow-500/10 flex items-center justify-center">
+              <span className="text-2xl font-bold text-amber-500">{userName.charAt(0)?.toUpperCase() || 'U'}</span>
             </div>
             <div>
-              <Button variant="outline" size="sm">
-                <Upload className="w-4 h-4" />
-                Change Photo
-              </Button>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Username: <span className="font-mono font-medium text-slate-700 dark:text-slate-300">{authUser?.username}</span>
+              </p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                Shop: <span className="font-mono text-amber-500">{authUser?.shopCode}</span> &middot; Role: <span className="capitalize">{authUser?.role}</span>
+              </p>
             </div>
           </div>
 
@@ -569,20 +658,16 @@ export function Settings() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="Phone" defaultValue="+94 77 123 4567" />
+            <Input
+              label="Phone"
+              value={userPhone}
+              onChange={(e) => setUserPhone(e.target.value)}
+            />
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Role</label>
-              <Combobox
-                value={userRole}
-                onChange={setUserRole}
-                options={[
-                  { value: 'Administrator', label: 'Administrator', icon: <Shield className="w-4 h-4" /> },
-                  { value: 'Manager', label: 'Manager', icon: <User className="w-4 h-4" /> },
-                  { value: 'Sales', label: 'Sales Staff', icon: <User className="w-4 h-4" /> },
-                  { value: 'Accountant', label: 'Accountant', icon: <User className="w-4 h-4" /> }
-                ]}
-                placeholder="Select role..."
-              />
+              <div className="px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 text-sm capitalize">
+                {authUser?.role || 'user'}
+              </div>
             </div>
           </div>
         </div>
@@ -591,17 +676,360 @@ export function Settings() {
       <div>
         <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Change Password</h3>
         <div className="space-y-4">
-          <Input label="Current Password" type="password" />
+          <Input
+            label="Current Password"
+            type="password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+          />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="New Password" type="password" />
-            <Input label="Confirm New Password" type="password" />
+            <Input
+              label="New Password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+            <Input
+              label="Confirm New Password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
           </div>
         </div>
       </div>
     </div>
   );
 
+  // ==========================================
+  // Users Management Tab (Admin only)
+  // ==========================================
 
+  const loadUsers = useCallback(async () => {
+    try {
+      setLoadingUsers(true);
+      const res = await usersApi.getAll();
+      setAllUsers(res.data);
+    } catch {
+      toast.error('Failed to load users');
+    } finally {
+      setLoadingUsers(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'users' && authUser?.role === 'admin') {
+      loadUsers();
+    }
+  }, [activeTab, authUser?.role, loadUsers]);
+
+  const openCreateUserModal = () => {
+    setEditingUser(null);
+    setFormUsername('');
+    setFormEmail('');
+    setFormFullName('');
+    setFormPhone('');
+    setFormRole('sales');
+    setFormShopCode(authUser?.shopCode || 'A');
+    setFormPassword('');
+    setShowNewPassword(false);
+    setShowUserModal(true);
+  };
+
+  const openEditUserModal = (u: AuthUser) => {
+    setEditingUser(u);
+    setFormUsername(u.username);
+    setFormEmail(u.email);
+    setFormFullName(u.fullName);
+    setFormPhone(u.phone || '');
+    setFormRole(u.role);
+    setFormShopCode(u.shopCode);
+    setFormPassword('');
+    setShowNewPassword(false);
+    setShowUserModal(true);
+  };
+
+  const handleSaveUser = async () => {
+    if (!formFullName.trim()) { toast.error('Full name is required'); return; }
+    if (!formEmail.trim()) { toast.error('Email is required'); return; }
+
+    setSavingUser(true);
+    try {
+      if (editingUser) {
+        // Update existing user
+        const updateData: any = {
+          email: formEmail.trim(),
+          fullName: formFullName.trim(),
+          phone: formPhone.trim() || undefined,
+          role: formRole,
+          shopCode: formShopCode.trim().toUpperCase(),
+        };
+        if (formPassword) updateData.password = formPassword;
+
+        await usersApi.update(editingUser.id, updateData);
+
+        // If the edited user is the current user and shop code changed, refresh auth
+        if (editingUser.id === authUser?.id && updateData.shopCode !== authUser?.shopCode) {
+          await refreshUser();
+          await loadCounters(updateData.shopCode);
+        }
+
+        toast.success('User updated successfully!');
+      } else {
+        // Create new user
+        if (!formUsername.trim()) { toast.error('Username is required'); setSavingUser(false); return; }
+        if (!formPassword || formPassword.length < 6) { toast.error('Password must be at least 6 characters'); setSavingUser(false); return; }
+
+        await usersApi.create({
+          username: formUsername.trim().toLowerCase(),
+          email: formEmail.trim(),
+          password: formPassword,
+          fullName: formFullName.trim(),
+          phone: formPhone.trim() || undefined,
+          role: formRole,
+          shopCode: formShopCode.trim().toUpperCase(),
+        });
+        toast.success('User registered successfully!');
+      }
+
+      setShowUserModal(false);
+      await loadUsers();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save user');
+    } finally {
+      setSavingUser(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
+    try {
+      await usersApi.delete(userId);
+      toast.success('User deleted');
+      await loadUsers();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete user');
+    }
+  };
+
+  const handleToggleActive = async (u: AuthUser) => {
+    try {
+      await usersApi.update(u.id, { isActive: !u.isActive });
+      toast.success(u.isActive ? 'User deactivated' : 'User activated');
+      await loadUsers();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update user');
+    }
+  };
+
+  const ROLE_COLORS: Record<string, string> = {
+    admin: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20',
+    manager: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+    sales: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+    accountant: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
+  };
+
+  const renderUsersManagement = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Registered Users</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Manage system users and their access</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={loadUsers} disabled={loadingUsers}>
+            {loadingUsers ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          </Button>
+          <Button variant="gold" size="sm" onClick={openCreateUserModal}>
+            <UserPlus className="w-4 h-4" />
+            Add User
+          </Button>
+        </div>
+      </div>
+
+      {loadingUsers ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
+          <span className="ml-2 text-sm text-slate-500">Loading users...</span>
+        </div>
+      ) : allUsers.length === 0 ? (
+        <div className="text-center py-12 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+          <Users className="w-10 h-10 text-slate-400 mx-auto mb-3" />
+          <p className="text-slate-600 dark:text-slate-400 font-medium">No users found</p>
+        </div>
+      ) : (
+        <div className="grid gap-3">
+          {allUsers.map((u) => (
+            <div
+              key={u.id}
+              className={cn(
+                'flex items-center gap-4 p-4 rounded-xl border transition-all bg-white dark:bg-slate-900/50',
+                u.isActive !== false
+                  ? 'border-slate-200 dark:border-slate-700 hover:border-amber-500/30'
+                  : 'border-slate-200/50 dark:border-slate-800 opacity-60'
+              )}
+            >
+              {/* Avatar */}
+              <div className={cn(
+                'flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm',
+                u.isActive !== false
+                  ? 'bg-gradient-to-br from-amber-500 to-yellow-600'
+                  : 'bg-slate-400'
+              )}>
+                {u.fullName.charAt(0).toUpperCase()}
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-semibold text-slate-800 dark:text-slate-200">{u.fullName}</p>
+                  <span className={cn('px-2 py-0.5 text-[10px] font-bold uppercase rounded-full border', ROLE_COLORS[u.role] || ROLE_COLORS.sales)}>
+                    {u.role}
+                  </span>
+                  <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                    {u.shopCode}
+                  </span>
+                  {u.isActive === false && (
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500">
+                      INACTIVE
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">@{u.username}</p>
+                  <span className="text-slate-300 dark:text-slate-600">&middot;</span>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{u.email}</p>
+                  {u.phone && (
+                    <>
+                      <span className="text-slate-300 dark:text-slate-600">&middot;</span>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{u.phone}</p>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => handleToggleActive(u)}
+                  className={cn(
+                    'p-2 rounded-lg transition-colors',
+                    u.isActive !== false
+                      ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
+                      : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  )}
+                  title={u.isActive !== false ? 'Deactivate' : 'Activate'}
+                >
+                  {u.isActive !== false ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={() => openEditUserModal(u)}
+                  className="p-2 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
+                  title="Edit"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+                {u.id !== authUser?.id && (
+                  <button
+                    onClick={() => handleDeleteUser(u.id, u.fullName)}
+                    className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* User Modal */}
+      <Modal isOpen={showUserModal} onClose={() => setShowUserModal(false)} title={editingUser ? 'Edit User' : 'Register New User'} size="lg">
+        <ModalContent>
+          <div className="space-y-4">
+            {!editingUser && (
+              <Input
+                label="Username"
+                value={formUsername}
+                onChange={(e) => setFormUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                placeholder="e.g. john_doe"
+              />
+            )}
+            <Input
+              label="Full Name"
+              value={formFullName}
+              onChange={(e) => setFormFullName(e.target.value)}
+              placeholder="e.g. John Doe"
+            />
+            <Input
+              label="Email"
+              type="email"
+              value={formEmail}
+              onChange={(e) => setFormEmail(e.target.value)}
+              placeholder="e.g. john@onelkajewellery.lk"
+            />
+            <Input
+              label="Phone"
+              value={formPhone}
+              onChange={(e) => setFormPhone(e.target.value)}
+              placeholder="+94 77 123 4567"
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Role</label>
+                <Combobox
+                  value={formRole}
+                  onChange={setFormRole}
+                  options={[
+                    { value: 'admin', label: 'Admin', icon: <Shield className="w-4 h-4" /> },
+                    { value: 'manager', label: 'Manager', icon: <User className="w-4 h-4" /> },
+                    { value: 'sales', label: 'Sales', icon: <User className="w-4 h-4" /> },
+                    { value: 'accountant', label: 'Accountant', icon: <User className="w-4 h-4" /> },
+                  ]}
+                  placeholder="Select role..."
+                />
+              </div>
+              <Input
+                label="Shop Code"
+                value={formShopCode}
+                onChange={(e) => setFormShopCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3))}
+                placeholder="A"
+                className="text-center font-mono font-bold tracking-widest"
+              />
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  {editingUser ? 'New Password (leave blank to keep)' : 'Password'}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                >
+                  {showNewPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              <Input
+                type={showNewPassword ? 'text' : 'password'}
+                value={formPassword}
+                onChange={(e) => setFormPassword(e.target.value)}
+                placeholder={editingUser ? 'Leave blank to keep current' : 'Min 6 characters'}
+              />
+            </div>
+          </div>
+        </ModalContent>
+        <ModalFooter>
+          <Button variant="outline" onClick={() => setShowUserModal(false)}>Cancel</Button>
+          <Button variant="gold" onClick={handleSaveUser} disabled={savingUser}>
+            {savingUser ? <Loader2 className="w-4 h-4 animate-spin" /> : editingUser ? <Save className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+            {editingUser ? 'Update User' : 'Register'}
+          </Button>
+        </ModalFooter>
+      </Modal>
+    </div>
+  );
 
   const renderAppearanceSettings = () => (
     <div className="space-y-6">
@@ -753,6 +1181,7 @@ export function Settings() {
         <CardContent className="p-6">
           {activeTab === 'company' && renderCompanySettings()}
           {activeTab === 'numbering' && renderNumberingSettings()}
+          {activeTab === 'users' && authUser?.role === 'admin' && renderUsersManagement()}
           {activeTab === 'user' && renderUserSettings()}
           {activeTab === 'appearance' && renderAppearanceSettings()}
         </CardContent>

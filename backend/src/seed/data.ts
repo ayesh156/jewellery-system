@@ -13,6 +13,7 @@ import type {
   clearances,
   clearanceItems,
   clearancePayments,
+  users,
 } from '../db/schema.js';
 
 type CategoryInsert = typeof categories.$inferInsert;
@@ -29,6 +30,7 @@ type CounterInsert = typeof counters.$inferInsert;
 type ClearanceInsert = typeof clearances.$inferInsert;
 type ClearanceItemInsert = typeof clearanceItems.$inferInsert;
 type ClearancePaymentInsert = typeof clearancePayments.$inferInsert;
+type UserInsert = typeof users.$inferInsert;
 
 // ==========================================
 // Company Info
@@ -38,15 +40,12 @@ export const seedCompanyInfo: CompanyInfoInsert = {
   id: 'default',
   name: 'Onelka Jewellery',
   tagline: 'Exquisite Craftsmanship Since 1985',
-  address: 'No. 123, Galle Road',
-  city: 'Colombo 03',
+  address: 'Makandura, Matara.',
+  city: 'Matara',
   country: 'Sri Lanka',
-  phone: '+94 11 234 5678',
-  phone2: '+94 77 123 4567',
-  email: 'info@onelkajewellery.lk',
-  website: 'www.onelkajewellery.lk',
-  registrationNumber: 'REG-2024-001',
-  taxNumber: 'TIN-123456789',
+  phone: '0770400789',
+  email: 'onelkajewellery95@gmail.com',
+  defaultTaxRate: '0',
 };
 
 // ==========================================
@@ -404,6 +403,18 @@ export const seedCounters: CounterInsert[] = [
   { id: 'counter-M-product', entityType: 'product', shopCode: 'M', prefix: 'PROD', lastNumber: 10, paddingLength: 5 },
   { id: 'counter-M-category', entityType: 'category', shopCode: 'M', prefix: 'CAT', lastNumber: 14, paddingLength: 5 },
   { id: 'counter-M-customer', entityType: 'customer', shopCode: 'M', prefix: 'CUS', lastNumber: 5, paddingLength: 5 },
+  // Shop T counters
+  { id: 'counter-T-invoice', entityType: 'invoice', shopCode: 'T', prefix: 'INV', lastNumber: 0, paddingLength: 5 },
+  { id: 'counter-T-clearance', entityType: 'clearance', shopCode: 'T', prefix: 'CLR', lastNumber: 0, paddingLength: 5 },
+  { id: 'counter-T-product', entityType: 'product', shopCode: 'T', prefix: 'PROD', lastNumber: 0, paddingLength: 5 },
+  { id: 'counter-T-category', entityType: 'category', shopCode: 'T', prefix: 'CAT', lastNumber: 0, paddingLength: 5 },
+  { id: 'counter-T-customer', entityType: 'customer', shopCode: 'T', prefix: 'CUS', lastNumber: 0, paddingLength: 5 },
+  // Shop D counters
+  { id: 'counter-D-invoice', entityType: 'invoice', shopCode: 'D', prefix: 'INV', lastNumber: 0, paddingLength: 5 },
+  { id: 'counter-D-clearance', entityType: 'clearance', shopCode: 'D', prefix: 'CLR', lastNumber: 0, paddingLength: 5 },
+  { id: 'counter-D-product', entityType: 'product', shopCode: 'D', prefix: 'PROD', lastNumber: 0, paddingLength: 5 },
+  { id: 'counter-D-category', entityType: 'category', shopCode: 'D', prefix: 'CAT', lastNumber: 0, paddingLength: 5 },
+  { id: 'counter-D-customer', entityType: 'customer', shopCode: 'D', prefix: 'CUS', lastNumber: 0, paddingLength: 5 },
 ];
 
 // ==========================================
@@ -613,5 +624,46 @@ export const seedClearancePayments: ClearancePaymentInsert[] = [
     amount: '217125', method: 'cash',
     date: '2025-03-05', reference: 'CLR-20250305-001',
     notes: 'Full payment - scratch & dent clearance',
+  },
+];
+
+// ==========================================
+// Users — 3 admin users
+// Password: onelka123 (bcrypt hash with 12 rounds)
+// ==========================================
+
+export const seedUsers: UserInsert[] = [
+  {
+    id: 'USR-01',
+    username: 'onelka1',
+    email: 'onelkajewellery95@gmail.com',
+    passwordHash: '$2b$12$F/7wv6p7wlZMqeSqNq.IqOWLY7Lhc77IymHqYYTu7sAf6ztCs6nbS',
+    fullName: 'onelka user 1',
+    phone: '0770400789',
+    role: 'admin',
+    shopCode: 'M',
+    isActive: true,
+  },
+  {
+    id: 'USR-02',
+    username: 'onelka2',
+    email: 'onelkajewellery95+2@gmail.com',
+    passwordHash: '$2b$12$F/7wv6p7wlZMqeSqNq.IqOWLY7Lhc77IymHqYYTu7sAf6ztCs6nbS',
+    fullName: 'onelka user 2',
+    phone: '0770400789',
+    role: 'admin',
+    shopCode: 'T',
+    isActive: true,
+  },
+  {
+    id: 'USR-03',
+    username: 'onelka3',
+    email: 'onelkajewellery95+3@gmail.com',
+    passwordHash: '$2b$12$F/7wv6p7wlZMqeSqNq.IqOWLY7Lhc77IymHqYYTu7sAf6ztCs6nbS',
+    fullName: 'onelka user 3',
+    phone: '0770400789',
+    role: 'admin',
+    shopCode: 'D',
+    isActive: true,
   },
 ];

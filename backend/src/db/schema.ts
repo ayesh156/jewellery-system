@@ -368,6 +368,32 @@ export const clearancePayments = pgTable('clearance_payments', {
 });
 
 // ==========================================
+// Users (Authentication & Authorization)
+// ==========================================
+
+export const userRoleEnum = pgEnum('user_role', [
+  'admin', 'manager', 'sales', 'accountant',
+]);
+
+export const users = pgTable('users', {
+  id: varchar('id', { length: 50 }).primaryKey(),
+  username: varchar('username', { length: 50 }).notNull(),
+  email: varchar('email', { length: 200 }).notNull(),
+  passwordHash: varchar('password_hash', { length: 255 }).notNull(),
+  fullName: varchar('full_name', { length: 200 }).notNull(),
+  phone: varchar('phone', { length: 20 }),
+  role: userRoleEnum('role').notNull().default('sales'),
+  shopCode: varchar('shop_code', { length: 10 }).notNull().default('A'),
+  isActive: boolean('is_active').notNull().default(true),
+  lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex('users_username_idx').on(table.username),
+  uniqueIndex('users_email_idx').on(table.email),
+]);
+
+// ==========================================
 // Counters (Auto-increment sequences)
 // ==========================================
 

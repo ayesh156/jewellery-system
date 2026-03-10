@@ -335,8 +335,8 @@ export function GoldTypes() {
       {/* Filters */}
       <Card>
         <CardContent className="p-3 sm:p-4 space-y-3">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="flex-1 min-w-[180px]">
               <Input
                 placeholder="Search gold types..."
                 value={searchQuery}
@@ -344,7 +344,7 @@ export function GoldTypes() {
                 icon={<Search className="w-4 h-4" />}
               />
             </div>
-            <div className="w-full sm:w-44">
+            <div className="flex items-center gap-2 shrink-0">
               <Combobox
                 options={[
                   { value: 'all', label: 'All Status', icon: <CircleDot className="w-3.5 h-3.5 text-slate-400" /> },
@@ -356,9 +356,10 @@ export function GoldTypes() {
                 placeholder="Status"
                 clearable={false}
                 showFooter={false}
+                className="w-[120px] sm:w-[160px]"
               />
             </div>
-            <div className="flex gap-1 overflow-x-auto">
+            <div className="flex items-center gap-1 shrink-0 overflow-x-auto">
               <button
                 onClick={() => toggleSort('karat')}
                 className={`flex items-center gap-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap ${
