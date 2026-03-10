@@ -487,6 +487,7 @@ export const PrintableInvoice = forwardRef<HTMLDivElement, PrintableInvoiceProps
             font-size: 9pt;
             color: #666;
             line-height: 1.6;
+            list-style-type: disc;
           }
 
           .terms-section-a5 ul li {

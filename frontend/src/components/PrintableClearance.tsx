@@ -477,6 +477,7 @@ export const PrintableClearance = forwardRef<HTMLDivElement, PrintableClearanceP
             font-size: 9pt;
             color: #666;
             line-height: 1.6;
+            list-style-type: disc;
           }
 
           .clr-terms-section-a5 ul li {
