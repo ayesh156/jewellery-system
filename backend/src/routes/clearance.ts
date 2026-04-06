@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { eq, ilike, or, sql, asc, desc } from 'drizzle-orm';
+import { eq, like, or, sql, asc, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../db/index.js';
 import { clearances, clearanceItems, clearancePayments, customers } from '../db/schema.js';
@@ -86,8 +86,8 @@ router.get('/', async (req, res, next) => {
     if (search) {
       conditions.push(
         or(
-          ilike(clearances.clearanceNumber, `%${search}%`),
-          ilike(clearances.customerName, `%${search}%`),
+          like(clearances.clearanceNumber, `%${search}%`),
+          like(clearances.customerName, `%${search}%`),
         )
       );
     }
@@ -174,11 +174,13 @@ router.post('/', async (req, res, next) => {
     if (!customer) throw new AppError(400, 'Customer not found');
 
     // Insert clearance
-    const [created] = await db.insert(clearances).values({
+    await db.insert(clearances).values({
       ...clearanceData,
       createdAt: new Date(),
       updatedAt: new Date(),
-    }).returning();
+    });
+
+    const [created] = await db.select().from(clearances).where(eq(clearances.id, clearanceData.id));
 
     // Insert items
     await db.insert(clearanceItems).values(
@@ -221,13 +223,13 @@ router.put('/:id', async (req, res, next) => {
     const parsed = createClearanceSchema.partial().omit({ id: true }).parse(req.body);
     const { items, ...clearanceData } = parsed;
 
-    const [updated] = await db
+    const result = await db
       .update(clearances)
       .set({ ...clearanceData, updatedAt: new Date() })
-      .where(eq(clearances.id, req.params.id))
-      .returning();
+      .where(eq(clearances.id, req.params.id));
 
-    if (!updated) throw new AppError(404, 'Clearance not found');
+    if ((result as any).affectedRows === 0) throw new AppError(404, 'Clearance not found');
+    const [updated] = await db.select().from(clearances).where(eq(clearances.id, req.params.id));
 
     // Replace items if provided
     if (items) {
@@ -263,18 +265,19 @@ router.post('/:id/payments', async (req, res, next) => {
     if (!clearance) throw new AppError(404, 'Clearance not found');
 
     // Insert payment
-    const [payment] = await db.insert(clearancePayments).values({
+    await db.insert(clearancePayments).values({
       ...parsed,
       clearanceId: req.params.id,
       createdAt: new Date(),
-    }).returning();
+    });
+    const [payment] = await db.select().from(clearancePayments).where(eq(clearancePayments.clearanceId, req.params.id)).orderBy(desc(clearancePayments.createdAt)).limit(1);
 
     // Update clearance totals
     const newAmountPaid = parseFloat(clearance.amountPaid) + parseFloat(parsed.amount);
     const newBalanceDue = parseFloat(clearance.total) - newAmountPaid;
     const newStatus = newBalanceDue <= 0 ? 'paid' : 'partial';
 
-    const [updatedClearance] = await db
+    const updateResult = await db
       .update(clearances)
       .set({
         amountPaid: newAmountPaid.toFixed(2),
@@ -283,8 +286,10 @@ router.post('/:id/payments', async (req, res, next) => {
         paymentMethod: parsed.method,
         updatedAt: new Date(),
       })
-      .where(eq(clearances.id, req.params.id))
-      .returning();
+      .where(eq(clearances.id, req.params.id));
+    if ((updateResult as any).affectedRows === 0) throw new AppError(404, 'Clearance not found');
+
+    const [updatedClearance] = await db.select().from(clearances).where(eq(clearances.id, req.params.id));
 
     res.status(201).json({
       status: 'success',
@@ -301,13 +306,16 @@ router.post('/:id/payments', async (req, res, next) => {
 
 // ==========================================
 // DELETE /api/clearance/:id — Delete clearance + items + payments
-// ==========================================
+// =========================================
 
 router.delete('/:id', async (req, res, next) => {
   try {
-    const [deleted] = await db.delete(clearances).where(eq(clearances.id, req.params.id)).returning();
-    if (!deleted) throw new AppError(404, 'Clearance not found');
-    res.json({ status: 'success', data: deleted });
+    const [clearance] = await db.select().from(clearances).where(eq(clearances.id, req.params.id));
+    if (!clearance) throw new AppError(404, 'Clearance not found');
+    await db.delete(clearancePayments).where(eq(clearancePayments.clearanceId, req.params.id));
+    await db.delete(clearanceItems).where(eq(clearanceItems.clearanceId, req.params.id));
+    await db.delete(clearances).where(eq(clearances.id, req.params.id));
+    res.json({ status: 'success', data: clearance });
   } catch (err) {
     next(err);
   }

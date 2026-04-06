@@ -44,8 +44,8 @@ router.get('/:id', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
   try {
     const parsed = createCategorySchema.parse(req.body);
-    const [created] = await db.insert(categories).values(parsed).returning();
-    res.status(201).json({ status: 'success', data: created });
+    await db.insert(categories).values(parsed);
+    res.status(201).json({ status: 'success', data: parsed });
   } catch (err) {
     if (err instanceof z.ZodError) {
       res.status(400).json({ status: 'error', message: 'Validation failed', errors: err.errors });
@@ -59,12 +59,12 @@ router.post('/', async (req, res, next) => {
 router.put('/:id', async (req, res, next) => {
   try {
     const parsed = updateCategorySchema.parse(req.body);
-    const [updated] = await db
+    const result = await db
       .update(categories)
       .set({ ...parsed, updatedAt: new Date() })
-      .where(eq(categories.id, req.params.id))
-      .returning();
-    if (!updated) throw new AppError(404, 'Category not found');
+      .where(eq(categories.id, req.params.id));
+    if ((result as any).affectedRows === 0) throw new AppError(404, 'Category not found');
+    const [updated] = await db.select().from(categories).where(eq(categories.id, req.params.id));
     res.json({ status: 'success', data: updated });
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -90,9 +90,10 @@ router.delete('/:id', async (req, res, next) => {
       throw new AppError(409, `Cannot delete: ${childCount.value} sub-category(s) depend on this category`);
     }
 
-    const [deleted] = await db.delete(categories).where(eq(categories.id, req.params.id)).returning();
-    if (!deleted) throw new AppError(404, 'Category not found');
-    res.json({ status: 'success', data: deleted });
+    const [category] = await db.select().from(categories).where(eq(categories.id, req.params.id));
+    if (!category) throw new AppError(404, 'Category not found');
+    await db.delete(categories).where(eq(categories.id, req.params.id));
+    res.json({ status: 'success', data: category });
   } catch (err) {
     next(err);
   }

@@ -40,12 +40,12 @@ router.put('/', async (req, res, next) => {
       clearanceTerms: z.string().max(2000).optional().nullable(),
     }).parse(req.body);
 
-    const [updated] = await db
+    const result = await db
       .update(companyInfo)
       .set({ ...parsed, updatedAt: new Date() })
-      .where(eq(companyInfo.id, 'default'))
-      .returning();
-    if (!updated) throw new AppError(404, 'Company info not found');
+      .where(eq(companyInfo.id, 'default'));
+    if ((result as any).affectedRows === 0) throw new AppError(404, 'Company info not found');
+    const [updated] = await db.select().from(companyInfo).where(eq(companyInfo.id, 'default'));
     res.json({ status: 'success', data: updated });
   } catch (err) {
     if (err instanceof z.ZodError) {

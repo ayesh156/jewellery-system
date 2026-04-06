@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { eq, ilike, or, sql, asc, desc } from 'drizzle-orm';
+import { eq, like, or, sql, asc, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../db/index.js';
 import { products, productGemstones, categories } from '../db/schema.js';
@@ -61,12 +61,12 @@ const updateProductSchema = createProductSchema.partial().omit({ id: true });
 router.get('/counts', async (_req, res, next) => {
   try {
     const byCategory = await db
-      .select({ categoryId: products.categoryId, count: sql<number>`count(*)::int` })
+      .select({ categoryId: products.categoryId, count: sql<number>`count(*)` })
       .from(products)
       .groupBy(products.categoryId);
 
     const byKarat = await db
-      .select({ karat: products.karat, count: sql<number>`count(*)::int` })
+      .select({ karat: products.karat, count: sql<number>`count(*)` })
       .from(products)
       .groupBy(products.karat);
 
@@ -113,8 +113,8 @@ router.get('/', async (req, res, next) => {
     if (search) {
       conditions.push(
         or(
-          ilike(products.name, `%${search}%`),
-          ilike(products.sku, `%${search}%`),
+          like(products.name, `%${search}%`),
+          like(products.sku, `%${search}%`),
         )
       );
     }
@@ -213,11 +213,13 @@ router.post('/', async (req, res, next) => {
     if (!category) throw new AppError(400, 'Category not found');
 
     // Insert product
-    const [created] = await db.insert(products).values({
+    await db.insert(products).values({
       ...productData,
       dateAdded: new Date(),
       lastUpdated: new Date(),
-    }).returning();
+    });
+
+    const [created] = await db.select().from(products).where(eq(products.id, productData.id));
 
     // Insert gemstones if any
     if (gemstonesData?.length) {
@@ -259,13 +261,13 @@ router.put('/:id', async (req, res, next) => {
       if (!category) throw new AppError(400, 'Category not found');
     }
 
-    const [updated] = await db
+    const result = await db
       .update(products)
       .set({ ...productData, lastUpdated: new Date() })
-      .where(eq(products.id, req.params.id))
-      .returning();
+      .where(eq(products.id, req.params.id));
 
-    if (!updated) throw new AppError(404, 'Product not found');
+    if ((result as any).affectedRows === 0) throw new AppError(404, 'Product not found');
+    const [updated] = await db.select().from(products).where(eq(products.id, req.params.id));
 
     // Replace gemstones if provided
     if (gemstonesData) {
@@ -298,9 +300,10 @@ router.put('/:id', async (req, res, next) => {
 
 router.delete('/:id', async (req, res, next) => {
   try {
-    const [deleted] = await db.delete(products).where(eq(products.id, req.params.id)).returning();
-    if (!deleted) throw new AppError(404, 'Product not found');
-    res.json({ status: 'success', data: deleted });
+    const [product] = await db.select().from(products).where(eq(products.id, req.params.id));
+    if (!product) throw new AppError(404, 'Product not found');
+    await db.delete(products).where(eq(products.id, req.params.id));
+    res.json({ status: 'success', data: product });
   } catch (err) {
     next(err);
   }
@@ -313,12 +316,12 @@ router.delete('/:id', async (req, res, next) => {
 router.patch('/:id/stock', async (req, res, next) => {
   try {
     const { quantity } = z.object({ quantity: z.number().int().min(0) }).parse(req.body);
-    const [updated] = await db
+    const result = await db
       .update(products)
       .set({ stockQuantity: quantity, lastUpdated: new Date() })
-      .where(eq(products.id, req.params.id))
-      .returning();
-    if (!updated) throw new AppError(404, 'Product not found');
+      .where(eq(products.id, req.params.id));
+    if ((result as any).affectedRows === 0) throw new AppError(404, 'Product not found');
+    const [updated] = await db.select().from(products).where(eq(products.id, req.params.id));
     res.json({ status: 'success', data: updated });
   } catch (err) {
     if (err instanceof z.ZodError) {

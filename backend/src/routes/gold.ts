@@ -31,12 +31,12 @@ router.put('/rates/:id', async (req, res, next) => {
       updatedBy: z.string().optional(),
     }).parse(req.body);
 
-    const [updated] = await db
+    const result = await db
       .update(goldRates)
       .set(parsed)
-      .where(eq(goldRates.id, req.params.id))
-      .returning();
-    if (!updated) throw new AppError(404, 'Gold rate not found');
+      .where(eq(goldRates.id, req.params.id));
+    if ((result as any).affectedRows === 0) throw new AppError(404, 'Gold rate not found');
+    const [updated] = await db.select().from(goldRates).where(eq(goldRates.id, req.params.id));
     res.json({ status: 'success', data: updated });
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -74,8 +74,8 @@ router.post('/types', async (req, res, next) => {
       color: z.string().max(20).optional(),
     }).parse(req.body);
 
-    const [created] = await db.insert(goldTypeConfigs).values(parsed).returning();
-    res.status(201).json({ status: 'success', data: created });
+    await db.insert(goldTypeConfigs).values(parsed);
+    res.status(201).json({ status: 'success', data: parsed });
   } catch (err) {
     if (err instanceof z.ZodError) {
       res.status(400).json({ status: 'error', message: 'Validation failed', errors: err.errors });
@@ -96,12 +96,12 @@ router.put('/types/:id', async (req, res, next) => {
       color: z.string().max(20).optional(),
     }).parse(req.body);
 
-    const [updated] = await db
+    const result = await db
       .update(goldTypeConfigs)
       .set(parsed)
-      .where(eq(goldTypeConfigs.id, req.params.id))
-      .returning();
-    if (!updated) throw new AppError(404, 'Gold type config not found');
+      .where(eq(goldTypeConfigs.id, req.params.id));
+    if ((result as any).affectedRows === 0) throw new AppError(404, 'Gold type config not found');
+    const [updated] = await db.select().from(goldTypeConfigs).where(eq(goldTypeConfigs.id, req.params.id));
     res.json({ status: 'success', data: updated });
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -115,12 +115,10 @@ router.put('/types/:id', async (req, res, next) => {
 // DELETE /api/gold/types/:id — Delete a gold type config
 router.delete('/types/:id', async (req, res, next) => {
   try {
-    const [deleted] = await db
-      .delete(goldTypeConfigs)
-      .where(eq(goldTypeConfigs.id, req.params.id))
-      .returning();
-    if (!deleted) throw new AppError(404, 'Gold type config not found');
-    res.json({ status: 'success', data: deleted });
+    const [typeConfig] = await db.select().from(goldTypeConfigs).where(eq(goldTypeConfigs.id, req.params.id));
+    if (!typeConfig) throw new AppError(404, 'Gold type config not found');
+    await db.delete(goldTypeConfigs).where(eq(goldTypeConfigs.id, req.params.id));
+    res.json({ status: 'success', data: typeConfig });
   } catch (err) {
     next(err);
   }

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { eq, ilike, or, sql, asc, desc } from 'drizzle-orm';
+import { eq, like, or, sql, asc, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../db/index.js';
 import { invoices, invoiceItems, payments, customers } from '../db/schema.js';
@@ -85,8 +85,8 @@ router.get('/', async (req, res, next) => {
     if (search) {
       conditions.push(
         or(
-          ilike(invoices.invoiceNumber, `%${search}%`),
-          ilike(invoices.customerName, `%${search}%`),
+          like(invoices.invoiceNumber, `%${search}%`),
+          like(invoices.customerName, `%${search}%`),
         )
       );
     }
@@ -173,11 +173,13 @@ router.post('/', async (req, res, next) => {
     if (!customer) throw new AppError(400, 'Customer not found');
 
     // Insert invoice
-    const [created] = await db.insert(invoices).values({
+    await db.insert(invoices).values({
       ...invoiceData,
       createdAt: new Date(),
       updatedAt: new Date(),
-    }).returning();
+    });
+
+    const [created] = await db.select().from(invoices).where(eq(invoices.id, invoiceData.id));
 
     // Insert items
     await db.insert(invoiceItems).values(
@@ -220,13 +222,13 @@ router.put('/:id', async (req, res, next) => {
     const parsed = createInvoiceSchema.partial().omit({ id: true }).parse(req.body);
     const { items, ...invoiceData } = parsed;
 
-    const [updated] = await db
+    const result = await db
       .update(invoices)
       .set({ ...invoiceData, updatedAt: new Date() })
-      .where(eq(invoices.id, req.params.id))
-      .returning();
+      .where(eq(invoices.id, req.params.id));
 
-    if (!updated) throw new AppError(404, 'Invoice not found');
+    if ((result as any).affectedRows === 0) throw new AppError(404, 'Invoice not found');
+    const [updated] = await db.select().from(invoices).where(eq(invoices.id, req.params.id));
 
     // Replace items if provided
     if (items) {
@@ -262,18 +264,19 @@ router.post('/:id/payments', async (req, res, next) => {
     if (!invoice) throw new AppError(404, 'Invoice not found');
 
     // Insert payment
-    const [payment] = await db.insert(payments).values({
+    await db.insert(payments).values({
       ...parsed,
       invoiceId: req.params.id,
       createdAt: new Date(),
-    }).returning();
+    });
+    const [payment] = await db.select().from(payments).where(eq(payments.invoiceId, req.params.id)).orderBy(desc(payments.createdAt)).limit(1);
 
     // Update invoice totals
     const newAmountPaid = parseFloat(invoice.amountPaid) + parseFloat(parsed.amount);
     const newBalanceDue = parseFloat(invoice.total) - newAmountPaid;
     const newStatus = newBalanceDue <= 0 ? 'paid' : 'partial';
 
-    const [updatedInvoice] = await db
+    const updateResult = await db
       .update(invoices)
       .set({
         amountPaid: newAmountPaid.toFixed(2),
@@ -282,8 +285,10 @@ router.post('/:id/payments', async (req, res, next) => {
         paymentMethod: parsed.method,
         updatedAt: new Date(),
       })
-      .where(eq(invoices.id, req.params.id))
-      .returning();
+      .where(eq(invoices.id, req.params.id));
+    if ((updateResult as any).affectedRows === 0) throw new AppError(404, 'Invoice not found');
+
+    const [updatedInvoice] = await db.select().from(invoices).where(eq(invoices.id, req.params.id));
 
     res.status(201).json({
       status: 'success',
@@ -304,9 +309,12 @@ router.post('/:id/payments', async (req, res, next) => {
 
 router.delete('/:id', async (req, res, next) => {
   try {
-    const [deleted] = await db.delete(invoices).where(eq(invoices.id, req.params.id)).returning();
-    if (!deleted) throw new AppError(404, 'Invoice not found');
-    res.json({ status: 'success', data: deleted });
+    const [invoice] = await db.select().from(invoices).where(eq(invoices.id, req.params.id));
+    if (!invoice) throw new AppError(404, 'Invoice not found');
+    await db.delete(payments).where(eq(payments.invoiceId, req.params.id));
+    await db.delete(invoiceItems).where(eq(invoiceItems.invoiceId, req.params.id));
+    await db.delete(invoices).where(eq(invoices.id, req.params.id));
+    res.json({ status: 'success', data: invoice });
   } catch (err) {
     next(err);
   }

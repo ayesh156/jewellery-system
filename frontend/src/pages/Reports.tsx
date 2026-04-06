@@ -136,17 +136,17 @@ export function Reports() {
   const filteredClearances = clearances.filter((clr) => filterByDateRange(clr.issueDate || clr.createdAt));
 
   // Computed stats
-  const totalInvoiceSales = filteredInvoices.reduce((s, i) => s + (i.total || 0), 0);
-  const totalClearanceSales = filteredClearances.reduce((s, c) => s + (c.total || 0), 0);
+  const totalInvoiceSales = filteredInvoices.reduce((s, i) => s + Number(i.total), 0);
+  const totalClearanceSales = filteredClearances.reduce((s, c) => s + Number(c.total), 0);
   const totalRevenue = totalInvoiceSales + totalClearanceSales;
   const totalCollected =
-    filteredInvoices.reduce((s, i) => s + (i.amountPaid || 0), 0) +
-    filteredClearances.reduce((s, c) => s + (c.amountPaid || 0), 0);
+    filteredInvoices.reduce((s, i) => s + Number(i.amountPaid), 0) +
+    filteredClearances.reduce((s, c) => s + Number(c.amountPaid), 0);
   const totalOutstanding =
-    filteredInvoices.reduce((s, i) => s + (i.balanceDue || 0), 0) +
-    filteredClearances.reduce((s, c) => s + (c.balanceDue || 0), 0);
-  const inventoryValue = products.reduce((s, p) => s + (p.sellingPrice || 0) * (p.stockQuantity || 0), 0);
-  const inventoryItems = products.reduce((s, p) => s + (p.stockQuantity || 0), 0);
+    filteredInvoices.reduce((s, i) => s + Number(i.balanceDue), 0) +
+    filteredClearances.reduce((s, c) => s + Number(c.balanceDue), 0);
+  const inventoryValue = products.reduce((s, p) => s + Number(p.sellingPrice) * Number(p.stockQuantity), 0);
+  const inventoryItems = products.reduce((s, p) => s + Number(p.stockQuantity), 0);
   const totalTransactions = filteredInvoices.length + filteredClearances.length;
 
   // Generate PDF

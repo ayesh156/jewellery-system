@@ -153,19 +153,19 @@ router.post('/', async (req, res, next) => {
       );
     }
 
+    await db.insert(users).values({
+      id: userId,
+      username: data.username,
+      email: data.email,
+      passwordHash,
+      fullName: data.fullName,
+      phone: data.phone || null,
+      role: data.role,
+      shopCode: data.shopCode,
+    });
+
     const [created] = await db
-      .insert(users)
-      .values({
-        id: userId,
-        username: data.username,
-        email: data.email,
-        passwordHash,
-        fullName: data.fullName,
-        phone: data.phone || null,
-        role: data.role,
-        shopCode: data.shopCode,
-      })
-      .returning({
+      .select({
         id: users.id,
         username: users.username,
         email: users.email,
@@ -175,7 +175,9 @@ router.post('/', async (req, res, next) => {
         shopCode: users.shopCode,
         isActive: users.isActive,
         createdAt: users.createdAt,
-      });
+      })
+      .from(users)
+      .where(eq(users.id, userId));
 
     res.status(201).json({ status: 'success', data: created });
   } catch (err) {
@@ -271,11 +273,14 @@ router.put('/:id', async (req, res, next) => {
       }
     }
 
-    const [updated] = await db
+    const result = await db
       .update(users)
       .set(setFields)
-      .where(eq(users.id, req.params.id))
-      .returning({
+      .where(eq(users.id, req.params.id));
+    if ((result as any).affectedRows === 0) throw new AppError(404, 'User not found');
+
+    const [updated] = await db
+      .select({
         id: users.id,
         username: users.username,
         email: users.email,
@@ -286,7 +291,9 @@ router.put('/:id', async (req, res, next) => {
         isActive: users.isActive,
         createdAt: users.createdAt,
         updatedAt: users.updatedAt,
-      });
+      })
+      .from(users)
+      .where(eq(users.id, req.params.id));
 
     res.json({ status: 'success', data: updated });
   } catch (err) {

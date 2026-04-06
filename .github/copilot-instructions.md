@@ -27,7 +27,7 @@ This is a **Jewellery Management System** (React SPA) for the Sri Lankan retail 
 - **Node.js + Express.js** — REST API
 - **TypeScript** in strict mode
 - **Drizzle ORM** — lightweight TypeScript-native ORM
-- **Neon PostgreSQL** — serverless Postgres database
+- **MySQL** — local MySQL/MariaDB or MySQL-compatible hosted database
 - **Zod** — request validation
 - **bcrypt** — password hashing
 - **jsonwebtoken (JWT)** — authentication tokens
@@ -332,7 +332,7 @@ npm run db:seed      # Seed database with initial data
 npm run db:studio    # Open Drizzle Studio GUI
 ```
 
-**Database:** Neon PostgreSQL (neon.tech) — connection via `DATABASE_URL` env var
+**Database:** MySQL-compatible database — connection via `DATABASE_URL` env var
 **API Base:** `http://localhost:3000/api`
 
 ### Seed Data (backend/src/seed/data.ts)

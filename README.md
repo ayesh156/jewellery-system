@@ -12,8 +12,8 @@ A full-stack **Jewellery Management System** built for the Sri Lankan retail jew
 |----------|-------------|
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS, React Router, Lucide Icons, jsPDF |
 | Backend  | Node.js, Express, TypeScript, Drizzle ORM, Zod, bcrypt, JWT |
-| Database | Neon PostgreSQL (serverless) |
-| Deploy   | Vercel (frontend), Neon (database) |
+| Database | Local/MySQL or MySQL-compatible hosted database |
+| Deploy   | Vercel (frontend), MySQL database hosting |
 
 ---
 
@@ -22,16 +22,22 @@ A full-stack **Jewellery Management System** built for the Sri Lankan retail jew
 ### Prerequisites
 - Node.js 18+
 - npm
-- Neon PostgreSQL database (or any Postgres)
+- Local MySQL / MariaDB or MySQL-compatible hosted database
 
 ### Backend Setup
 ```bash
 cd backend
 cp .env.example .env       # Add your DATABASE_URL and JWT_SECRET
 npm install
-npm run db:push            # Create tables in Neon DB
+npm run db:push            # Create tables in the configured MySQL database
 npm run db:seed            # Seed with sample data
 npm run dev                # Start API at http://localhost:3000
+```
+
+If you want to run with a local MySQL database, set `DATABASE_URL` in `.env` like:
+
+```bash
+DATABASE_URL=mysql://root:password@localhost:3306/onelka_jewellery
 ```
 
 ### Frontend Setup

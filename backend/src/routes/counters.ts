@@ -44,8 +44,8 @@ router.get('/', async (req, res, next) => {
 // POST /api/counters/next — Atomically get next number
 // Body: { entityType: 'invoice', shopCode: 'A' }
 // Auto-creates counter if it doesn't exist for this shop
-// Uses UPDATE ... SET last_number = last_number + 1 RETURNING
-// Safe for concurrent access — PostgreSQL guarantees atomicity
+// Uses UPDATE ... SET last_number = last_number + 1
+// Safe for concurrent access when the counter row exists; otherwise it creates a new row first
 // ==========================================
 
 const nextSchema = z.object({
@@ -58,13 +58,16 @@ router.post('/next', async (req, res, next) => {
     const { entityType, shopCode } = nextSchema.parse(req.body);
 
     // Try atomic increment
-    const [updated] = await db
+    const result = await db
       .update(counters)
       .set({ lastNumber: sql`${counters.lastNumber} + 1` })
-      .where(and(eq(counters.entityType, entityType), eq(counters.shopCode, shopCode)))
-      .returning();
+      .where(and(eq(counters.entityType, entityType), eq(counters.shopCode, shopCode)));
 
-    if (updated) {
+    if ((result as any).affectedRows > 0) {
+      const [updated] = await db
+        .select()
+        .from(counters)
+        .where(and(eq(counters.entityType, entityType), eq(counters.shopCode, shopCode)));
       const paddedNumber = updated.lastNumber.toString().padStart(updated.paddingLength, '0');
       const formatted = `${shopCode}${paddedNumber}`;
       const formattedId = `${shopCode}-${updated.prefix}-${paddedNumber}`;
@@ -85,7 +88,7 @@ router.post('/next', async (req, res, next) => {
     // Counter doesn't exist — auto-create with default prefix
     const prefix = DEFAULT_PREFIXES[entityType] || entityType.toUpperCase().slice(0, 4);
 
-    const [created] = await db
+    await db
       .insert(counters)
       .values({
         id: `counter-${shopCode}-${entityType}`,
@@ -94,8 +97,12 @@ router.post('/next', async (req, res, next) => {
         prefix,
         lastNumber: 1,
         paddingLength: 5,
-      })
-      .returning();
+      });
+
+    const [created] = await db
+      .select()
+      .from(counters)
+      .where(and(eq(counters.entityType, entityType), eq(counters.shopCode, shopCode)));
 
     const paddedNumber = created.lastNumber.toString().padStart(created.paddingLength, '0');
     const formatted = `${shopCode}${paddedNumber}`;
@@ -202,16 +209,20 @@ router.put('/:entityType', async (req, res, next) => {
       return;
     }
 
-    const [updated] = await db
+    const result = await db
       .update(counters)
       .set(setFields)
-      .where(and(eq(counters.entityType, entityType), eq(counters.shopCode, parsed.shopCode)))
-      .returning();
+      .where(and(eq(counters.entityType, entityType), eq(counters.shopCode, parsed.shopCode)));
 
-    if (!updated) {
+    if ((result as any).affectedRows === 0) {
       res.status(404).json({ status: 'error', message: `Counter not found for ${entityType} / ${parsed.shopCode}` });
       return;
     }
+
+    const [updated] = await db
+      .select()
+      .from(counters)
+      .where(and(eq(counters.entityType, entityType), eq(counters.shopCode, parsed.shopCode)));
 
     res.json({
       status: 'success',

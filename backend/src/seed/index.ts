@@ -1,6 +1,5 @@
 import 'dotenv/config';
-import { neon } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
+import { drizzle } from 'drizzle-orm/mysql2';
 import { sql } from 'drizzle-orm';
 import * as schema from '../db/schema.js';
 import {
@@ -30,8 +29,7 @@ async function seed() {
 
   console.log('🌱 Starting database seed...\n');
 
-  const client = neon(databaseUrl);
-  const db = drizzle(client, { schema });
+  const db = drizzle(databaseUrl, { schema, mode: 'default' });
 
   // Clear tables in reverse dependency order
   console.log('🗑️  Clearing existing data...');
@@ -140,7 +138,9 @@ async function seed() {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 }
 
-seed().catch((err) => {
-  console.error('❌ Seed failed:', err);
-  process.exit(1);
-});
+seed()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error('❌ Seed failed:', err);
+    process.exit(1);
+  });

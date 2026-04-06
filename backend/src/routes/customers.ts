@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { eq, ilike, or, sql, asc, desc } from 'drizzle-orm';
+import { eq, like, or, sql, asc, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../db/index.js';
 import { customers } from '../db/schema.js';
@@ -56,8 +56,8 @@ router.get('/', async (req, res, next) => {
     if (search) {
       conditions.push(
         or(
-          ilike(customers.name, `%${search}%`),
-          ilike(customers.phone, `%${search}%`),
+          like(customers.name, `%${search}%`),
+          like(customers.phone, `%${search}%`),
         )
       );
     }
@@ -112,11 +112,12 @@ router.get('/:id', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
   try {
     const parsed = createCustomerSchema.parse(req.body);
-    const [created] = await db.insert(customers).values({
+    await db.insert(customers).values({
       ...parsed,
       createdAt: new Date(),
       updatedAt: new Date(),
-    }).returning();
+    });
+    const [created] = await db.select().from(customers).where(eq(customers.id, parsed.id));
     res.status(201).json({ status: 'success', data: created });
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -134,12 +135,12 @@ router.post('/', async (req, res, next) => {
 router.put('/:id', async (req, res, next) => {
   try {
     const parsed = updateCustomerSchema.parse(req.body);
-    const [updated] = await db
+    const result = await db
       .update(customers)
       .set({ ...parsed, updatedAt: new Date() })
-      .where(eq(customers.id, req.params.id))
-      .returning();
-    if (!updated) throw new AppError(404, 'Customer not found');
+      .where(eq(customers.id, req.params.id));
+    if ((result as any).affectedRows === 0) throw new AppError(404, 'Customer not found');
+    const [updated] = await db.select().from(customers).where(eq(customers.id, req.params.id));
     res.json({ status: 'success', data: updated });
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -156,9 +157,10 @@ router.put('/:id', async (req, res, next) => {
 
 router.delete('/:id', async (req, res, next) => {
   try {
-    const [deleted] = await db.delete(customers).where(eq(customers.id, req.params.id)).returning();
-    if (!deleted) throw new AppError(404, 'Customer not found');
-    res.json({ status: 'success', data: deleted });
+    const [customer] = await db.select().from(customers).where(eq(customers.id, req.params.id));
+    if (!customer) throw new AppError(404, 'Customer not found');
+    await db.delete(customers).where(eq(customers.id, req.params.id));
+    res.json({ status: 'success', data: customer });
   } catch (err) {
     next(err);
   }
